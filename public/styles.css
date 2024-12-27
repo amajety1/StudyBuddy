@@ -1,0 +1,1385 @@
+/* Header Section */ /* Header Section */ /* Header Section */ /* Header Section *//* Header Section */
+.header-image{
+  width: 100%;
+  min-width: 1000px;
+  height: 200px;
+  object-fit: cover;
+}
+
+
+
+/* Parent container */
+.login-container {
+  padding: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 800px;
+  margin: 0;
+  background-color: #ab5b5b;
+}
+
+.noto-sans{
+  font-family: "Noto Sans", serif;
+  font-optical-sizing: auto;
+  font-weight: 100;
+  font-style: normal;
+  font-variation-settings:
+      "wdth" 100;
+      
+}
+
+.general-hover:hover{
+  background-color: #dfdcdc; /* or any other darker color of your choice */
+
+}
+.general-transition {
+  transition: background-color 0.2s ease-in-out;
+}
+
+
+
+body{
+  margin: 0;
+  padding: 0;
+  background-color: #ffffff;
+}
+
+
+form{
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.email-form ,
+.password-form  {
+  width: 80%;
+  
+}
+
+.forgot-password{
+  margin-bottom: 5%;
+}
+
+.email-form input,
+.password-form input {
+  width: 100%;
+  border-radius: 10px;
+  height: 25px;
+  border-width: 0px;
+  padding-top: 1.5%;
+  padding-bottom: 1.5%;
+  margin-bottom: 5%;
+  padding-left: 2%;
+  
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.login-button{
+  font-size: 90%;
+  width: 80%;
+  border-radius: 10px;
+  height: 20px;
+  border-width: 0px;
+  padding-top: 3.5%;
+  padding-bottom: 6.5%;
+  margin-bottom: 4%;
+  padding-left: 2%;
+}
+.login-button:hover {
+  background-color: #dfdcdc; /* or any other darker color of your choice */
+}
+.login-button {
+  transition: background-color 0.2s ease-in-out;
+}
+
+.google-button{
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  font-size: 90%;
+  width: 80%;
+  border-radius: 10px;
+  height: 20px;
+  border-width: 0px;
+  padding-top: 5.0%;
+  padding-bottom: 5.5%;
+  margin-bottom: 4%;
+  padding-left: 2%;
+}
+.google-button:hover {
+  background-color: #dfdcdc; /* or any other darker color of your choice */
+}
+.google-button {
+  transition: background-color 0.2s ease-in-out;
+}
+
+.input-box:focus {
+  outline: none;
+  border: 1px solid #ccc; /* or any other color of your choice */
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.2); /* or any other shadow effect */
+}
+
+
+/*       --------------------------------------------------------------------------------------------------------   */
+/*       --------------------------------------------------------------------------------------------------------   */
+/*       --------------------------------------------------------------------------------------------------------   */
+/*       --------------------------------------------------------------------------------------------------------   */
+/*       --------------------------------------------------------------------------------------------------------   */
+/* SignupPword SignupPword SignupPword SignupPword SignupPword SignupPword SignupPword SignupPword SignupPword SignupPword */
+
+.phone-input-container {
+  display: flex;
+  gap: 10px; /* Space between dropdown and input */
+  align-items: center;
+}
+
+.country-code-dropdown {
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  height: 36px; /* Matches the input field height */
+}
+
+.phone-number-input {
+  flex: 1; /* Takes up remaining space */
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  height: 36px;
+}
+
+.phone-form input
+ {
+  width: 100%;
+  border-radius: 10px;
+  height: 25px;
+  border-width: 0px;
+  padding-top: 1.5%;
+  padding-bottom: 1.5%;
+
+  padding-left: 2%;
+  
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.phone-form {
+  width: 80%;
+  margin-bottom: 20px;
+  
+}
+
+h4{
+  margin: 0;
+}
+
+/*       --------------------------------------------------------------------------------------------------------   */
+/*       --------------------------------------------------------------------------------------------------------   */
+/*       --------------------------------------------------------------------------------------------------------   */
+/*       --------------------------------------------------------------------------------------------------------   */
+/*       --------------------------------------------------------------------------------------------------------   */
+/* ProfileInfo ProfileInfo ProfileInfo ProfileInfo ProfileInfo ProfileInfo ProfileInfo ProfileInfo ProfileInfo ProfileInfo  */
+
+.course-input-container {
+  display: flex;
+  gap: 10px; /* Space between dropdown and input */
+  align-items: center;
+  position: relative;
+}
+.dropdown-options {
+  position: absolute;
+  width: 100%;
+  max-height: 100px;
+  overflow-y: auto;
+  background-color: white;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  margin-top: 150px;
+  z-index: 100;
+  list-style: none;
+  padding: 0;
+}
+
+.dropdown-options li {
+  padding: 8px;
+  cursor: pointer;
+}
+
+.profile-form{
+  width: 500px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.github-input-box{
+  outline: none;
+  border: 1px solid #ccc; /* or any other color of your choice */
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.2); /* or any other shadow effect */
+
+}
+
+.courses-input-box{
+  width: 300px;
+}
+
+.course-dropdown {
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  height: 36px; /* Matches the input field height */
+}
+
+.course-add-button {
+  width: 80%;
+  border-radius: 10px;
+  height: 35px;
+  border: none;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.course-add-button:hover {
+  background-color: #dfdcdc; /* or any other darker color of your choice */
+}
+.course-add-button {
+  transition: background-color 0.2s ease-in-out;
+}
+
+.selected-item {
+  display: flex;
+  align-items: center;
+  background-color: #f0f0f0;
+  padding: 0px;
+  border-radius: 5px;
+  margin-bottom: 5px;
+  font-size: 14px;
+  margin: 0px;
+  padding: 7px;
+  margin-top: 5px;
+  
+}
+
+.selected-item button {
+  
+  background: none;
+  border: none;
+  color: red;
+  cursor: pointer;
+  font-size: 16px;
+}
+.selected-courses{
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/*      Projects in profile section */ /*      Projects in profile section */ /*      Projects in profile section */
+/*      Projects in profile section */ /*      Projects in profile section */ /*      Projects in profile section */
+/*      Projects in profile section */ /*      Projects in profile section */ /*      Projects in profile section */
+
+/* Project Area */
+.project-area {
+  width: 400px;
+  margin-top: 20px;
+}
+
+.add-project-button {
+  width: 100%;
+  border-radius: 10px;
+  height: 35px;
+  border: none;
+  background-color: #9dd99f; /* Green button */
+  color: white;
+  font-size: 14px;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: background-color 0.2s ease-in-out;
+}
+
+.add-project-button:hover {
+  background-color: #45a049; /* Darker green on hover */
+}
+
+.project-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 15px;
+  width: 80%;
+}
+
+.project-form input,
+.project-form textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 14px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.project-form textarea {
+  resize: none; /* Prevents resizing of the textarea */
+  height: 100px;
+}
+
+.save-project-button {
+  width: 100%;
+  border-radius: 10px;
+  height: 35px;
+  border: none;
+  background-color: #4caf50; /* Green button */
+  color: white;
+  font-size: 14px;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: background-color 0.2s ease-in-out;
+}
+
+.save-project-button:hover {
+  background-color: #45a049; /* Darker green on hover */
+}
+
+/* Project List */
+.project-list {
+  margin-top: 20px;
+  width: 100%;
+}
+
+.project-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #f0f0f0;
+  padding: 10px;
+  border-radius: 5px;
+  margin-bottom: 10px;
+  font-size: 14px;
+}
+
+.project-item span {
+  font-weight: bold;
+}
+
+.edit-project-button {
+  background: none;
+  border: none;
+  color: #007bff; /* Blue for edit button */
+  cursor: pointer;
+  font-size: 14px;
+  text-decoration: underline;
+}
+
+.edit-project-button:hover {
+  color: #0056b3; /* Darker blue on hover */
+}
+
+
+/* Home Toolbar Home Toolbar Home Toolbar Home Toolbar Home Toolbar Home Toolbar Home Toolbar Home Toolbar   */
+/* --------------------------------------------------------------------------------------------------------   */
+/* Home Toolbar Home Toolbar Home Toolbar Home Toolbar Home Toolbar Home Toolbar Home Toolbar Home Toolbar   */
+/* --------------------------------------------------------------------------------------------------------   */
+/* Home Toolbar Home Toolbar Home Toolbar Home Toolbar Home Toolbar Home Toolbar Home Toolbar Home Toolbar   */
+/* --------------------------------------------------------------------------------------------------------   */
+/* Home Toolbar Home Toolbar Home Toolbar Home Toolbar Home Toolbar Home Toolbar Home Toolbar Home Toolbar   */
+
+
+.home-toolbar-total{
+  display: flex;
+  justify-content: space-between;
+  background-color: #f0f0f0;
+  width: 100%;
+  min-width: 1000px;
+}
+
+.home-toolbar-left-search{
+  display: flex;
+  align-items: center;
+  padding: 5px 100px;
+  flex-basis: 50%;
+  min-width: 500px;
+}
+
+.navbar-search-bar {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  padding: 10px 20px;
+  border: none;
+  background-color: white;
+  gap: 10px;
+
+}
+
+.navbar-search-bar img {
+  width: 44px;
+  height: 44px;
+  padding: 5px;
+  
+  background-color: white;
+
+}
+
+.navbar-search-bar input {
+  width: 300px;
+  padding: 10px;
+  border: none;
+  border-radius: 0px 5px 5px 0px;
+}
+
+
+.home-toolbar-right-items{
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  background-color: #f0f0f0;
+  flex-basis: 50%;
+  min-width: 500px;
+  padding: 5px 100px;
+  border-radius: 5px;
+  margin-bottom: 0px;
+  font-size: 14px;
+  gap: 40px;
+
+}
+
+.notification-dropdown-window{
+  position: absolute;
+  background-color: #ffffff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  width: 150px; /* Set the width of the dropdown */
+  z-index: 1000;
+  padding: 10px;
+}
+
+.notification-drop-flexbox {
+  display: flex;
+  flex-direction: column;
+  gap: 10px; /* Spacing between notification items */
+}
+
+.notification-drop-item {
+  background-color: #f9f9f9;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 10px;
+  font-family: "Noto Sans", sans-serif;
+  font-size: 14px;
+  color: #333;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: space-between; /* Allows for adding icons if needed */
+  cursor: pointer;
+}
+
+.notification-drop-item:hover {
+  background-color: #eaeaea;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.notification-drop-item img {
+  width: 20px;
+  height: 20px;
+  margin-left: 10px; /* For spacing if you add icons */
+}
+
+.home-toolbar-item{
+  position: relative;
+}
+
+.home-toolbar-item img{
+  width: 30px;
+  height: 30px;
+}
+
+.flex-for-navbar{
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  align-items: center;
+  justify-content: center;
+}
+
+.flex-for-navbar p{
+  margin-bottom: 0px;
+}
+
+.navbar-text-and-arrow{
+  display: flex;
+  margin-bottom: 0px;
+}
+
+.navbar-text-and-arrow img{
+  margin-top: 3px;
+  width: 17px;
+  height: 17px;
+}
+
+
+
+.profile-link{
+  padding-top: 20px;
+  position: relative;
+}
+
+.profile-dropdown-window{
+  position: absolute;
+  top: 100px;
+  right: 10px;
+  z-index: 10;
+
+}
+
+.profile-drop-flexbox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px;
+  background-color: #f0f0f0;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+.profile-drop-item {
+  padding: 10px;
+  border-bottom: 1px solid #ccc;
+  cursor: pointer;
+  width: 300px;
+  text-align: left;
+}
+
+.profile-drop-item:last-child {
+  border-bottom: none;
+}
+
+.profile-drop-item:hover {
+  background-color: #e0e0e0;
+}
+
+/* Home Recomended Matches Home Recomended Matches Home Recomended Matches Home Recomended Matches Home Recomended Matches Home Recomended Matches   */
+/* --------------------------------------------------------------------------------------------------------   */
+/* Home Recomended Matches Home Recomended Matches Home Recomended Matches Home Recomended Matches Home Recomended Matches Home Recomended Matches   */
+/* --------------------------------------------------------------------------------------------------------   */
+/* Home Recomended Matches Home Recomended Matches Home Recomended Matches Home Recomended Matches Home Recomended Matches Home Recomended Matches   */
+/* --------------------------------------------------------------------------------------------------------   */
+
+/* Matches and Messages */
+
+.matches-and-messages{
+  display: flex;
+  min-width: 1000px;
+  padding: 50px 100px;
+  background-color: #f0f0f0;
+  position: relative;
+  z-index: 1;
+}
+
+/* Matches */
+
+.matches-title-and-buddies{
+  display: flex;  
+  flex-direction: column;
+  align-items: start;
+  background-color: #f0f0f0;
+  /* flex-basis: 90%; */
+  gap: 20px;
+ 
+}
+
+.matched-buddies{
+  display: flex;
+  flex-direction: column;
+  gap: 50px;
+}
+
+.matched-buddy{
+  display: flex;
+  gap: 20px;
+}
+.matched-buddy img{
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+/* Messages */
+
+.messages {
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  right: 10px;
+  bottom: 0px;
+  background-color: #f0f0f0;
+  border: 1px solid #ccc;
+  border-radius: 10px 10px 0 0;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  padding: 10px;
+  width: 300px;
+  max-width: 500px;
+  
+  min-height: 50px;
+}
+
+.messages::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: 100%;
+  border-style: solid;
+  border-width: 10px 0 10px 10px;
+  border-color: transparent transparent transparent #f0f0f0;
+}
+
+
+
+.message-box-title{
+  display: flex;
+  margin-bottom: 10px;
+  justify-content: space-between;
+
+}
+
+.message-box-title img{
+  width: 30px;
+  height: 30px;
+}
+
+.message-box-title p{
+  font-size: 24px;
+}
+
+.chatbox{
+  
+  display: flex;
+  gap: 10px;
+  height: 100px;
+  padding: 10px 5px;
+  border-style: solid;
+  align-items: start;
+
+  border-width: 1px 1px 0px 0px;
+  cursor: pointer;
+  background-color: white;
+  transition: background-color 0.3s ease;
+}
+
+.chatbox:hover{
+  background-color: #e0e0e0;
+}
+
+.chatbox img{
+  width:50px;
+  height: 50px;
+  margin-top: 7.5px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.chatbox-title-and-message{
+  
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: start;
+}
+.chatbox-title-and-message h3{
+  margin-top: 7.5px;
+  font-size: 16px;
+}
+
+.chat-expanded-window{
+  position: fixed;
+  width: 475px;
+  height: 500px;
+  bottom: 0px;
+  right: 400px;
+  z-index: 20;
+  background-color: #f0f0f0;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+.chat-expanded-window-title{
+  display: flex;
+  align-items: center;
+}
+.chat-expanded-window-title img{
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+.chat-expanded-window-title h3{
+  margin-left: 10px;
+  font-size: 16px;
+  margin-top: 7.5px;
+
+}
+
+.chat-expanded-window-title-left-profile-and-name{
+  display: flex;
+  align-items: top;
+  width: 100%;
+}
+
+.chat-expanded-window-title-right-down-arrow{
+  display: flex;
+  align-items: start;
+  justify-content: end;
+  height: 100%;
+}
+.chat-expanded-window-title-right-down-arrow img{
+  width: 40px;
+  height: 40px;
+}
+
+.chat-expanded-window-messages{
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.expanded-chat-receiving-sequence{
+  display: flex;
+  gap: 10px;
+}
+.expanded-chat-receiving-sequence img{
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.receiving-sequence-messages{
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 20px;
+}
+.receiving-sequence-messages p{
+  margin: 0px;
+}
+
+/*       --------------------------------------------------------------------------------------------------------   */
+/*       --------------------------------------------------------------------------------------------------------   */
+/*       --------------------------------------------------------------------------------------------------------   */
+/*       --------------------------------------------------------------------------------------------------------   */
+/*       --------------------------------------------------------------------------------------------------------   */
+/* BuddyProfile BuddyProfile BuddyProfile BuddyProfile BuddyProfile BuddyProfile BuddyProfile BuddyProfile BuddyProfile  */
+
+
+.buddy-profile{
+  display: flex;
+  padding: 20px 180px;
+  background-color: #f0f0f0;
+  gap: 20px;
+  position: relative;
+  
+}
+
+.buddy-profile-name-github-courses-left-half{
+  width: 80%;
+  position: relative;
+  min-width: 700px;
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+  
+}
+.buddy-profile-buddy-suggestions-right-half{
+  width: 20%;
+}
+
+.buddy-profile-links{
+  width: 100%;
+  display: flex;
+  justify-content: end;
+  padding-right: 20px;
+  gap: 10px;
+}
+.buddy-profile-links  img{
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
+  margin-top: 20px;
+}
+
+.profile-backdrop img{
+  width: 100%;
+  max-height: 200px;
+  object-fit: cover;
+}
+
+/* Profile Image */
+.own-profile-image {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  object-fit: cover;
+  position: absolute;
+  top: 100px;
+  left: 30px;
+  cursor: pointer;
+  
+}
+
+/* Darken profile image on hover */
+/* .own-profile-image:hover {
+  filter: brightness(50%);
+} */
+
+
+/* Edit Icon */
+.edit-profile-pic {
+  position: absolute;
+  left: 85px;
+  top: 160px;
+  z-index: 10;
+  height: 30px;
+  width: 30px;
+  cursor: pointer;
+}
+
+
+
+
+
+.buddy-profile-name-brief-about-major-degree{
+  margin-top: 10px;
+  display: flex;
+  justify-content: space-between;
+  padding: 0px 30px;
+}
+
+.buddy-profile-name-backdrop-connect{
+  display: flex;
+  flex-direction: column;
+  gap: 10px; 
+}
+
+.buddy-profile-about-github{
+  
+  padding: 0px 30px;
+}
+
+.buddy-profile-line{
+    width: 100%;
+    height: 1px;
+    background-color: #ccc;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  
+}
+
+.buddy-profile-courses{
+  margin-top: 20px;
+  padding: 0px 30px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.buddy-profile-current-courses{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.buddy-profile-current-course-card{
+  padding: 5px 10px;
+  border: #ab5b5b solid 1px;
+}
+
+.buddy-profile-previous-courses{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.buddy-profile-previous-course-card{
+  padding: 5px 10px;
+  border: #82c87f solid 1px;
+}
+
+.buddy-profile-session-card{
+  border-width: 1px;
+  border-style: solid;
+  border-color: #82c87f;
+  padding: 5px 10px;
+}
+
+.study-session-cards{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.buddy-profile-book-study-session{
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 20px;
+  padding: 5px 30px;
+}
+.edit-icon-name-about-profile{
+  display: flex;
+  align-items: end;
+}
+.edit-icon-name-about-profile img{
+  height: 25px;
+  width: 25px;
+}
+
+.buddy-profile-projects{
+  padding: 10px 30px;
+}
+
+.buddy-profile-project-card-title-and-link{
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 20px;
+}
+
+.buddy-profile-projects-cards{
+  margin-top: 30px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.buddy-profile-project-card{
+  flex: 1 1 40%; /* Each item takes up 50% of the container */
+  box-sizing: border-box; /* Include padding/border in the width */
+  max-width: calc(50% - 16px); /* Ensures items don’t grow beyond 50% */;
+  min-width: 200px;
+  border-width: 1px;
+  border-style: solid;
+  border-color: #82c87f;
+}
+.buddy-profile-project-card-description{
+  padding: 10px 20px;
+ 
+}
+
+/*       --------------------------------------------------------------------------------------------------------   */
+/*       --------------------------------------------------------------------------------------------------------   */
+/* EDIT PROFILE WINDOW EDIT PROFILE WINDOW EDIT PROFILE WINDOW EDIT PROFILE WINDOW EDIT PROFILE WINDOW EDIT PROFILE WINDOW EDIT PROFILE WINDOW EDIT PROFILE WINDOW  */
+.edit-profile-window-content{
+  position: fixed;
+  top: 60px;
+  width: 1100px;
+  height: 650px;
+  border-width: 1px;
+  border-color: black;
+  border-style: solid;
+  z-index: 1000;
+  background-color: #f0f0f0;
+  overflow: auto;
+  
+}
+
+.edit-profile-window-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: transparent;
+  z-index: 500;
+  
+}
+
+.title-and-close {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+}
+
+.title-and-close > h3 {
+  margin-top: 30px;
+  margin-left: 475px;
+}
+
+.title-and-close > img {
+  margin-right: 0px;
+}
+
+.edit-bio ,.edit-about, .edit-courses ,.edit-projects{
+  margin-top: 30px;
+  padding: 10px 100px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.edit-current-courses{
+  display: flex;
+  gap: 20px;
+
+}
+
+.course-div-edit{
+  padding: 10px;
+  display: flex;
+  border: 1px solid #ccc;
+  gap: 10px;
+}
+.course-div-edit > img{
+  height: 20px;
+  width: 20px;
+  margin-top: 3px;
+}
+
+.edit-projects-card{
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.edit-projects-card-top-row{
+  text-align: right;
+}
+
+
+.edit-github-link {
+  margin-bottom: 20px;
+  padding: 15px 100px;
+}
+
+.edit-github-link input {
+  width: 100%;
+  padding: 8px;
+  margin-top: 10px;
+  margin-bottom: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.edit-github-link button {
+  padding: 8px 12px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.edit-github-link button:hover {
+  background-color: #0056b3;
+}
+
+.edit-github-link p {
+  margin-top: 10px;
+  color: #555;
+  font-size: 14px;
+}
+
+
+/* Schedule Schedule Schedule ScheduleSchedule ScheduleSchedule ScheduleSchedule ScheduleSchedule ScheduleSchedule Schedule */
+/* Schedule Schedule Schedule ScheduleSchedule ScheduleSchedule ScheduleSchedule ScheduleSchedule ScheduleSchedule Schedule */
+/* Schedule Schedule Schedule ScheduleSchedule ScheduleSchedule ScheduleSchedule ScheduleSchedule ScheduleSchedule Schedule */
+/* Schedule Schedule Schedule ScheduleSchedule ScheduleSchedule ScheduleSchedule ScheduleSchedule ScheduleSchedule Schedule */
+.edit-times-available{
+  padding: 10px 100px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.schedule {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 10px;
+  width: 400px;
+}
+
+.time-slot {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.time-slot input {
+  width: 100px;
+}
+
+.time-slot button {
+  padding: 5px 10px;
+  background-color: red;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.schedule button {
+  padding: 5px 10px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.schedule button:hover {
+  background-color: #0056b3;
+}
+
+/* ChatPage ChatPage ChatPage ChatPage ChatPage ChatPage ChatPage ChatPage ChatPage ChatPage ChatPage ChatPage ChatPage ChatPage  */
+/* ChatPage ChatPage ChatPage ChatPage ChatPage ChatPage ChatPage ChatPage ChatPage ChatPage ChatPage ChatPage ChatPage ChatPage  */
+/* ChatPage ChatPage ChatPage ChatPage ChatPage ChatPage ChatPage ChatPage ChatPage ChatPage ChatPage ChatPage ChatPage ChatPage  */  
+/* ChatPage ChatPage ChatPage ChatPage ChatPage ChatPage ChatPage ChatPage ChatPage ChatPage ChatPage ChatPage ChatPage ChatPage  */
+
+.chats-and-messages{
+  display: flex;
+}
+
+.chats-lhs{
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 20px 100px;
+}
+
+.chats-lhs-chats{
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.chats-lhs-chat{
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  border: solid 1px #ccc;
+  padding: 10px;
+  width: 200px;
+  background-color: white;
+  transition: background-color 0.3s ease;
+
+}
+
+.chats-lhs-chat:hover{
+  background-color: #f0f0f0;
+}
+
+.chats-lhs-chat > img{
+  height: 35px;
+  width: 35px;
+  border-radius: 50%;
+}
+.chats-lhs-chat > p{
+  margin: 0px;
+}
+
+.messages-rhs{
+  padding: 10px 100px;
+  border: 1px solid #ccc;
+  width: 100%;
+  min-width: 750px;
+  height: 100%;
+  overflow-y: scroll;
+  min-height: 500px;
+  margin-right: 40px;
+  margin-top: 40px;
+}
+
+
+.messages-rhs-header{
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+
+
+.messages-rhs-header > img{
+  height: 35px;
+  width: 35px;
+  border-radius: 50%;
+}
+
+.messages-rhs-messages{
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.message-img-and-text{
+  display: flex;
+  gap: 10px;
+}
+
+.message-img-and-text h5{
+  border: 1px solid #ccc;
+  border-radius: 25%;
+  padding: 5px;
+}
+
+.message-img-and-text > img{
+  height: 25px;
+  width: 25px;
+  border-radius: 50%;
+}
+
+.messages-rhs-message > .message-time{
+  width: 100%;
+  text-align: center;
+
+}
+
+
+/*       --------------------------------------------------------------------------------------------------------   */
+/* Create Group Create Group Create Group Create Group Create Group Create Group Create Group Create Group Create Group  */
+/* Create Group Create Group Create Group Create Group Create Group Create Group Create Group Create Group Create Group  */
+/* Create Group Create Group Create Group Create Group Create Group Create Group Create Group Create Group Create Group  */
+/* Create Group Create Group Create Group Create Group Create Group Create Group Create Group Create Group Create Group  */
+
+.create-group-top{
+  padding: 20px 50px;
+  width: 100%;
+  min-width: 750px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 600px;
+}
+
+.create-group-left img{
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  
+}
+
+.create-group-left{
+  flex:1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  gap: 30px;
+}
+
+.create-group-right{
+  flex:1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.create-group-info-form{
+  display: flex;
+  gap: 20px;
+}
+
+.create-group-bottom{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px 50px;
+  width: 100%;
+  min-width: 750px;
+  height: 100px;
+}
+
+.create-group-bottom button{
+  width: 200px;
+  height: 50px;
+  border-radius: 10px;
+  border: none;
+  background-color: #ab5b5b;
+  color: white;
+  font-size: 20px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.create-group-bottom button:hover{
+  background-color: #8a3a3a;
+}
+
+/*       --------------------------------------------------------------------------------------------------------   */
+/*       --------------------------------------------------------------------------------------------------------   */
+/*       --------------------------------------------------------------------------------------------------------   */
+/*       --------------------------------------------------------------------------------------------------------   */
+/*       --------------------------------------------------------------------------------------------------------   */
+/*Responsiveness Responsiveness Responsiveness Responsiveness Responsiveness Responsiveness Responsiveness Responsiveness  */
+
+
+
+
+@media screen and (min-width: 769px) {
+  
+.login-image-half {
+  margin-left: 18%;
+  width: 500px;
+  height: 650px; /* Ensures full height of container */
+  background-color: rgb(255, 205, 139);
+  border-radius: 10px 10px 10px 10px; /* Slight curve for aesthetics */
+}
+
+
+
+/* Right half for login form */
+.login-text-half {
+  margin-right: 18%;
+overflow-y: scroll;
+
+  height: 650px; 
+  width: 500px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  
+  background-color: rgb(67, 209, 138);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border-radius: 10px 10px 10px 10px;
+  
+}
+}
+
+/* Media Query for Smaller Screens (Width <= 768px) */
+@media screen and (max-width: 768px) {
+  
+.login-image-half {
+  display: none;
+}
+
+
+
+/* Right half for login form */
+.login-text-half {
+  margin-right: 6%;
+  width: 500px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  
+  background-color: rgb(67, 209, 138);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border-radius: 10px 10px 10px 10px;
+  height: 80%; 
+}
+}
