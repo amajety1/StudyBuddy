@@ -58,16 +58,8 @@ function SignupPword() {
                                 />
                             </div>
                         </div>
-
-
-                        
-                        
-
                         <button  type="submit" className='login-button noto-sans'>Continue</button>
                     </form>
-                    
-                
-
                 </div>
             </div>;
 };

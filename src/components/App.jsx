@@ -11,11 +11,12 @@ import OwnProfile from "../pages/OwnProfile";
 import ChatPage from "../pages/ChatPage";
 import CreateGroup from "../pages/CreateGroup";
 import SearchPage from "../pages/SearchPage";
+import ConfirmEmail from "../pages/ConfirmEmail";
 
 function App() {
 
   // You can manage authentication state here
-  const isAuthenticated = true; // Replace with your auth logic
+  const isAuthenticated = false; // Replace with your auth logic
 
   return (
     <BrowserRouter>
@@ -26,6 +27,9 @@ function App() {
         <Route path="/signup-password" element={<SignupPword />} />
         <Route path="/validate-number" element={<ValidateNumber />} />
         <Route path="/profile-info" element={<ProfileInfo />} />
+        <Route path="/" element={<Navigate to="/home" />} />
+        <Route path="*" element={<Navigate to="/home" />} />
+        <Route path="/confirm-email" element={<ConfirmEmail />} />
 
         {/* Protected Routes */}
         <Route
@@ -52,10 +56,12 @@ function App() {
           path="/search"
           element={isAuthenticated ? <SearchPage /> : <Navigate to="/login" />}
         />
+        <Route
+          path="/confirm-email"
+          element={<Navigate to="/confirm-email" />}
+        />
 
-        {/* Default redirect */}
-        <Route path="/" element={<Navigate to="/home" />} />
-        <Route path="*" element={<Navigate to="/home" />} />
+        
       </Routes>
     </BrowserRouter>
   );
