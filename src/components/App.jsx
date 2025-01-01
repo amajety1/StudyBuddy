@@ -1,9 +1,7 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import Signup from "../pages/Signup"
+import Signup from "../pages/Signup";
 import Login from "../pages/Login";
-import SignupPword from "../pages/SignupPword";
-import ValidateNumber from "../pages/validateNumber";
 import ProfileInfo from "../pages/ProfileInfo";
 import Home from "../pages/Home";
 import BuddyProfile from "../pages/BuddyProfile";
@@ -14,9 +12,12 @@ import SearchPage from "../pages/SearchPage";
 import ConfirmEmail from "../pages/ConfirmEmail";
 
 function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(!!localStorage.getItem("token"));
 
-  // You can manage authentication state here
-  const isAuthenticated = false; // Replace with your auth logic
+  // This effect ensures the authentication state is updated if `localStorage` changes
+  useEffect(() => {
+    setIsAuthenticated(!!localStorage.getItem("token"));
+  }, []);
 
   return (
     <BrowserRouter>
@@ -24,9 +25,7 @@ function App() {
         {/* Public Routes */}
         <Route path="/signup" element={<Signup />} />
         <Route path="/login" element={<Login />} />
-        <Route path="/signup-password" element={<SignupPword />} />
-        <Route path="/validate-number" element={<ValidateNumber />} />
-        <Route path="/profile-info" element={<ProfileInfo />} />
+        <Route path="/profile-info" element={<ProfileInfo setIsAuthenticated={setIsAuthenticated} />} />
         <Route path="/" element={<Navigate to="/home" />} />
         <Route path="*" element={<Navigate to="/home" />} />
         <Route path="/confirm-email" element={<ConfirmEmail />} />
@@ -60,8 +59,6 @@ function App() {
           path="/confirm-email"
           element={<Navigate to="/confirm-email" />}
         />
-
-        
       </Routes>
     </BrowserRouter>
   );

@@ -5,6 +5,53 @@ import ProjectCard from "./ProjectCard";
 import DaySchedule from "./DaySchedule";
 
 function OwnProfileSection() {
+    const [user, setUser] = useState(null);
+    const [profileImage, setProfileImage] = useState("/images/empty-profile-pic.png");
+    const [isLoading, setIsLoading] = useState(false);
+
+    // Fetch user data including profile picture on component mount
+    useEffect(() => {
+        console.log("Initial profileImage:", profileImage);
+        
+        const fetchUserData = async () => {
+            try {
+                const token = localStorage.getItem('token');
+                console.log("Token:", token);
+                
+                if (!token) {
+                    console.log("No token found");
+                    return;
+                }
+
+                const response = await fetch('http://localhost:5001/api/users/me', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const userData = await response.json();
+                    console.log("Fetched user data:", userData);
+                    setUser(userData);
+                    
+                    // Update profile image URL to use our new endpoint with cache busting
+                    if (userData._id) {
+                        setProfileImage(`http://localhost:5001/api/profile-picture/${userData._id}?t=${Date.now()}`);
+                    }
+                } else {
+                    console.log("Failed to fetch user data:", response.status);
+                }
+            } catch (error) {
+                console.error('Error fetching user data:', error);
+            }
+        };
+
+        fetchUserData();
+    }, []); // Empty dependency array means this runs once on mount
+
+    useEffect(() => {
+        console.log("profileImage state changed to:", profileImage);
+    }, [profileImage]); // Log whenever profileImage changes
 
     const handleUpdate = (day, updatedTimes) => {
         setAvailableTimes((prev) => ({
@@ -13,25 +60,73 @@ function OwnProfileSection() {
         }));
       };
 
-      const [profileImage, setProfileImage] = useState("/images/own-profile.jpg");
-    
-      const handleFileChange = (e) => {
+      const handleFileChange = async (e) => {
         const file = e.target.files[0];
-        if (file) {
-          const reader = new FileReader();
-          reader.onload = (event) => {
-            setProfileImage(event.target.result); // Update the profile image preview
-          };
-          reader.readAsDataURL(file);
+        if (file && user) {
+            try {
+                setIsLoading(true);
+                console.log("File selected:", file.name);
+
+                // Upload to server
+                const formData = new FormData();
+                formData.append('profilePicture', file);
+                formData.append('userId', user._id);
+
+                console.log("Uploading to server...");
+                const uploadResponse = await fetch('http://localhost:5001/api/users/upload-profile-picture', {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                if (!uploadResponse.ok) {
+                    throw new Error('Failed to upload profile picture');
+                }
+
+                const { profilePicturePath } = await uploadResponse.json();
+                console.log("Upload successful, path:", profilePicturePath);
+
+                // Update user profile with new picture path
+                const token = localStorage.getItem('token');
+                const updateResponse = await fetch('http://localhost:5001/api/users/update-profile', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        ...user,
+                        profilePicture: profilePicturePath
+                    })
+                });
+
+                if (!updateResponse.ok) {
+                    throw new Error('Failed to update user profile');
+                }
+
+                console.log("Profile updated successfully");
+                // Update the image URL to use our new endpoint
+                setProfileImage(`http://localhost:5001/api/profile-picture/${user._id}?t=${Date.now()}`);
+            } catch (error) {
+                console.error('Error updating profile picture:', error);
+                alert('Failed to update profile picture. Please try again.');
+                // Revert to previous profile picture
+                if (user?._id) {
+                    setProfileImage(`http://localhost:5001/api/profile-picture/${user._id}`);
+                } else {
+                    setProfileImage("/images/empty-profile-pic.png");
+                }
+            } finally {
+                setIsLoading(false);
+            }
         }
-      };
-    
-      const triggerFileInput = () => {
+    };
+
+    const triggerFileInput = () => {
         document.getElementById("profile-image-input").click();
-      };
-    
-      const [githubLink, setGithubLink] = useState("github.com");
-      const [tempGithubLink, setTempGithubLink] = useState(githubLink);
+    };
+
+    const [githubLink, setGithubLink] = useState("github.com");
+    const [tempGithubLink, setTempGithubLink] = useState(githubLink);
 
     const [availableTimes, setAvailableTimes] = useState({
       monday: [
@@ -284,14 +379,26 @@ function OwnProfileSection() {
         </div>
             <div className="buddy-profile-name-github-courses-left-half">
                 
-                    <img onClick={triggerFileInput} onMouseEnter={() => setIsHoveredEdit(true)} onMouseLeave={() => setIsHoveredEdit(false)} style={{display: (isHovered || isHoveredEdit) ? "block" : "none"}} className="edit-profile-pic"  src="/images/edit.png"></img>
+                    <img 
+                        onClick={triggerFileInput} 
+                        onMouseEnter={() => setIsHoveredEdit(true)} 
+                        onMouseLeave={() => setIsHoveredEdit(false)} 
+                        style={{
+                            display: (isHovered || isHoveredEdit) ? "block" : "none",
+                            opacity: isLoading ? 0.5 : 1
+                        }} 
+                        className="edit-profile-pic"  
+                        src="/images/edit.png"
+                        alt="Edit"
+                    />
                     <img
                         onMouseEnter={() => setIsHovered(true)}
                         onMouseLeave={() => setIsHovered(false)}
-                        onClick={triggerFileInput} // Trigger file input when image is clicked
+                        onClick={!isLoading ? triggerFileInput : undefined}
                         style={{
-                        filter: isHovered||isHoveredEdit ? "brightness(0.75)" : "brightness(1)",
-                        cursor: "pointer",
+                            filter: isHovered || isHoveredEdit ? "brightness(0.75)" : "brightness(1)",
+                            cursor: isLoading ? "wait" : "pointer",
+                            opacity: isLoading ? 0.7 : 1
                         }}
                         className="own-profile-image"
                         src={profileImage}
@@ -304,6 +411,7 @@ function OwnProfileSection() {
                         accept="image/*"
                         style={{ display: "none" }}
                         onChange={handleFileChange}
+                        disabled={isLoading}
                     />
                 
                 <div className="buddy-profile-name-backdrop-connect">

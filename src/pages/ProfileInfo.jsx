@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 
 const courses = [
   "CSC 2720 - Data Structures",
@@ -11,57 +12,126 @@ const courses = [
   "CSC 4320 - Operating Systems",
 ];
 
-function ProfileInfo() {
+function ProfileInfo({ setIsAuthenticated }) {
   const [github, setGithub] = useState("");
   const [selectedCourses, setSelectedCourses] = useState([]);
-  const [search, setSearch] = useState(""); // Search query for courses
+  const [search, setSearch] = useState("");
   const [projects, setProjects] = useState([]);
-  const [isAddingProject, setIsAddingProject] = useState(false); // Toggle for showing project input fields
+  const [profilePicture, setProfilePicture] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isAddingProject, setIsAddingProject] = useState(false);
   const [newProject, setNewProject] = useState({
     name: "",
     description: "",
     techStack: "",
     githubLink: "",
   });
+  const [errorMessage, setErrorMessage] = useState("");
 
-  // Filter courses based on search query
+  const location = useLocation();
+  const { email } = location.state; // Retrieve email from navigation state
+  const navigate = useNavigate();
+
   const filteredCourses = courses.filter((course) =>
     course.toLowerCase().includes(search.toLowerCase())
   );
 
-  // Add selected course
   const addCourse = (course) => {
     if (!selectedCourses.includes(course)) {
       setSelectedCourses([...selectedCourses, course]);
-      setSearch(""); // Clear search after adding
+      setSearch("");
     }
   };
 
-  // Remove course
   const removeCourse = (courseToRemove) => {
     setSelectedCourses(selectedCourses.filter((course) => course !== courseToRemove));
   };
 
-  // Handle input changes for project
   const handleProjectInputChange = (e) => {
     const { name, value } = e.target;
     setNewProject({ ...newProject, [name]: value });
   };
 
-  // Add new project
   const addProject = () => {
     if (newProject.name.trim()) {
       setProjects([...projects, { ...newProject }]);
       setNewProject({ name: "", description: "", techStack: "", githubLink: "" });
-      setIsAddingProject(false); // Collapse input fields
+      setIsAddingProject(false);
     }
   };
 
-  // Edit project
   const editProject = (index) => {
     setNewProject(projects[index]);
     setIsAddingProject(true);
     setProjects(projects.filter((_, i) => i !== index));
+  };
+
+  const handleProfilePictureChange = async (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      try {
+        setIsLoading(true);
+        setErrorMessage("");
+
+        // Create FormData for file upload
+        const formData = new FormData();
+        formData.append('profilePicture', file);
+        formData.append('userId', email);
+
+        // Upload to server
+        const uploadResponse = await fetch('http://localhost:5001/api/users/upload-profile-picture', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!uploadResponse.ok) {
+          throw new Error('Failed to upload profile picture');
+        }
+
+        const { profilePicturePath } = await uploadResponse.json();
+        setProfilePicture(profilePicturePath);
+      } catch (error) {
+        console.error('Error uploading profile picture:', error);
+        setErrorMessage('Failed to upload profile picture. Please try again.');
+      } finally {
+        setIsLoading(false);
+      }
+    }
+  };
+
+  const formSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await fetch("http://localhost:5001/api/users/initial-profile-creation", {
+        method: "PUT",
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+          github,
+          selectedCourses,
+          projects,
+          // Only include profilePicture if one was uploaded
+          ...(profilePicture && { profilePicture })
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        console.log("Profile updated:", data);
+        const token = data.token;
+        localStorage.setItem("token", token);
+        setIsAuthenticated(true);
+        navigate("/home");
+      } else {
+        setErrorMessage(data.error || "An error occurred.");
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      setErrorMessage("An unexpected error occurred.");
+    }
   };
 
   return (
@@ -71,7 +141,17 @@ function ProfileInfo() {
         <div className="login-heading-description">
           <h2 className="noto-sans">Profile</h2>
         </div>
-        <div className="profile-form">
+        <form onSubmit={formSubmit} className="profile-form">
+
+        {/* Profile Picture Upload */}
+        <div className="profile-picture-form">
+            <label className="noto-sans">Upload Profile Picture</label>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleProfilePictureChange}
+            />
+          </div>
           {/* GitHub Input */}
           <div className="email-form">
             <label className="noto-sans">GitHub Profile</label>
@@ -80,6 +160,7 @@ function ProfileInfo() {
               type="text"
               placeholder="Enter GitHub Link Here:"
               required
+              value={github}
               onChange={(e) => setGithub(e.target.value)}
             />
           </div>
@@ -194,11 +275,13 @@ function ProfileInfo() {
             </div>
           </div>
 
+          {errorMessage && <p className="error-message">{errorMessage}</p>}
+
           {/* Continue Button */}
           <button type="submit" className="login-button noto-sans">
             Continue
           </button>
-        </div>
+        </form>
       </div>
     </div>
   );

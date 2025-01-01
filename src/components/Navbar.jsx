@@ -12,6 +12,11 @@ function Navbar() {
     navigate("/search"); // Navigate to the search page
   };
 
+  const handleSignOut = () => {
+    localStorage.removeItem("token");
+    navigate("/login");
+  };
+
   const handleProfileClick = () => {
     navigate("/profile"); // Navigate to the profile page
   }
@@ -49,17 +54,17 @@ function Navbar() {
   return (
     <div className="home-toolbar-total">
       <div className="home-toolbar-left-search">
-      <div
-        className="navbar-search-bar"
-        onClick={handleSearchClick} 
-        style={{ cursor: "pointer" }} 
-      >
-        <img src="/images/search.png" alt="Search" />
-        <h3 className="noto-sans">Search</h3>
-      </div>
+        <div
+          className="navbar-search-bar"
+          onClick={handleSearchClick}
+          style={{ cursor: "pointer" }}
+        >
+          <img src="/images/search.png" alt="Search" />
+          <h3 className="noto-sans">Search</h3>
+        </div>
       </div>
       <div className="home-toolbar-right-items">
-        <div className="home-toolbar-item home-link"  onClick={handleHomeClick}  style={{ cursor: "pointer" }}>
+        <div className="home-toolbar-item home-link" onClick={handleHomeClick} style={{ cursor: "pointer" }}>
           <a>
             <div className="flex-for-navbar">
               <img src="/images/study-logo.png" alt="Home" />
@@ -111,8 +116,8 @@ function Navbar() {
               <div className="profile-drop-flexbox">
                 <div className="profile-drop-item" onClick={handleProfileClick}>My Profile</div>
                 <div className="profile-drop-item">Settings</div>
-                <div className="profile-drop-item">Sign Out</div>
-                
+                <div onClick={handleSignOut} className="profile-drop-item">Sign Out</div>
+
               </div>
             </div>
           )}

@@ -26,7 +26,6 @@ function Signup() {
     const formSubmit = async (e) => {
         e.preventDefault();
         const { firstName, lastName, email, password, confirmPassword } = formData;
-        console.log('success: \n\n\n', formData);
 
         // Clear previous messages
         setErrorMessage("");
@@ -62,8 +61,8 @@ function Signup() {
 
             if (response.ok) {
                 setSuccessMessage("User created successfully.");
-                console.log("Signup successful:", data);
-                navigate("/confirm-email");
+                console.log("Signup successful:", data, data.verificationCode);
+                navigate("/confirm-email", { state: { email, verificationCode: data.verificationCode } });
             } else {
                 setErrorMessage(data.error || "An error occurred.");
                 console.error("Error during signup:", data.error);

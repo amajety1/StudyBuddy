@@ -1,25 +1,43 @@
 import React, { useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 
 function ConfirmEmail() {
   const [verificationCode, setVerificationCode] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { email, verificationCode: expectedCode } = location.state;
 
-  const formSubmit = (e) => {
+  const formSubmit = async (e) => {
     e.preventDefault();
 
-    // Example validation for 6-character code
-    if (verificationCode.length !== 6 || !/^\d+$/.test(verificationCode)) {
-      setErrorMessage("Please enter a valid 6-digit code.");
+    if (verificationCode !== expectedCode) {
+      setErrorMessage("Invalid verification code.");
+      setVerificationCode("");
       return;
     }
 
-    setErrorMessage(""); // Clear error
-    console.log("Verification Code Submitted:", verificationCode);
+    try {
+      const response = await fetch(`http://localhost:5001/api/users/verify`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email }),
+      });
 
-    // Proceed to the next step
-    // Example: navigate("/next-page");
-    const code =  Math.floor(Math.random() * 1000000);
-    
+      const data = await response.json();
+
+      if (response.ok) {
+        console.log("User verified successfully:", data);
+        navigate("/profile-info",{ state: { email} });
+      } else {
+        setErrorMessage(data.error || "An error occurred during verification.");
+      }
+    } catch (error) {
+      console.error("Error during verification:", error);
+      setErrorMessage("An error occurred. Please try again.");
+    }
   };
 
   return (
