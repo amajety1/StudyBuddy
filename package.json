@@ -10,6 +10,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@coreui/coreui": "^5.2.0",
+    "@coreui/react": "^5.4.1",
     "@filen/sdk": "^0.1.191",
     "bcrypt": "^5.1.1",
     "bootstrap": "^5.3.3",
@@ -25,6 +27,7 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.11.2",
+    "react-select": "^5.9.0",
     "resend": "^4.0.1",
     "socket.io": "^4.8.1",
     "socket.io-client": "^4.8.1"

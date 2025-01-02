@@ -8,7 +8,7 @@ const placeholderStyle = {
     visibility: 'hidden'
 };
 
-function ChatExpandedWindowMessages({ messages, currentUser }) {
+function ChatExpandedWindowMessages({ messages, currentUser, isGroupChat }) {
     const messagesEndRef = useRef(null);
 
     // Auto-scroll to bottom when new messages arrive
@@ -21,6 +21,13 @@ function ChatExpandedWindowMessages({ messages, currentUser }) {
     }, [messages]);
 
     if (!messages || !currentUser) return null;
+
+    const formatTime = (timestamp) => {
+        return new Date(timestamp).toLocaleTimeString([], {
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    };
 
     return (
         <div className="chat-expanded-window-messages">
@@ -40,6 +47,8 @@ function ChatExpandedWindowMessages({ messages, currentUser }) {
                     (nextMessage.sender._id !== message.sender._id && 
                      nextMessage.sender !== message.sender);
 
+                const showSenderName = isGroupChat && !isSender;
+
                 return (
                     <div
                         key={message._id || index}
@@ -56,13 +65,15 @@ function ChatExpandedWindowMessages({ messages, currentUser }) {
                             <div style={placeholderStyle} />
                         )}
                         <div className={isSender ? 'sending-sequence-messages' : 'receiving-sequence-messages'}>
+                            {showSenderName && (
+                                <div className="message-sender">
+                                    {message.sender.firstName} {message.sender.lastName}
+                                </div>
+                            )}
                             <p>{message.content}</p>
                             {isLastInSequence && (
                                 <span className="message-time">
-                                    {new Date(message.timestamp).toLocaleTimeString([], {
-                                        hour: '2-digit',
-                                        minute: '2-digit'
-                                    })}
+                                    {formatTime(message.timestamp)}
                                 </span>
                             )}
                         </div>

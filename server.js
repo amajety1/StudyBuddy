@@ -15,6 +15,13 @@ import multer from 'multer';
 import { uploadProfilePicture, getProfilePicture } from './utils/filenCloudServer.js';
 import path from 'path';
 import { Resend } from 'resend';
+import fs from 'fs/promises';
+import Group from './models/Group.js';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 // Load environment variables
 const SECRET_KEY = process.env.JWT_SECRET;
@@ -93,45 +100,77 @@ io.on('connection', (socket) => {
     socket.on('join room', (roomId) => {
         socket.join(roomId);
         console.log(`User joined room: ${roomId}`);
+        // Reset unread count when user joins room
+        if (socket.user) {
+            ChatRoom.findById(roomId).then(chatroom => {
+                if (chatroom) {
+                    chatroom.setUnreadCountForUser(socket.user._id, 0);
+                    chatroom.save();
+                }
+            });
+        }
+    });
+
+    socket.on('send message', async ({ roomId, content, sender }) => {
+        try {
+            const message = new Message({
+                content,
+                sender,
+                chatRoom: roomId,  // Add chatRoom reference
+                timestamp: new Date()
+            });
+            await message.save();
+
+            const chatroom = await ChatRoom.findById(roomId);
+            if (!chatroom) return;
+
+            chatroom.messages.push(message._id);
+            
+            // Initialize unread counts if needed
+            if (!chatroom.unreadCounts) {
+                chatroom.unreadCounts = {};
+            }
+            
+            // Increment unread count for other participants
+            chatroom.participants.forEach(participantId => {
+                const participantIdStr = participantId.toString();
+                if (participantIdStr !== sender.toString()) {
+                    chatroom.unreadCounts[participantIdStr] = 
+                        (chatroom.unreadCounts[participantIdStr] || 0) + 1;
+                }
+            });
+
+            await chatroom.save();
+
+            // Populate the message with sender info and include chatRoom ID
+            const populatedMessage = await Message.findById(message._id)
+                .populate('sender', 'firstName lastName profilePicture');
+
+            // Add chatRoom ID to the populated message
+            const messageWithRoom = {
+                ...populatedMessage.toObject(),
+                chatRoom: roomId
+            };
+
+            io.to(roomId).emit('new message', messageWithRoom);
+            
+            // Emit updated unread counts
+            chatroom.participants.forEach(participantId => {
+                const participantIdStr = participantId.toString();
+                io.to(participantIdStr).emit('unread count update', {
+                    roomId,
+                    count: chatroom.unreadCounts[participantIdStr] || 0
+                });
+            });
+        } catch (error) {
+            console.error('Error sending message:', error);
+            socket.emit('error', { message: 'Failed to send message' });
+        }
     });
 
     socket.on('leave room', (roomId) => {
         socket.leave(roomId);
         console.log(`User left room: ${roomId}`);
-    });
-
-    socket.on('send message', async (data) => {
-        try {
-            const { roomId, content, sender } = data;
-            
-            // Create and save the new message
-            const message = new Message({
-                chatRoom: roomId,
-                content,
-                sender,
-                timestamp: new Date()
-            });
-            await message.save();
-            
-            // Add message to the chatroom's messages array
-            await ChatRoom.findByIdAndUpdate(
-                roomId,
-                { 
-                    $push: { messages: message._id },
-                    $set: { lastUpdated: new Date() }
-                }
-            );
-
-            // Populate sender info before sending
-            const populatedMessage = await Message.findById(message._id)
-                .populate('sender', 'firstName lastName profilePicture');
-            
-            // Emit to all users in the room
-            io.to(roomId).emit('new message', populatedMessage);
-        } catch (error) {
-            console.error('Error sending message:', error);
-            socket.emit('error', { message: 'Failed to send message' });
-        }
     });
 
     socket.on('disconnect', () => {
@@ -163,6 +202,17 @@ app.get("/api/users/me", authenticate, async (req, res) => {
     } catch (error) {
         console.error('Error fetching user:', error);
         res.status(500).json({ error: 'Failed to fetch user' });
+    }
+  });
+
+
+
+  // Example backend route (Node.js/Express)
+  app.get("/api/users/verify", authenticate, async (req, res) => {
+    try {
+      res.status(200).json({ valid: true });
+    } catch (error) {
+      res.status(401).json({ error: "Invalid token" });
     }
   });
 
@@ -371,155 +421,481 @@ app.put('/api/users/initial-profile-creation', async (req, res) => {
     }
   });
 
+  app.get('/api/users/buddies', authenticate, async (req, res) => {
+    try {
+        // Get the user ID from the authenticated token
+        const userId = req.user.id;
 
+        // Find the user and populate their buddies
+        const user = await User.findById(userId).populate('buddies', 'firstName lastName _id');
 
-  
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
 
+        // Send back the list of buddies
+        res.json(user.buddies);
+    } catch (error) {
+        console.error('Error fetching buddies:', error.message);
+        res.status(500).json({ error: 'Failed to fetch buddies' });
+    }
+});
 
-app.post('/api/users/upload-profile-picture', upload.single('profilePicture'), async (req, res) => {
+// Create chatroom endpoint
+app.post('/api/chatrooms', authenticate, async (req, res) => {
   try {
-    if (!req.file) {
-      return res.status(400).json({ error: 'No file uploaded' });
+    const { participantId } = req.body;
+    
+    // Check if a non-group chatroom already exists between these users
+    const existingChatroom = await ChatRoom.findOne({
+      participants: { 
+        $all: [req.user._id, participantId],
+        $size: 2
+      },
+      isGroupChat: false
+    });
+
+    if (existingChatroom) {
+      return res.json(existingChatroom);
     }
 
-    const userId = req.body.userId;
-    const fileBuffer = req.file.buffer;
+    // Create new chatroom
+    const chatroom = new ChatRoom({
+      participants: [req.user._id, participantId],
+      messages: [],
+      isGroupChat: false
+    });
+    await chatroom.save();
 
-    // Upload new picture to Filen cloud
-    const filePath = await uploadProfilePicture(fileBuffer, userId);
+    // Add chatroom to both users' chatrooms array
+    await User.updateOne(
+      { _id: req.user._id },
+      { $addToSet: { 
+        chatrooms: chatroom._id
+      }
+    });
 
-    // Update user's profile picture path in database
-    await User.findByIdAndUpdate(userId, { profilePicture: filePath });
+    await User.updateOne(
+      { _id: participantId },
+      { $addToSet: { 
+        chatrooms: chatroom._id
+      }
+    });
 
-    // If successful, return the new path
-    res.json({ profilePicturePath: filePath });
+    res.status(201).json(chatroom);
   } catch (error) {
-    console.error('Error uploading profile picture:', error);
-    res.status(500).json({ error: 'Failed to upload profile picture' });
+    console.error('Error creating chatroom:', error);
+    res.status(500).json({ error: 'Failed to create chatroom' });
   }
 });
 
-// Endpoint to serve profile pictures
-app.get('/api/profile-picture/:userId', async (req, res) => {
+// Send a message in a chatroom
+app.post('/api/chatrooms/:chatroomId/messages', authenticate, async (req, res) => {
   try {
-    const user = await User.findById(req.params.userId);
-    if (!user || !user.profilePicture) {
-      return res.status(404).send('Profile picture not found');
+    const { content } = req.body;
+    const chatroom = await ChatRoom.findById(req.params.chatroomId)
+      .populate('participants', 'firstName lastName profilePicture');
+
+    if (!chatroom) {
+      return res.status(404).json({ error: 'Chatroom not found' });
     }
 
-    // Set cache control headers to prevent caching
-    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-    res.setHeader('Pragma', 'no-cache');
-    res.setHeader('Expires', '0');
+    // Check if user is participant
+    if (!chatroom.participants.some(p => p._id.equals(req.user._id))) {
+      return res.status(403).json({ error: 'Not authorized to send messages in this chat' });
+    }
 
-    const imageBuffer = await getProfilePicture(user.profilePicture);
-    res.type('image/jpeg').send(imageBuffer);
+    // Create new message
+    const message = new Message({
+      sender: req.user._id,
+      content,
+      timestamp: new Date()
+    });
+    await message.save();
+
+    // Add message to chatroom
+    chatroom.messages.push(message._id);
+    chatroom.lastUpdated = new Date();
+
+    // Update unread counts for all participants except sender
+    chatroom.participants.forEach(participant => {
+      if (!participant._id.equals(req.user._id)) {
+        if (!chatroom.unreadCounts) chatroom.unreadCounts = {};
+        chatroom.unreadCounts[participant._id] = (chatroom.unreadCounts[participant._id] || 0) + 1;
+      }
+    });
+
+    await chatroom.save();
+
+    // Populate sender info before sending response
+    await message.populate('sender', 'firstName lastName profilePicture');
+    
+    res.json({
+      message,
+      isGroupChat: chatroom.isGroupChat,
+      participants: chatroom.participants
+    });
   } catch (error) {
-    console.error('Error getting profile picture:', error);
-    res.status(500).send('Failed to get profile picture');
+    console.error('Error sending message:', error);
+    res.status(500).json({ error: 'Failed to send message' });
   }
 });
 
 // Get user's chatrooms
 app.get('/api/chatrooms', authenticate, async (req, res) => {
     try {
-        console.log('Fetching chatrooms for user:', req.user._id);
+        // Fetch chatrooms with participants and messages
         const chatrooms = await ChatRoom.find({
             participants: req.user._id
         })
         .populate('participants', 'firstName lastName profilePicture email')
         .populate({
             path: 'messages',
-            options: { sort: { 'timestamp': -1 } },
+            options: { sort: { 'timestamp': -1 }, limit: 1 },
             populate: {
                 path: 'sender',
                 select: 'firstName lastName profilePicture'
             }
         })
-        .lean()
-        .exec();
+        .lean();
 
-        // Add lastMessage field for each chatroom
-        const chatroomsWithLastMessage = chatrooms.map(chatroom => ({
-            ...chatroom,
-            lastMessage: chatroom.messages && chatroom.messages.length > 0 
-                ? chatroom.messages[0] // First message is the latest due to sort
-                : null
-        }));
+        // For group chats, we need to fetch the associated groups to get their names
+        const groupChatrooms = chatrooms.filter(chat => chat.isGroupChat);
+        const groups = await Group.find({
+            chatRoom: { $in: groupChatrooms.map(chat => chat._id) }
+        }).lean();
+
+        // Create a map of chatroom ID to group name
+        const chatroomToGroupName = {};
+        groups.forEach(group => {
+            if (group.chatRoom) {
+                chatroomToGroupName[group.chatRoom.toString()] = group.name;
+            }
+        });
+
+        // Process each chatroom to add display information
+        const chatroomsWithInfo = chatrooms.map(chatroom => {
+            const unreadCount = chatroom.unreadCounts?.[req.user._id.toString()] || 0;
+            let displayTitle, displayPhoto;
+
+            if (chatroom.isGroupChat) {
+                // Use the group name from our map
+                displayTitle = chatroomToGroupName[chatroom._id.toString()] || 'Unnamed Group';
+                displayPhoto = chatroom.groupPhoto || '/images/default-group.jpeg';
+            } else {
+                // For direct messages, show the other participant's name
+                const otherParticipant = chatroom.participants.find(
+                    p => p._id.toString() !== req.user._id.toString()
+                );
+                displayTitle = otherParticipant ? 
+                    `${otherParticipant.firstName} ${otherParticipant.lastName}` : 
+                    'Unknown User';
+                displayPhoto = otherParticipant?.profilePicture || '/images/default-profile.jpeg';
+            }
+
+            return {
+                ...chatroom,
+                unreadCount,
+                displayTitle,
+                displayPhoto,
+                lastMessage: chatroom.messages?.[0] || null
+            };
+        });
         
-        console.log('Found chatrooms:', chatroomsWithLastMessage);
-        res.json(chatroomsWithLastMessage);
+        res.json(chatroomsWithInfo);
     } catch (error) {
         console.error('Error fetching chatrooms:', error);
         res.status(500).json({ error: 'Failed to fetch chatrooms' });
     }
 });
 
-// Get messages for a specific chatroom
-app.get('/api/chatrooms/:chatroomId/messages', authenticate, async (req, res) => {
-    try {
-        const chatroom = await ChatRoom.findById(req.params.chatroomId)
-            .populate({
-                path: 'messages',
-                populate: {
-                    path: 'sender',
-                    select: 'name profilePicture'
-                }
-            });
+// Create group chatroom as part of group creation
+app.post('/api/users/create-group', authenticate, upload.single('photo'), async (req, res) => {
+  try {
+    const { name, description, course, members } = req.body;
+    const memberIds = JSON.parse(members || '[]');
+    const allParticipants = [req.user._id, ...memberIds];
 
-        if (!chatroom) {
-            return res.status(404).json({ error: 'Chatroom not found' });
-        }
-
-        // Check if user is participant
-        if (!chatroom.participants.includes(req.user._id)) {
-            return res.status(403).json({ error: 'Not authorized to view these messages' });
-        }
-
-        res.json(chatroom.messages);
-    } catch (error) {
-        console.error('Error fetching messages:', error);
-        res.status(500).json({ error: 'Failed to fetch messages' });
+    // Handle file upload if present
+    let profilePicture = '/images/default-group.jpeg';
+    if (req.file) {
+      try {
+        const groupsDir = path.join(__dirname, 'public/images/groups');
+        await fs.mkdir(groupsDir, { recursive: true });
+        const tempPath = req.file.path;
+        const targetPath = path.join(groupsDir, req.file.filename);
+        await fs.rename(tempPath, targetPath);
+        profilePicture = `/images/groups/${req.file.filename}`;
+      } catch (fileError) {
+        console.error('Error handling file:', fileError);
+      }
     }
+
+    // Create a new chatroom for the group
+    const chatRoom = new ChatRoom({
+      participants: allParticipants,
+      isGroupChat: true,
+      chatTitle: name, // Set the group name as chat title
+      groupPhoto: profilePicture
+    });
+    await chatRoom.save();
+
+    // Create the group
+    const group = new Group({
+      name,
+      description,
+      course,
+      owner: req.user._id,
+      members: allParticipants,
+      profilePicture,
+      chatRoom: chatRoom._id
+    });
+    await group.save();
+
+    // Update all participants' groups and chatrooms arrays
+    await User.updateMany(
+      { _id: { $in: allParticipants } },
+      { 
+        $addToSet: { 
+          groups: group._id,
+          chatrooms: chatRoom._id
+        }
+      }
+    );
+
+    res.status(201).json({ 
+      message: 'Group created successfully',
+      groupId: group._id,
+      chatRoomId: chatRoom._id
+    });
+  } catch (error) {
+    console.error('Error creating group:', error);
+    res.status(500).json({ error: error.message || 'Server error' });
+  }
 });
 
-// Send a message in a chatroom
-app.post('/api/chatrooms/:chatroomId/messages', authenticate, async (req, res) => {
+  // Get group details
+  app.get('/api/groups/:groupId', authenticate, async (req, res) => {
     try {
-        const { content } = req.body;
-        const chatroom = await ChatRoom.findById(req.params.chatroomId);
+      const group = await Group.findById(req.params.groupId)
+        .populate('owner', 'firstName lastName profilePicture')
+        .populate('members', 'firstName lastName profilePicture')
+        .populate('pendingRequests.user', 'firstName lastName profilePicture');
+      
+      if (!group) {
+        return res.status(404).json({ error: 'Group not found' });
+      }
 
-        if (!chatroom) {
-            return res.status(404).json({ error: 'Chatroom not found' });
-        }
-
-        // Check if user is participant
-        if (!chatroom.participants.includes(req.user._id)) {
-            return res.status(403).json({ error: 'Not authorized to send messages in this chat' });
-        }
-
-        // Create new message
-        const message = new Message({
-            sender: req.user._id,
-            content,
-            timestamp: new Date()
-        });
-        await message.save();
-
-        // Add message to chatroom
-        chatroom.messages.push(message._id);
-        chatroom.lastUpdated = new Date();
-        await chatroom.save();
-
-        // Populate sender info before sending response
-        await message.populate('sender', 'name profilePicture');
-        
-        res.json(message);
+      res.json(group);
     } catch (error) {
-        console.error('Error sending message:', error);
-        res.status(500).json({ error: 'Failed to send message' });
+      console.error('Error fetching group:', error);
+      res.status(500).json({ error: 'Server error' });
     }
-});
+  });
+
+  // Request to join group
+  app.post('/api/groups/:groupId/join', authenticate, async (req, res) => {
+    try {
+      const group = await Group.findById(req.params.groupId);
+      
+      if (!group) {
+        return res.status(404).json({ error: 'Group not found' });
+      }
+
+      // Check if user is already a member or has a pending request
+      if (group.members.includes(req.user._id)) {
+        return res.status(400).json({ error: 'Already a member' });
+      }
+
+      const existingRequest = group.pendingRequests.find(
+        request => request.user.toString() === req.user._id.toString()
+      );
+      if (existingRequest) {
+        return res.status(400).json({ error: 'Request already pending' });
+      }
+
+      // Add join request
+      group.pendingRequests.push({
+        user: req.user._id,
+        status: 'pending'
+      });
+      await group.save();
+
+      res.status(200).json({ message: 'Join request sent' });
+    } catch (error) {
+      console.error('Error sending join request:', error);
+      res.status(500).json({ error: 'Server error' });
+    }
+  });
+
+  app.post("/api/users/upload-profile-picture", upload.single('profilePicture'), async (req, res) => {
+    console.log('[Server] Profile picture upload request received');
+    try {
+      if (!req.file) {
+        console.log('[Server] No file in request');
+        return res.status(400).json({ error: 'No file uploaded' });
+      }
+
+      console.log('[Server] File received:', {
+        originalname: req.file.originalname,
+        size: req.file.size,
+        mimetype: req.file.mimetype
+      });
+
+      let user;
+      // Check if this is an authenticated request
+      if (req.headers.authorization) {
+        try {
+          const token = req.headers.authorization.split(' ')[1];
+          const decoded = jwt.verify(token, SECRET_KEY);
+          user = await User.findById(decoded.id);
+          console.log('[Server] Authenticated user found:', user._id);
+        } catch (error) {
+          console.log('[Server] Token verification failed:', error.message);
+        }
+      }
+
+      // If not authenticated or token invalid, try to find user by email
+      if (!user && req.body.email) {
+        user = await User.findOne({ email: req.body.email });
+        console.log('[Server] User found by email:', user ? user._id : 'Not found');
+      }
+
+      if (!user) {
+        console.log('[Server] No user found');
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      // Upload new picture to Filen cloud
+      console.log('[Server] Uploading to Filen cloud...');
+      const filePath = await uploadProfilePicture(req.file.buffer, user._id.toString());
+      console.log('[Server] Upload successful, path:', filePath);
+
+      // Add server URL prefix if path is relative
+      const fullPath = filePath.startsWith('http') ? filePath : `http://localhost:5001${filePath}`;
+      console.log('[Server] Full path:', fullPath);
+
+      // Update user's profile picture path in database
+      console.log('[Server] Updating user document...');
+      const updatedUser = await User.findByIdAndUpdate(
+        user._id,
+        { profilePicture: fullPath },
+        { new: true }
+      );
+
+      if (!updatedUser) {
+        console.log('[Server] Failed to update user document');
+        throw new Error('Failed to update user document');
+      }
+
+      console.log('[Server] User document updated successfully');
+      res.json({ profilePicturePath: fullPath });
+    } catch (error) {
+      console.error('[Server] Error in profile picture upload:', error);
+      res.status(500).json({ 
+        error: 'Failed to upload profile picture',
+        details: error.message
+      });
+    }
+  });
+
+  // Endpoint to serve profile pictures
+  app.get('/api/profile-picture/:userId', async (req, res) => {
+    try {
+      const user = await User.findById(req.params.userId);
+      if (!user || !user.profilePicture) {
+        return res.status(404).send('Profile picture not found');
+      }
+
+      // Set cache control headers to prevent caching
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+
+      const imageBuffer = await getProfilePicture(user.profilePicture);
+      res.type('image/jpeg').send(imageBuffer);
+    } catch (error) {
+      console.error('Error getting profile picture:', error);
+      res.status(500).send('Failed to get profile picture');
+    }
+  });
+
+  // Get messages for a specific chatroom
+  app.get('/api/chatrooms/:chatroomId/messages', authenticate, async (req, res) => {
+      try {
+          const chatroom = await ChatRoom.findById(req.params.chatroomId)
+              .populate({
+                  path: 'messages',
+                  populate: {
+                      path: 'sender',
+                      select: 'name profilePicture'
+                  }
+              });
+
+          if (!chatroom) {
+              return res.status(404).json({ error: 'Chatroom not found' });
+          }
+
+          // Check if user is participant
+          if (!chatroom.participants.includes(req.user._id)) {
+              return res.status(403).json({ error: 'Not authorized to view these messages' });
+          }
+
+          res.json(chatroom.messages);
+      } catch (error) {
+          console.error('Error fetching messages:', error);
+          res.status(500).json({ error: 'Failed to fetch messages' });
+      }
+  });
+
+  // Update user profile
+  app.put('/api/users/update-profile', authenticate, async (req, res) => {
+    console.log('[Server] Update profile request received');
+    try {
+      console.log('[Server] Request body:', req.body);
+      console.log('[Server] User from token:', req.user);
+
+      // Find and update user
+      const updatedUser = await User.findByIdAndUpdate(
+        req.user._id,
+        { $set: req.body },
+        { new: true }
+      );
+
+      if (!updatedUser) {
+        console.log('[Server] User not found for update');
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      console.log('[Server] User updated successfully:', updatedUser);
+      res.json(updatedUser);
+    } catch (error) {
+      console.error('[Server] Error updating user profile:', error);
+      res.status(500).json({ error: 'Failed to update profile', details: error.message });
+    }
+  });
+
+  // Serve profile pictures
+  app.get('/profile-pictures/:filename', async (req, res) => {
+    try {
+      const filePath = `/profile-pictures/${req.params.filename}`;
+      console.log('[Server] Fetching profile picture:', filePath);
+      
+      const imageBuffer = await getProfilePicture(filePath);
+      
+      // Set appropriate headers
+      res.setHeader('Content-Type', 'image/jpeg');
+      res.setHeader('Cache-Control', 'public, max-age=31557600'); // Cache for 1 year
+      
+      res.send(imageBuffer);
+    } catch (error) {
+      console.error('[Server] Error serving profile picture:', error);
+      res.status(404).send('Profile picture not found');
+    }
+  });
+
+  // Serve static files from the public directory
+  app.use('/images', express.static(path.join(__dirname, 'public/images')));
 
 server.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);

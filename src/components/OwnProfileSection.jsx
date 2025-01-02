@@ -6,23 +6,22 @@ import DaySchedule from "./DaySchedule";
 
 function OwnProfileSection() {
     const [user, setUser] = useState(null);
-    const [profileImage, setProfileImage] = useState("/images/empty-profile-pic.png");
+    const [profileImage, setProfileImage] = useState('http://localhost:5001/images/default-profile.jpeg');
     const [isLoading, setIsLoading] = useState(false);
+    const [imageError, setImageError] = useState(false);
 
     // Fetch user data including profile picture on component mount
     useEffect(() => {
-        console.log("Initial profileImage:", profileImage);
-        
         const fetchUserData = async () => {
             try {
                 const token = localStorage.getItem('token');
-                console.log("Token:", token);
-                
+                console.log("[Profile] Token:", token ? "Present" : "Missing");
                 if (!token) {
-                    console.log("No token found");
+                    console.log("[Profile] No token found");
                     return;
                 }
 
+                console.log("[Profile] Fetching user data...");
                 const response = await fetch('http://localhost:5001/api/users/me', {
                     headers: {
                         'Authorization': `Bearer ${token}`
@@ -31,18 +30,25 @@ function OwnProfileSection() {
                 
                 if (response.ok) {
                     const userData = await response.json();
-                    console.log("Fetched user data:", userData);
+                    console.log("[Profile] User data received:", userData);
                     setUser(userData);
                     
-                    // Update profile image URL to use our new endpoint with cache busting
-                    if (userData._id) {
-                        setProfileImage(`http://localhost:5001/api/profile-picture/${userData._id}?t=${Date.now()}`);
+                    // Update profile image URL
+                    if (userData.profilePicture) {
+                        console.log("[Profile] Raw profile picture path:", userData.profilePicture);
+                        setImageError(false); // Reset error state
+                        setProfileImage(userData.profilePicture);
+                    } else {
+                        console.log("[Profile] No profile picture in user data");
+                        setProfileImage('http://localhost:5001/images/default-profile.jpeg');
                     }
                 } else {
-                    console.log("Failed to fetch user data:", response.status);
+                    console.log("[Profile] Failed to fetch user data:", response.status);
+                    const errorText = await response.text();
+                    console.log("[Profile] Error details:", errorText);
                 }
             } catch (error) {
-                console.error('Error fetching user data:', error);
+                console.error('[Profile] Error fetching user data:', error);
             }
         };
 
@@ -53,6 +59,12 @@ function OwnProfileSection() {
         console.log("profileImage state changed to:", profileImage);
     }, [profileImage]); // Log whenever profileImage changes
 
+    const handleImageError = () => {
+        console.log("[Profile] Image failed to load, using default");
+        setImageError(true);
+        setProfileImage('http://localhost:5001/images/default-profile.jpeg');
+    };
+
     const handleUpdate = (day, updatedTimes) => {
         setAvailableTimes((prev) => ({
           ...prev,
@@ -62,62 +74,82 @@ function OwnProfileSection() {
 
       const handleFileChange = async (e) => {
         const file = e.target.files[0];
-        if (file && user) {
-            try {
-                setIsLoading(true);
-                console.log("File selected:", file.name);
+        console.log("[Profile] File selected:", file ? file.name : "No file");
+        
+        if (!file || !user) {
+            console.log("[Profile] Missing file or user:", { file: !!file, user: !!user });
+            return;
+        }
 
-                // Upload to server
-                const formData = new FormData();
-                formData.append('profilePicture', file);
-                formData.append('userId', user._id);
+        if (file.size > 5 * 1024 * 1024) {
+            console.log("[Profile] File too large:", file.size);
+            alert("File size should not exceed 5MB");
+            return;
+        }
 
-                console.log("Uploading to server...");
-                const uploadResponse = await fetch('http://localhost:5001/api/users/upload-profile-picture', {
-                    method: 'POST',
-                    body: formData,
-                });
+        try {
+            setIsLoading(true);
+            console.log("[Profile] Starting file upload...");
 
-                if (!uploadResponse.ok) {
-                    throw new Error('Failed to upload profile picture');
-                }
+            const formData = new FormData();
+            formData.append('profilePicture', file);
+            formData.append('userId', user.email);
+            console.log("[Profile] FormData created with userId:", user.email);
 
-                const { profilePicturePath } = await uploadResponse.json();
-                console.log("Upload successful, path:", profilePicturePath);
+            const token = localStorage.getItem('token');
+            console.log("[Profile] Upload request starting...");
+            const uploadResponse = await fetch('http://localhost:5001/api/users/upload-profile-picture', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                },
+                body: formData,
+            });
 
-                // Update user profile with new picture path
-                const token = localStorage.getItem('token');
-                const updateResponse = await fetch('http://localhost:5001/api/users/update-profile', {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify({
-                        ...user,
-                        profilePicture: profilePicturePath
-                    })
-                });
-
-                if (!updateResponse.ok) {
-                    throw new Error('Failed to update user profile');
-                }
-
-                console.log("Profile updated successfully");
-                // Update the image URL to use our new endpoint
-                setProfileImage(`http://localhost:5001/api/profile-picture/${user._id}?t=${Date.now()}`);
-            } catch (error) {
-                console.error('Error updating profile picture:', error);
-                alert('Failed to update profile picture. Please try again.');
-                // Revert to previous profile picture
-                if (user?._id) {
-                    setProfileImage(`http://localhost:5001/api/profile-picture/${user._id}`);
-                } else {
-                    setProfileImage("/images/empty-profile-pic.png");
-                }
-            } finally {
-                setIsLoading(false);
+            console.log("[Profile] Upload response status:", uploadResponse.status);
+            if (!uploadResponse.ok) {
+                const errorText = await uploadResponse.text();
+                console.log("[Profile] Upload error details:", errorText);
+                throw new Error('Failed to upload profile picture');
             }
+
+            const responseData = await uploadResponse.json();
+            console.log("[Profile] Upload response data:", responseData);
+            const { profilePicturePath } = responseData;
+
+            // Make sure we have the full URL
+            const fullPicturePath = profilePicturePath.startsWith('http') 
+                ? profilePicturePath 
+                : `http://localhost:5001${profilePicturePath}`;
+            console.log("[Profile] Full picture path:", fullPicturePath);
+
+            // Update the profile image immediately
+            setProfileImage(fullPicturePath);
+            console.log("[Profile] Profile image state updated");
+
+            // Refresh user data
+            console.log("[Profile] Refreshing user data...");
+            const userResponse = await fetch('http://localhost:5001/api/users/me', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (userResponse.ok) {
+                const userData = await userResponse.json();
+                console.log("[Profile] Refreshed user data:", userData);
+                setUser(userData);
+            } else {
+                console.log("[Profile] Failed to refresh user data:", userResponse.status);
+                const errorText = await userResponse.text();
+                console.log("[Profile] Refresh error details:", errorText);
+            }
+        } catch (error) {
+            console.error("[Profile] Error updating profile picture:", error);
+            alert("Failed to update profile picture. Please try again.");
+        } finally {
+            setIsLoading(false);
+            console.log("[Profile] Upload process completed");
         }
     };
 
@@ -403,6 +435,7 @@ function OwnProfileSection() {
                         className="own-profile-image"
                         src={profileImage}
                         alt="Profile"
+                        onError={handleImageError}
                     />
                     {/* Hidden File Input */}
                     <input

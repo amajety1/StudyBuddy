@@ -56,13 +56,39 @@ function Messages() {
     useEffect(() => {
         if (!socket) return;
 
-        // Listen for new messages and refresh chatrooms
-        socket.on('new message', () => {
-            fetchChatrooms();
+        // Listen for new messages
+        socket.on('new message', (message) => {
+            setChatrooms(prevChatrooms => 
+                prevChatrooms.map(chatroom => {
+                    // If this is the chatroom that received the message
+                    if (chatroom._id === message.chatRoom) {
+                        return {
+                            ...chatroom,
+                            lastMessage: message, // Update the last message
+                            messages: chatroom.messages 
+                                ? [message, ...chatroom.messages]
+                                : [message]
+                        };
+                    }
+                    return chatroom;
+                })
+            );
+        });
+
+        // Listen for unread count updates
+        socket.on('unread count update', ({ roomId, count }) => {
+            setChatrooms(prevChatrooms => 
+                prevChatrooms.map(chatroom => 
+                    chatroom._id === roomId 
+                        ? { ...chatroom, unreadCount: count }
+                        : chatroom
+                )
+            );
         });
 
         return () => {
             socket.off('new message');
+            socket.off('unread count update');
         };
     }, [socket]);
 

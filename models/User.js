@@ -16,14 +16,14 @@ const userSchema = new Schema({
   password: { type: String, required: true },
   isVerified: { type: Boolean, default: false },
   verificationCode: { type: String },
-  profilePicture: { type: String, default: '/images/default-profile.jpeg' }, // URL to profile picture
-
+  profilePicture: { type: String, default: 'http://localhost:5001/images/default-profile.jpeg' }, // URL to profile picture
+  buddies: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+  groups: [{ type: mongoose.Schema.Types.ObjectId, ref: "Group" }],
+  chatrooms: [{ type: mongoose.Schema.Types.ObjectId, ref: "ChatRoom" }], // Array of chatroom references
   // Profile Info
   github: { type: String },
   selectedCourses: [{ type: String }], // Array of course strings
   projects: [projectSchema], // Array of project objects
-
-  chatRooms: [{ type: mongoose.Schema.Types.ObjectId, ref: "ChatRoom" }], // References to chat rooms
 
 });
 

@@ -1,46 +1,85 @@
-import React from 'react';
+import React, { useState } from 'react';
+import ChatExpandedWindow from './ChatExpandedWindow';
 
-function Chatbox({ chatroom, currentUser, onClick, isSelected }) {
-    if (!chatroom || !currentUser) return null;
+const Chatbox = ({ chatroom, currentUser }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(chatroom.unreadCount || 0);
 
-    // Find the other participant in the chat
-    const otherParticipant = chatroom.participants.find(
-        participant => participant._id !== currentUser._id
-    );
+  // Get the display title based on chat type
+  const getChatTitle = () => {
+    if (chatroom.isGroupChat) {
+      return chatroom.displayTitle;
+    } else {
+      const otherParticipant = chatroom.participants.find(
+        p => p._id !== currentUser._id
+      );
+      return otherParticipant 
+        ? `${otherParticipant.firstName} ${otherParticipant.lastName}`
+        : 'Unknown User';
+    }
+  };
 
-    if (!otherParticipant) return null;
+  // Get the display photo based on chat type
+  const getChatPhoto = () => {
+    if (chatroom.isGroupChat) {
+      return chatroom.displayPhoto || '/images/default-group.jpeg';
+    } else {
+      const otherParticipant = chatroom.participants.find(
+        p => p._id !== currentUser._id
+      );
+      return otherParticipant?.profilePicture || '/images/default-profile.jpeg';
+    }
+  };
 
-    return (
-        <div
-            className={`chatbox ${isSelected ? 'selected' : ''}`}
-            onClick={onClick}
-        >
-            <div className="chatbox-profile-pic">
-                <img
-                    src={otherParticipant.profilePicture || "/images/empty-profile-pic.png"}
-                    alt="Profile"
-                />
+  const lastMessage = chatroom.messages?.[0];
+  const lastMessagePreview = lastMessage 
+    ? `${lastMessage.sender.firstName}: ${lastMessage.content.substring(0, 30)}${lastMessage.content.length > 30 ? '...' : ''}`
+    : 'No messages yet';
+
+  const handleClick = () => {
+    setIsExpanded(true);
+    setUnreadCount(0); // Reset unread count when opening chat
+  };
+
+  return (
+    <>
+      <div 
+        className={`chatbox ${unreadCount > 0 ? 'has-unread' : ''} ${chatroom.isGroupChat ? 'group-chat' : ''}`}
+        onClick={handleClick}
+      >
+        <div className="chat-header">
+          <img 
+            src={getChatPhoto()} 
+            alt={getChatTitle()}
+            className="chat-avatar"
+          />
+          <div className="chat-info">
+            <div className="chat-title">
+              {getChatTitle()}
+              {chatroom.isGroupChat && <span className="group-indicator">Group</span>}
             </div>
-            <div className="chatbox-info">
-                <div className="chatbox-name">
-                    {otherParticipant.name || `${otherParticipant.firstName} ${otherParticipant.lastName}`}
-                </div>
-                {chatroom.lastMessage && (
-                    <div className="chatbox-last-message">
-                        {chatroom.lastMessage.content}
-                    </div>
-                )}
-                {chatroom.lastMessage && (
-                    <div className="chatbox-time">
-                        {new Date(chatroom.lastMessage.timestamp).toLocaleTimeString([], {
-                            hour: '2-digit',
-                            minute: '2-digit'
-                        })}
-                    </div>
-                )}
-            </div>
+            <div className="last-message">{lastMessagePreview}</div>
+          </div>
+          {unreadCount > 0 && (
+            <div className="unread-badge">{unreadCount}</div>
+          )}
         </div>
-    );
-}
+      </div>
+
+      {isExpanded && (
+        <ChatExpandedWindow
+          chatroom={{
+            ...chatroom,
+            displayTitle: getChatTitle(),
+            displayPhoto: getChatPhoto()
+          }}
+          currentUser={currentUser}
+          onClose={() => setIsExpanded(false)}
+          setUnreadCount={setUnreadCount}
+        />
+      )}
+    </>
+  );
+};
 
 export default Chatbox;

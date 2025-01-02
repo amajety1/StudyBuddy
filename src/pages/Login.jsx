@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-function Login() {
+function Login({ setIsAuthenticated }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
@@ -25,6 +25,9 @@ function Login() {
 
         // Store the token in localStorage
         localStorage.setItem("token", data.token);
+
+        // Update authentication state
+        setIsAuthenticated(true);
 
         // Navigate to the home page
         navigate("/home");

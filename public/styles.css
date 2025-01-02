@@ -388,7 +388,6 @@ h4{
 /* --------------------------------------------------------------------------------------------------------   */
 /* Home Toolbar Home Toolbar Home Toolbar Home Toolbar Home Toolbar Home Toolbar Home Toolbar Home Toolbar   */
 
-
 .home-toolbar-total{
   display: flex;
   justify-content: space-between;
@@ -640,7 +639,73 @@ h4{
   border-color: transparent transparent transparent #f0f0f0;
 }
 
+/* Group Chat Styles */
+.group-chat {
+  background-color: #f0f5ff;
+}
 
+.group-indicator {
+  font-size: 0.8em;
+  background-color: #e3e8ff;
+  padding: 2px 6px;
+  border-radius: 10px;
+  margin-left: 8px;
+}
+
+.participants-list {
+  max-height: 200px;
+  overflow-y: auto;
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #dee2e6;
+  padding: 10px;
+}
+
+.participant-item {
+  display: flex;
+  align-items: center;
+  padding: 5px 0;
+}
+
+.participant-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  margin-right: 8px;
+}
+
+.participants-toggle {
+  background: none;
+  border: 1px solid #dee2e6;
+  border-radius: 15px;
+  padding: 2px 8px;
+  font-size: 0.8em;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.participants-toggle:hover {
+  background-color: #e9ecef;
+}
+
+.message-sender {
+  font-size: 0.8em;
+  color: #6c757d;
+  margin-bottom: 2px;
+}
+
+/* Group chat specific styles */
+.chat-expanded-window.group {
+  border-color: #4a90e2;
+}
+
+.chat-expanded-window.group .chat-header {
+  background-color: #4a90e2;
+  color: white;
+}
+
+.chat-expanded-window.group .chat-header img {
+  border: 2px solid white;
+}
 
 .message-box-title{
   display: flex;
@@ -788,7 +853,6 @@ h4{
 /*       --------------------------------------------------------------------------------------------------------   */
 /* BuddyProfile BuddyProfile BuddyProfile BuddyProfile BuddyProfile BuddyProfile BuddyProfile BuddyProfile BuddyProfile  */
 
-
 .buddy-profile{
   display: flex;
   padding: 20px 180px;
@@ -848,7 +912,6 @@ h4{
 /* .own-profile-image:hover {
   filter: brightness(50%);
 } */
-
 
 /* Edit Icon */
 .edit-profile-pic {
@@ -982,7 +1045,6 @@ h4{
  
 }
 
-/*       --------------------------------------------------------------------------------------------------------   */
 /*       --------------------------------------------------------------------------------------------------------   */
 /* EDIT PROFILE WINDOW EDIT PROFILE WINDOW EDIT PROFILE WINDOW EDIT PROFILE WINDOW EDIT PROFILE WINDOW EDIT PROFILE WINDOW EDIT PROFILE WINDOW EDIT PROFILE WINDOW  */
 .edit-profile-window-content{
@@ -1214,7 +1276,73 @@ h4{
   width: 100%;
 }
 
+/* Group Chat Styles */
+.group-chat {
+  background-color: #f0f5ff;
+}
 
+.group-indicator {
+  font-size: 0.8em;
+  background-color: #e3e8ff;
+  padding: 2px 6px;
+  border-radius: 10px;
+  margin-left: 8px;
+}
+
+.participants-list {
+  max-height: 200px;
+  overflow-y: auto;
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #dee2e6;
+  padding: 10px;
+}
+
+.participant-item {
+  display: flex;
+  align-items: center;
+  padding: 5px 0;
+}
+
+.participant-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  margin-right: 8px;
+}
+
+.participants-toggle {
+  background: none;
+  border: 1px solid #dee2e6;
+  border-radius: 15px;
+  padding: 2px 8px;
+  font-size: 0.8em;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.participants-toggle:hover {
+  background-color: #e9ecef;
+}
+
+.message-sender {
+  font-size: 0.8em;
+  color: #6c757d;
+  margin-bottom: 2px;
+}
+
+/* Group chat specific styles */
+.chat-expanded-window.group {
+  border-color: #4a90e2;
+}
+
+.chat-expanded-window.group .chat-header {
+  background-color: #4a90e2;
+  color: white;
+}
+
+.chat-expanded-window.group .chat-header img {
+  border: 2px solid white;
+}
 
 .messages-rhs-header > img{
   height: 35px;
@@ -1325,6 +1453,12 @@ h4{
   background-color: #8a3a3a;
 }
 
+.group-img-submit{
+  height: 80px;
+  width: 80px;
+  border-radius: 50%;
+}
+
 /*       --------------------------------------------------------------------------------------------------------   */
 /*       --------------------------------------------------------------------------------------------------------   */
 /*       --------------------------------------------------------------------------------------------------------   */
@@ -1344,8 +1478,6 @@ h4{
   background-color: rgb(255, 205, 139);
   border-radius: 10px 10px 10px 10px; /* Slight curve for aesthetics */
 }
-
-
 
 /* Right half for login form */
 .login-text-half {
@@ -1373,8 +1505,6 @@ overflow-y: scroll;
   display: none;
 }
 
-
-
 /* Right half for login form */
 .login-text-half {
   margin-right: 6%;
@@ -1389,4 +1519,37 @@ overflow-y: scroll;
   border-radius: 10px 10px 10px 10px;
   height: 80%; 
 }
+
+/* Loading spinner styles */
+.loading-spinner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.loading-spinner span {
+    color: #ffffff;
+}
+
+.submit-button {
+    width: 100%;
+    padding: 12px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s ease;
+}
+
+.submit-button:hover:not(:disabled) {
+    background-color: #0056b3;
+}
+
+.submit-button:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+    opacity: 0.8;
 }

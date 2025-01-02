@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { io } from 'socket.io-client';
 import ChatExpandedWindowMessages from './ChatExpandedWindowMessages';
 
@@ -43,20 +43,17 @@ function ChatExpandedWindow({
     currentUser, 
     onClose,
     isChatWindowMinimized,
-    handleChatMinimizeClick
+    handleChatMinimizeClick,
+    setUnreadCount
 }) {
     const [messages, setMessages] = useState([]);
     const [newMessage, setNewMessage] = useState('');
-    const [otherUser, setOtherUser] = useState(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [showParticipants, setShowParticipants] = useState(false);
     const [socket, setSocket] = useState(null);
-
-    // Prevent scroll propagation
-    const handleScroll = (e) => {
-        e.stopPropagation();
-    };
+    const messagesEndRef = useRef(null);
 
     useEffect(() => {
-        // Initialize socket connection
         const newSocket = io('http://localhost:5001');
         setSocket(newSocket);
 
@@ -89,37 +86,31 @@ function ChatExpandedWindow({
     }, [socket, chatroom]);
 
     useEffect(() => {
-        if (!chatroom || !currentUser) return;
-
-        // Find the other participant
-        const other = chatroom.participants.find(
-            participant => participant._id !== currentUser._id
-        );
-        setOtherUser(other);
-
-        // Set initial messages from chatroom
-        const fetchMessages = async () => {
-            try {
-                const token = localStorage.getItem('token');
-                const response = await fetch(`http://localhost:5001/api/chatrooms/${chatroom._id}/messages`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-                
-                if (!response.ok) throw new Error('Failed to fetch messages');
-                
-                const fetchedMessages = await response.json();
-                setMessages(fetchedMessages);
-            } catch (error) {
-                console.error('Error fetching messages:', error);
-            }
-        };
-
         fetchMessages();
-    }, [chatroom, currentUser]);
+        const interval = setInterval(fetchMessages, 5000); // Poll for new messages
+        return () => clearInterval(interval);
+    }, []);
 
-    const handleSendMessage = async (e) => {
+    const fetchMessages = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`http://localhost:5001/api/chatrooms/${chatroom._id}/messages`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            if (response.ok) {
+                const data = await response.json();
+                setMessages(data);
+                setIsLoading(false);
+                scrollToBottom();
+            }
+        } catch (error) {
+            console.error('Error fetching messages:', error);
+        }
+    };
+
+    const handleSend = async (e) => {
         e.preventDefault();
         if (!newMessage.trim() || !socket) return;
 
@@ -137,7 +128,11 @@ function ChatExpandedWindow({
         }
     };
 
-    if (!chatroom || !currentUser || !otherUser) {
+    const scrollToBottom = () => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    };
+
+    if (!chatroom || !currentUser) {
         return null;
     }
 
@@ -145,16 +140,24 @@ function ChatExpandedWindow({
         <div 
             className={`chat-expanded-window ${isChatWindowMinimized ? 'minimized' : ''}`}
             style={chatWindowStyle}
-            onWheel={handleScroll}
         >
             <div className="chat-expanded-window-title" style={chatHeaderStyle}>
                 <div className="chat-expanded-window-title-left-profile-and-name">
                     <img 
-                        src={otherUser.profilePicture || "/images/empty-profile-pic.png"} 
-                        alt="Profile"
+                        src={chatroom.displayPhoto} 
+                        alt={chatroom.displayTitle} 
                         style={{ width: '30px', height: '30px', borderRadius: '50%', marginRight: '10px' }}
                     />
-                    <h3 style={{ margin: 0 }}>{`${otherUser.firstName} ${otherUser.lastName}`}</h3>
+                    <h3 style={{ margin: 0 }}>{chatroom.displayTitle}</h3>
+                    {chatroom.isGroupChat && (
+                        <button 
+                            className="participants-toggle"
+                            onClick={() => setShowParticipants(!showParticipants)}
+                            style={{ marginLeft: '10px' }}
+                        >
+                            {showParticipants ? 'Hide' : 'Show'} Participants
+                        </button>
+                    )}
                 </div>
                 <div className="chat-expanded-window-title-right-down-arrow">
                     <img
@@ -172,14 +175,36 @@ function ChatExpandedWindow({
                 </div>
             </div>
 
-            <div style={chatMessagesStyle} onScroll={handleScroll}>
-                <ChatExpandedWindowMessages 
-                    messages={messages}
-                    currentUser={currentUser}
-                />
+            {showParticipants && chatroom.isGroupChat && (
+                <div className="participants-list">
+                    <h4>Group Members</h4>
+                    {chatroom.participants.map(participant => (
+                        <div key={participant._id} className="participant-item">
+                            <img 
+                                src={participant.profilePicture || '/images/default-profile.jpeg'} 
+                                alt={participant.firstName} 
+                                className="participant-avatar"
+                            />
+                            <span>{participant.firstName} {participant.lastName}</span>
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            <div style={chatMessagesStyle}>
+                {isLoading ? (
+                    <div className="loading">Loading messages...</div>
+                ) : (
+                    <ChatExpandedWindowMessages 
+                        messages={messages} 
+                        currentUser={currentUser}
+                        isGroupChat={chatroom.isGroupChat}
+                    />
+                )}
+                <div ref={messagesEndRef} />
             </div>
 
-            <form onSubmit={handleSendMessage} style={chatInputStyle}>
+            <form onSubmit={handleSend} style={chatInputStyle}>
                 <div style={{ display: 'flex', gap: '10px' }}>
                     <input
                         type="text"

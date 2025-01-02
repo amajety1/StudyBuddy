@@ -11,6 +11,7 @@ function Signup() {
     });
     const [errorMessage, setErrorMessage] = useState("");
     const [successMessage, setSuccessMessage] = useState("");
+    const [isLoading, setIsLoading] = useState(false);
     const navigate = useNavigate();
 
     const handleInputChange = (e) => {
@@ -20,6 +21,7 @@ function Signup() {
 
     const isPasswordValid = (password) => {
         const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{3,}$/;
+        console.log(regex.test(password), password);
         return regex.test(password);
     };
 
@@ -49,6 +51,7 @@ function Signup() {
         }
 
         try {
+            setIsLoading(true);
             const response = await fetch("http://localhost:5001/api/users/signup", {
                 method: "POST",
                 headers: {
@@ -62,6 +65,8 @@ function Signup() {
             if (response.ok) {
                 setSuccessMessage("User created successfully.");
                 console.log("Signup successful:", data, data.verificationCode);
+                // Store email in localStorage
+                localStorage.setItem("email", email);
                 navigate("/confirm-email", { state: { email, verificationCode: data.verificationCode } });
             } else {
                 setErrorMessage(data.error || "An error occurred.");
@@ -70,6 +75,8 @@ function Signup() {
         } catch (error) {
             console.error("Error during signup:", error);
             setErrorMessage("An error occurred. Please try again.");
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -138,9 +145,21 @@ function Signup() {
                     </div>
                     {errorMessage && <p className="error-message">{errorMessage}</p>}
                     {successMessage && <p className="success-message">{successMessage}</p>}
-                    <button type="submit" className="login-button noto-sans">
-                        Sign Up
-                    </button>
+                    <div className="form-group">
+                        <button 
+                            type="submit" 
+                            className="noto-sans submit-button"
+                            disabled={isLoading}
+                        >
+                            {isLoading ? (
+                                <div className="loading-spinner">
+                                    <span>Signing up...</span>
+                                </div>
+                            ) : (
+                                "Sign Up"
+                            )}
+                        </button>
+                    </div>
                     <div className="no-account">
                         <a href="/login" className="noto-sans">
                             Already have an account?

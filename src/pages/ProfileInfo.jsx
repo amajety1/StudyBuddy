@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { CAlert } from '@coreui/react';
+
 
 const courses = [
   "CSC 2720 - Data Structures",
@@ -68,36 +70,47 @@ function ProfileInfo({ setIsAuthenticated }) {
 
   const handleProfilePictureChange = async (e) => {
     const file = e.target.files[0];
-    if (file) {
-      try {
-        setIsLoading(true);
-        setErrorMessage("");
+    if (!file) return;
 
-        // Create FormData for file upload
-        const formData = new FormData();
-        formData.append('profilePicture', file);
-        formData.append('userId', email);
+    if (file.size > 5 * 1024 * 1024) {
+      setErrorMessage("File size should not exceed 5MB");
+      return;
+    }
 
-        // Upload to server
-        const uploadResponse = await fetch('http://localhost:5001/api/users/upload-profile-picture', {
-          method: 'POST',
-          body: formData,
-        });
+    try {
+      setIsLoading(true);
+      setErrorMessage("");
+  
+      const formData = new FormData();
+      formData.append("profilePicture", file);
+      formData.append("email", email); // Add email for initial profile creation
+      
+      // For initial profile creation, we don't need authorization
+      const uploadResponse = await fetch("http://localhost:5001/api/users/upload-profile-picture", {
+        method: "POST",
+        body: formData,
+      });
 
-        if (!uploadResponse.ok) {
-          throw new Error('Failed to upload profile picture');
-        }
-
-        const { profilePicturePath } = await uploadResponse.json();
-        setProfilePicture(profilePicturePath);
-      } catch (error) {
-        console.error('Error uploading profile picture:', error);
-        setErrorMessage('Failed to upload profile picture. Please try again.');
-      } finally {
-        setIsLoading(false);
+      console.log("[ProfileInfo] Upload response status:", uploadResponse.status);
+      if (!uploadResponse.ok) {
+        const errorText = await uploadResponse.text();
+        console.log("[ProfileInfo] Upload error details:", errorText);
+        throw new Error("Failed to upload profile picture");
       }
+  
+      const { profilePicturePath } = await uploadResponse.json();
+      console.log("[ProfileInfo] Received profile picture path:", profilePicturePath);
+      
+      setProfilePicture(profilePicturePath);
+      console.log("[ProfileInfo] Profile picture state updated");
+    } catch (error) {
+      console.error("[ProfileInfo] Error uploading profile picture:", error);
+      setErrorMessage("Failed to upload profile picture. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   };
+  
 
   const formSubmit = async (e) => {
     e.preventDefault();

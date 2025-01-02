@@ -1,27 +1,42 @@
-function ChatsLHS({ groupMessageInfo, setMessageGroupID }) {
+import React, { useEffect, useState } from 'react';
+
+const ChatsLHS = ({ onSelectChatroom, selectedChatroomId }) => {
+    const [chatrooms, setChatrooms] = useState([]);
+
+    useEffect(() => {
+        const fetchChatrooms = async () => {
+            try {
+                const response = await fetch('/api/chatrooms');
+                if (!response.ok) {
+                    throw new Error('Failed to fetch chatrooms');
+                }
+                const data = await response.json();
+                setChatrooms(data);
+            } catch (error) {
+                console.error('Error fetching chatrooms:', error);
+            }
+        };
+
+        fetchChatrooms();
+    }, []);
+
     return (
-      <div className="chats-lhs">
-        <div className="chats-lhs-header">
-          <h1 className="noto-sans">Chats</h1>
+        <div className="chats-lhs">
+            <h2>Your Chats</h2>
+            <div className="chatroom-list">
+                {chatrooms.map((chatroom) => (
+                    <div
+                        key={chatroom._id}
+                        className={`chatroom-item ${selectedChatroomId === chatroom._id ? 'selected' : ''}`}
+                        onClick={() => onSelectChatroom(chatroom._id)}
+                    >
+                        <h3>{chatroom.name}</h3>
+                        <p>{chatroom.latestMessage?.content || 'No messages yet'}</p>
+                    </div>
+                ))}
+            </div>
         </div>
-        <div className="chats-lhs-chats">
-          {Object.keys(groupMessageInfo).map((groupKey) => {
-            const group = groupMessageInfo[groupKey];
-            return (
-              <div
-                key={groupKey}
-                className="chats-lhs-chat"
-                onClick={() => setMessageGroupID(groupKey)} // Update selected group ID
-              >
-                <img src={group.image} alt={`${group.name} image`} />
-                <p className="noto-sans">{group.name}</p>
-              </div>
-            );
-          })}
-        </div>
-      </div>
     );
-  }
-  
-  export default ChatsLHS;
-  
+};
+
+export default ChatsLHS;
