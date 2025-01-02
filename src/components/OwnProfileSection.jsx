@@ -5,11 +5,28 @@ import ProjectCard from "./ProjectCard";
 import DaySchedule from "./DaySchedule";
 
 function OwnProfileSection() {
-    const [user, setUser] = useState(null);
+    const [user, setUser] = useState({
+        firstName: "default",
+        lastName: "default",
+        selectedCourses: [],
+        major: "default",
+        degreeType: "default",
+        githubLink: "default",
+        projects: [],
+        bio: "default"
+
+    });
     const [profileImage, setProfileImage] = useState('http://localhost:5001/images/default-profile.jpeg');
     const [isLoading, setIsLoading] = useState(false);
     const [imageError, setImageError] = useState(false);
+    const [firstName, setFirstName] = useState("default");
+    const [lastName, setLastName] = useState("default");
 
+
+    useEffect(() => {
+        console.log("Updated user variable: ", user);
+    }, [user]);
+    
     // Fetch user data including profile picture on component mount
     useEffect(() => {
         const fetchUserData = async () => {
@@ -31,7 +48,20 @@ function OwnProfileSection() {
                 if (response.ok) {
                     const userData = await response.json();
                     console.log("[Profile] User data received:", userData);
-                    setUser(userData);
+                    setUser({
+                        firstName: userData.firstName,
+                        lastName: userData.lastName,
+                        selectedCourses: userData.selectedCourses,
+                        major: userData.major,
+                        degreeType: userData.degreeType,
+                        githubLink: userData.githubLink,
+                        bio: userData.bio,
+                        about: userData.about,
+                        projects: userData.projects,
+                        availableSessions: userData.availableSessions
+                    });
+                    console.log("user variable: ", user);
+                    
                     
                     // Update profile image URL
                     if (userData.profilePicture) {
@@ -202,22 +232,22 @@ function OwnProfileSection() {
 
     const [projects, setProjects] = useState([
         {
-          title: "WeatherWise 1",
+          title: "Pilot Project",
           link: "https://github.com",
           description:
-            "WeatherWise is a smart weather application that provides real-time weather updates, forecasts, and suggestions for activities based on local conditions. It uses OpenWeatherMap's API and integrates with Google Calendar to recommend the best times for outdoor activities.",
+            "Pilot tracking app"
         },
         {
-          title: "WeatherWise 2",
+          title: "Dieting App",
           link: "https://github.com",
           description:
-            "WeatherWise is a smart weather application that provides real-time weather updates, forecasts, and suggestions for activities based on local conditions. It uses OpenWeatherMap's API and integrates with Google Calendar to recommend the best times for outdoor activities.",
+            "Dieting scanner"
         },
         {
-          title: "WeatherWise 3",
+          title: "Fitness scanner",
           link: "https://github.com",
           description:
-            "WeatherWise is a smart weather application that provides real-time weather updates, forecasts, and suggestions for activities based on local conditions. It uses OpenWeatherMap's API and integrates with Google Calendar to recommend the best times for outdoor activities.",
+            "Weight loss"
         },
       ]);
     const allCourses = [
@@ -465,19 +495,19 @@ function OwnProfileSection() {
                     </div>
                     <div className="buddy-profile-name-brief-about-major-degree">
                         <div className="buddy-profile-brief-name">
-                            <h3 className="noto-sans">Aniket Majety</h3>
-                            <p className="noto-sans">{userBio}</p>
+                            <h3 className="noto-sans">{user.firstName} {user.lastName}</h3>
+                            <p className="noto-sans">{user.bio}</p>
                         </div>
                         <div className="buddy-profile-brief-edu">
-                            <h3 className="noto-sans">Computer Science</h3>
-                            <p className="noto-sans">BS</p>
+                            <h3 className="noto-sans">{user.major}</h3>
+                            <p className="noto-sans">{user.degreeType}</p>
                             <div className="buddy-profile-line"></div>
                         </div>
                     </div>
                 </div>
                 <div className="buddy-profile-about-github">
                     <h3>About</h3>
-                    <p>{userAbout}</p>                    
+                    <p>{user.about}</p>                    
                     <div className="buddy-profile-line"></div>
                 </div>
                 <div className="buddy-profile-courses">
@@ -485,9 +515,9 @@ function OwnProfileSection() {
                     <div className="buddy-profile-current-course-and-label">
                         <h5 className="noto-sans">Current Courses</h5>
                         <div className="buddy-profile-current-courses">
-                            <div className="buddy-profile-current-course-card">CSC 1302</div>
-                            <div className="buddy-profile-current-course-card">MATH 2212</div>
-                            <div className="buddy-profile-current-course-card">PERS 2001</div>
+                        {user.selectedCourses.map((course, index) => (
+                            <div key={index} className="buddy-profile-current-course-card">{course}</div>
+                        ))}
                         </div>
                     </div>
                     <div className="buddy-profile-previous-course-and-label">
@@ -496,6 +526,7 @@ function OwnProfileSection() {
                             <div className="buddy-profile-previous-course-card">MATH 1113</div>
                             <div className="buddy-profile-previous-course-card">CSC 1301</div>
                             <div className="buddy-profile-previous-course-card">ENGL 1101</div>
+
                         </div>
                     </div>
 
@@ -505,27 +536,28 @@ function OwnProfileSection() {
                     <h3 className="noto-sans">Book Study Session</h3>
                     <h4 className="noto-sans">Available sessions</h4>
                     <div className="study-session-cards">
-                        {Object.entries(availableTimes).map(([day, times]) =>
-                            times.map((time, index) => (
-                            <div key={`${day}-${index}`} className="buddy-profile-session-card">
-                                <h6 className="noto-sans">Day: {day.charAt(0).toUpperCase() + day.slice(1)}</h6>
-                                <h6 className="noto-sans">Time: {time.start} - {time.end}</h6>
-                                <h6 className="noto-sans">Online</h6>
+                        {user.availableSessions.map((session, index) => (
+                            <div key={index} className="buddy-profile-session-card">
+                                <h6 className="noto-sans">Day: {session.dayOfWeek}</h6>
+                                <h6 className="noto-sans">Time: {session.time}</h6>
+                                <h6 className="noto-sans">Location: {session.location}</h6>
+                                <h6 className="noto-sans">Type: {session.sessionType}</h6>
                             </div>
-                            ))
-                        )}
+                        ))}
                     </div>
+
                 </div>
 
                     <div className="buddy-profile-projects">
                         <h3 className="noto-sans">Projects</h3>
                         <div className="buddy-profile-projects-cards">
-                            {projects.map((project, index) => (
+                            {user.projects.map((project, index) => (
                             <ProjectCard
                                 key={index}
-                                title={project.title}
-                                link={project.link}
+                                name={project.name}
                                 description={project.description}
+                                techStack={project.techStack}
+                                githubLink={project.githubLink}
                             />
                             ))}
                         </div>
