@@ -13,7 +13,9 @@ function OwnProfileSection() {
         degreeType: "default",
         githubLink: "default",
         projects: [],
-        bio: "default"
+        bio: "default",
+        previousCourses: [],
+        
 
     });
     const [profileImage, setProfileImage] = useState('http://localhost:5001/images/default-profile.jpeg');
@@ -31,6 +33,7 @@ function OwnProfileSection() {
     useEffect(() => {
         const fetchUserData = async () => {
             try {
+                console.log("[Profile] Fetching user data...");
                 const token = localStorage.getItem('token');
                 console.log("[Profile] Token:", token ? "Present" : "Missing");
                 if (!token) {
@@ -58,7 +61,8 @@ function OwnProfileSection() {
                         bio: userData.bio,
                         about: userData.about,
                         projects: userData.projects,
-                        availableSessions: userData.availableSessions
+                        availableSessions: userData.availableSessions,
+                        previousCourses: userData.previousCourses
                     });
                     console.log("user variable: ", user);
                     
@@ -523,9 +527,10 @@ function OwnProfileSection() {
                     <div className="buddy-profile-previous-course-and-label">
                         <h5 className="noto-sans">Previous Courses</h5>
                         <div className="buddy-profile-previous-courses">
-                            <div className="buddy-profile-previous-course-card">MATH 1113</div>
-                            <div className="buddy-profile-previous-course-card">CSC 1301</div>
-                            <div className="buddy-profile-previous-course-card">ENGL 1101</div>
+                        
+                            {user.previousCourses?.map((course, index) => (
+                            <div key={index} className="buddy-profile-previous-course-card">{course}</div>
+                            ))}
 
                         </div>
                     </div>
@@ -536,7 +541,7 @@ function OwnProfileSection() {
                     <h3 className="noto-sans">Book Study Session</h3>
                     <h4 className="noto-sans">Available sessions</h4>
                     <div className="study-session-cards">
-                        {user.availableSessions.map((session, index) => (
+                        {user.availableSessions?.map((session, index) => (
                             <div key={index} className="buddy-profile-session-card">
                                 <h6 className="noto-sans">Day: {session.dayOfWeek}</h6>
                                 <h6 className="noto-sans">Time: {session.time}</h6>
