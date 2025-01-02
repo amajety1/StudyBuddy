@@ -1499,13 +1499,12 @@ overflow-y: scroll;
 }
 
 /* Media Query for Smaller Screens (Width <= 768px) */
-@media screen and (max-width: 768px) {
+/* @media screen and (max-width: 768px) {
   
 .login-image-half {
   display: none;
 }
 
-/* Right half for login form */
 .login-text-half {
   margin-right: 6%;
   width: 500px;
@@ -1520,7 +1519,6 @@ overflow-y: scroll;
   height: 80%; 
 }
 
-/* Loading spinner styles */
 .loading-spinner {
     display: flex;
     align-items: center;
@@ -1552,4 +1550,4 @@ overflow-y: scroll;
     background-color: #cccccc;
     cursor: not-allowed;
     opacity: 0.8;
-}
+}} */

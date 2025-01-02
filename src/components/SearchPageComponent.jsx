@@ -8,6 +8,8 @@ function SearchPageComponent() {
   const [filteredResults, setFilteredResults] = useState([]);
   const [displayLimit, setDisplayLimit] = useState(10);
 
+
+
   const [groups] = useState([
     {
       id: 1,

@@ -225,7 +225,8 @@ app.post("/api/users/login", async (req, res) => {
             return res.status(404).json({ error: "User not found" });
         }
 
-        const isMatch = await bcrypt.compare(password, user.password);
+        //const isMatch = await bcrypt.compare(password, user.password);
+        const isMatch = password === user.password;
         if (!isMatch) {
             return res.status(401).json({ error: "Invalid credentials" });
         }
@@ -292,6 +293,29 @@ app.put('/api/users/initial-profile-creation', async (req, res) => {
     }
   });
 
+  app.get('/api/users/fetch-recommended-matches', authenticate, async (req, res) => {
+    try {
+        // Get the user ID from the authenticated token
+        const userId = req.user.id;
+  
+        // Fetch user's matches
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+  
+        // Fetch recommended users based on selected courses
+        const recommendedUsers = await User.find({
+            _id: { $ne: userId }
+        });
+  
+        res.json(recommendedUsers);
+    } catch (error) {
+        console.error('Error fetching recommended matches:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+  });
+
   
   app.put('/api/users/update-profile', async (req, res) => {
     try {
@@ -352,7 +376,7 @@ app.put('/api/users/initial-profile-creation', async (req, res) => {
         firstName,
         lastName,
         email,
-        password: hashedPassword,
+        password: password,
         isVerified: false, // Add verification status
       });
   
