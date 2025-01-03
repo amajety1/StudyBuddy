@@ -1,41 +1,81 @@
-function DaySchedule({ day, times, onUpdate }) {
-    const handleTimeChange = (index, field, value) => {
-      const updatedTimes = [...times];
-      updatedTimes[index][field] = value;
-      onUpdate(day, updatedTimes);
+function DaySchedule({ day, sessions, onUpdate }) {
+  const handleSessionChange = (index, field, value) => {
+    const updatedSessions = [...sessions];
+    updatedSessions[index] = {
+      ...updatedSessions[index],
+      [field]: value
     };
-  
-    const addTimeSlot = () => {
-      onUpdate(day, [...times, { start: "", end: "" }]);
+    onUpdate(day, updatedSessions);
+  };
+
+  const addSession = () => {
+    const newSession = {
+      start: "",
+      end: "",
+      location: "",
+      sessionType: ""
     };
-  
-    const removeTimeSlot = (index) => {
-      const updatedTimes = times.filter((_, i) => i !== index);
-      onUpdate(day, updatedTimes);
-    };
-  
-    return (
-      <div className={`schedule ${day}-sessions`}>
-        <h4>{day.charAt(0).toUpperCase() + day.slice(1)}</h4>
-        {times.map((time, index) => (
-          <div key={index} className="time-slot">
+    onUpdate(day, [...sessions, newSession]);
+  };
+
+  const removeSession = (index) => {
+    const updatedSessions = sessions.filter((_, i) => i !== index);
+    onUpdate(day, updatedSessions);
+  };
+
+  return (
+    <div className={`schedule ${day.toLowerCase()}-sessions`}>
+      <h4>{day}</h4>
+      {sessions.map((session, index) => (
+        <div key={index} className="session-slot">
+          <div className="session-time">
             <input
               type="time"
-              value={time.start}
-              onChange={(e) => handleTimeChange(index, "start", e.target.value)}
+              value={session.start}
+              onChange={(e) => handleSessionChange(index, "start", e.target.value)}
             />
             <span>to</span>
             <input
               type="time"
-              value={time.end}
-              onChange={(e) => handleTimeChange(index, "end", e.target.value)}
+              value={session.end}
+              onChange={(e) => handleSessionChange(index, "end", e.target.value)}
             />
-            <button onClick={() => removeTimeSlot(index)}>Remove</button>
           </div>
-        ))}
-        <button onClick={addTimeSlot}>Add Time Slot</button>
-      </div>
-    );
-  }
+          
+          <div className="session-details">
+            <input
+              type="text"
+              value={session.location}
+              placeholder="Location"
+              onChange={(e) => handleSessionChange(index, "location", e.target.value)}
+            />
+            
+            <select
+              value={session.sessionType}
+              onChange={(e) => handleSessionChange(index, "sessionType", e.target.value)}
+            >
+              <option value="">Select Type</option>
+              <option value="One-on-One">One-on-One</option>
+              <option value="Group">Group</option>
+            </select>
+            
+            <button 
+              onClick={() => removeSession(index)}
+              className="remove-session-btn"
+            >
+              Remove
+            </button>
+          </div>
+        </div>
+      ))}
+      <button 
+        onClick={addSession}
+        className="add-session-btn"
+      >
+        Add Session
+      </button>
+    </div>
+  );
+}
 
-    export default DaySchedule;
+export default DaySchedule;

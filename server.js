@@ -317,33 +317,6 @@ app.put('/api/users/initial-profile-creation', async (req, res) => {
   });
 
   
-  app.put('/api/users/update-profile', async (req, res) => {
-    try {
-      const { email, github, selectedCourses, projects, profilePicture } = req.body;
-  
-      const updatedUser = await User.findOneAndUpdate(
-        { email },
-        { 
-          github, 
-          selectedCourses, 
-          projects,
-          profilePicture // Store the Filen cloud path
-        },
-        { new: true }
-      );
-  
-      if (!updatedUser) {
-        return res.status(404).json({ error: 'User not found' });
-      }
-  
-      res.json({ user: updatedUser });
-    } catch (error) {
-      console.error('Error updating profile:', error);
-      res.status(500).json({ error: 'Server error' });
-    }
-  });
-  
-  
 
   app.post("/api/users/signup", async (req, res) => {
     try {

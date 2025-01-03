@@ -1,8 +1,18 @@
-import React, { useState } from "react";
-
-function EditCourses({ allCourses, title, initialCourses }) {
+import { useState, useEffect } from "react";
+function EditCourses({ allCourses, title, initialCourses, onCoursesChange }) {
   const [filteredCourses, setFilteredCourses] = useState([]);
   const [courses, setCourses] = useState(initialCourses);
+
+  // Initialize courses only once when initialCourses changes
+  useEffect(() => {
+    setCourses(initialCourses);
+  }, [initialCourses]);
+
+  // Create a new function to handle course updates
+  const updateCourses = (newCourses) => {
+    setCourses(newCourses);
+    onCoursesChange(newCourses);
+  };
 
   return (
     <div className="edit-courses">
@@ -14,9 +24,10 @@ function EditCourses({ allCourses, title, initialCourses }) {
             <img
               src="/images/close-arrow.png"
               alt="Remove"
-              onClick={() =>
-                setCourses(courses.filter((c, i) => i !== index))
-              }
+              onClick={() => {
+                const newCourses = courses.filter((c, i) => i !== index);
+                updateCourses(newCourses);
+              }}
             />
           </div>
         ))}
@@ -45,7 +56,8 @@ function EditCourses({ allCourses, title, initialCourses }) {
               <button
                 onClick={() => {
                   if (!courses.includes(course)) {
-                    setCourses([...courses, course]);
+                    const newCourses = [...courses, course];
+                    updateCourses(newCourses);
                   }
                 }}
               >
