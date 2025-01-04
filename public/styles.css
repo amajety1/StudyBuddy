@@ -475,6 +475,7 @@ h4{
   transition: background-color 0.3s ease, box-shadow 0.3s ease;
   display: flex;
   align-items: center;
+  flex-direction: column;
   justify-content: space-between; /* Allows for adding icons if needed */
   cursor: pointer;
 }
@@ -482,6 +483,16 @@ h4{
 .notification-drop-item:hover {
   background-color: #eaeaea;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.notification-dot{
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: red;
+  position: absolute;
+  top: -5px;
+  right: -5px;
 }
 
 .notification-drop-item img {

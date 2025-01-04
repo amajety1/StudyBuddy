@@ -1,12 +1,16 @@
 import mongoose from 'mongoose';
 const { Schema, model } = mongoose;
 
+
 const projectSchema = new Schema({
   name: { type: String, required: true },
   description: { type: String, required: true },
   techStack: { type: String },
   githubLink: { type: String }
 });
+
+
+
 
 const availableSessionSchema = new Schema({
   dayOfWeek: { 
@@ -56,6 +60,7 @@ const userSchema = new Schema({
   bio: { type: String },
   about: { type: String },
   availableSessions: [availableSessionSchema], // Array of available session objects
+  notifications: [{ type: mongoose.Schema.Types.ObjectId, ref: "Notification" }],
 
 
 });

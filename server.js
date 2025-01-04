@@ -4,6 +4,8 @@ dotenv.config();
 import express from 'express';
 import mongoose from 'mongoose';
 import User from './models/User.js';
+import Notification from './models/Notification.js';
+
 import ChatRoom from './models/ChatRoom.js';
 import Message from './models/Message.js';
 import cors from 'cors';
@@ -210,6 +212,8 @@ app.get("/api/users/verify", authenticate, async (req, res) => {
   }
 });
 
+
+
 app.post("/api/users/login", async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -386,6 +390,68 @@ app.post("/api/users/signup", async (req, res) => {
     });
   }
 });
+
+app.get("/api/users/get-notifications", authenticate, async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id)
+      .select("-password")
+      .populate({
+        path: "notifications",
+        populate: { path: "user", select: "firstName lastName email" },
+        options: { limit: 10, sort: { date: -1 } }, // Limit to 10, sorted by date descending
+      });
+
+    // Check if there are any unseen notifications
+    const hasUnseenNotifications = user.notifications.some(notification => !notification.seen);
+
+    // Log notifications for debugging
+    console.log("NOTIFICATIONS:", user.notifications);
+
+    // Send response with notifications and unseen status
+    res.json({ notifications: user.notifications, hasUnseen: hasUnseenNotifications });
+  } catch (error) {
+    console.error("Error fetching notifications:", error);
+    res.status(500).json({ error: "Failed to fetch notifications" });
+  }
+});
+
+
+
+app.get("/api/users/seen-notifications", authenticate, async (req, res) => {
+  try {
+    // Find the user by ID and populate notifications
+    const user = await User.findById(req.user._id).populate("notifications");
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // Update all notifications to be seen
+    const notificationIds = user.notifications.map((notification) => notification._id);
+    await Notification.updateMany(
+      { _id: { $in: notificationIds } }, // Match all notifications for this user
+      { $set: { seen: true } } // Set seen to true
+    );
+
+    res.json({ message: "Notifications marked as seen" });
+  } catch (error) {
+    console.error("Error marking notifications as seen:", error);
+    res.status(500).json({ error: "Failed to mark notifications as seen" });
+  }
+});
+
+
+// app.get("/api/users/me", authenticate, async (req, res) => {
+//   try {
+//     const user = await User.findById(req.user._id).select('-password');
+//     if (!user) {
+//       return res.status(404).json({ error: 'User not found' });
+//     }
+//     res.json(user);
+//   } catch (error) {
+//     res.status(500).json({ error: 'Failed to fetch user' });
+//   }
+// });
 
 app.post('/api/users/send-buddy-request', authenticate, async (req, res) => {
   const { matchId } = req.body;

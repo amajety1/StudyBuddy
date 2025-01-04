@@ -6,7 +6,46 @@ import { useNavigate } from "react-router-dom";
 function Navbar() {
   const [isOptionsOpen, setIsOptionsOpen] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+  const [hasUnseen, setHasUnseen] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const token = localStorage.getItem('token');
   const navigate = useNavigate();
+
+  const seenNotifications = async () => {
+    setHasUnseen(false);
+    console.log('Has Unseen: ', hasUnseen);
+    try {
+      const response = await fetch('http://localhost:5001/api/users/seen-notifications', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (!response.ok) {
+        throw new Error('Failed to mark notifications as seen');
+      }
+    } catch (error) {
+      console.error('Error marking notifications as seen:', error);
+    }
+  };
+
+  const getTimeAgo = (date) => {
+    const now = new Date();
+    const notificationDate = new Date(date);
+    const differenceInSeconds = Math.floor((now - notificationDate) / 1000);
+  
+    if (differenceInSeconds < 60) {
+      return `${differenceInSeconds} seconds ago`;
+    } else if (differenceInSeconds < 3600) {
+      const minutes = Math.floor(differenceInSeconds / 60);
+      return `${minutes} minute${minutes > 1 ? "s" : ""} ago`;
+    } else if (differenceInSeconds < 86400) {
+      const hours = Math.floor(differenceInSeconds / 3600);
+      return `${hours} hour${hours > 1 ? "s" : ""} ago`;
+    } else {
+      const days = Math.floor(differenceInSeconds / 86400);
+      return `${days} day${days > 1 ? "s" : ""} ago`;
+    }
+  };
 
   const handleSearchClick = () => {
     navigate("/search"); // Navigate to the search page
@@ -36,7 +75,40 @@ function Navbar() {
   const handleNotificationClick = (e) => {
     e.stopPropagation(); // Prevent closing on inside clicks
     setIsNotificationOpen(!isNotificationOpen);
+    seenNotifications();
   };
+
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      if (!token) return;
+      console.log("Token: ", token);
+
+      try {
+        const response = await fetch("http://localhost:5001/api/users/get-notifications", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch notifications");
+        }
+
+        const { notifications: receivedNotifications, hasUnseen: unseen } = await response.json();
+
+        // Set the notifications and unseen status
+        setNotifications(receivedNotifications);
+        setHasUnseen(unseen);
+
+        console.log("Fetched Notifications: ", receivedNotifications);
+        console.log("Has Unseen Notifications: ", unseen);
+      } catch (error) {
+        console.error("Error fetching notifications:", error);
+      }
+    };
+
+    fetchNotifications();
+  }, [token]);
 
   useEffect(() => {
     const handleClickOutside = () => {
@@ -84,6 +156,7 @@ function Navbar() {
         <div className="home-toolbar-item notification-dropdown">
           <div className="flex-for-navbar" onClick={handleNotificationClick}>
             <img src="/images/notification.png" alt="Notifications" />
+            {hasUnseen && <div className="notification-dot"></div>}
             <p className="notification-p noto-sans">Notifications</p>
           </div>
           {isNotificationOpen && (
@@ -92,9 +165,12 @@ function Navbar() {
               onClick={(e) => e.stopPropagation()} // Prevent clicks inside from closing
             >
               <div className="notification-drop-flexbox">
-                <div className="notification-drop-item">Option 1</div>
-                <div className="notification-drop-item">Option 2</div>
-                <div className="notification-drop-item">Option 3</div>
+              {notifications.map((notification, index) => (
+                <div key={index} className="notification-drop-item">
+                  <p className="noto-sans">{notification.content}</p>
+                  <p className="noto-sans">{getTimeAgo(notification.date)}</p>
+                </div>
+              ))}
               </div>
             </div>
           )}

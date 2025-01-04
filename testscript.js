@@ -1,6 +1,8 @@
 import mongoose from 'mongoose';
 import ChatRoom from './models/ChatRoom.js';
 import Message from './models/Message.js';
+import User from './models/User.js';
+import Notification from './models/Notification.js';
 
 // Connect to MongoDB
 mongoose.connect('mongodb://127.0.0.1:27017/StudyBuddy', {
@@ -27,41 +29,6 @@ const messagesToInsert = [
     },
 ];
 
-const insertMessages = async () => {
-    try {
-        // Insert messages into the Message collection
-        const insertedMessages = await Message.insertMany(
-            messagesToInsert.map(message => ({
-                ...message,
-                timestamp: new Date(), // Add timestamp to each message
-            }))
-        );
-
-        // Extract message IDs
-        const messageIds = insertedMessages.map(msg => msg._id);
-
-        // Update the chatroom with the message IDs
-        const updatedChatRoom = await ChatRoom.findByIdAndUpdate(
-            chatroomId,
-            {
-                $push: { messages: { $each: messageIds } },
-                $set: { lastUpdated: new Date() },
-            },
-            { new: true }
-        );
-
-        console.log('Messages inserted successfully:', insertedMessages);
-        console.log('Chatroom updated successfully:', updatedChatRoom);
-
-        // Verify the update by fetching the chatroom
-        const verifiedChatRoom = await ChatRoom.findById(chatroomId).populate('messages');
-        console.log('Verified chatroom state:', verifiedChatRoom);
-    } catch (error) {
-        console.error('Error inserting messages:', error);
-    } finally {
-        // Close the database connection
-        mongoose.connection.close();
-    }
-};
-
-insertMessages();
+const userId = "6776b0af9c5c68e0ff8cad70"; // Replace with the actual user ID
+const user = await User.findById(userId).populate("notifications");
+console.log("Populated user notifications:", user.notifications);
