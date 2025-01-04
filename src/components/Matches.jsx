@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 function Matches() {
     const [matches, setMatches] = useState([]);
@@ -6,6 +7,7 @@ function Matches() {
     const [currentUserData, setCurrentUserData] = useState(null);
     const [sentRequests, setSentRequests] = useState(new Set());
     const token = localStorage.getItem('token');
+    const navigate = useNavigate();
 
     useEffect(() => {
         // Fetch current user's ID
@@ -58,7 +60,7 @@ function Matches() {
             });
 
             const data = await response.json();
-            
+
             if (response.ok) {
                 // Update local state to show sent status
                 setSentRequests(prev => new Set([...prev, matchId]));
@@ -68,11 +70,6 @@ function Matches() {
                     outgoingBuddyRequests: [...(prev.outgoingBuddyRequests || []), matchId]
                 }));
             } else {
-                // If it's already sent, we should still show it as sent
-                if (data.error === 'Buddy request already sent') {
-                    setSentRequests(prev => new Set([...prev, matchId]));
-                    return;
-                }
                 throw new Error(data.error || 'Failed to send buddy request');
             }
         } catch (error) {
@@ -94,7 +91,7 @@ function Matches() {
                         'Authorization': `Bearer ${token}`
                     }
                 });
-                
+
                 if (!response.ok) {
                     throw new Error('Failed to fetch matches');
                 }
@@ -112,6 +109,11 @@ function Matches() {
 
         fetchMatches();
     }, [token]);
+
+    const navigateToProfile = (matchId) => {
+        console.log('Navigating to profile with ID:', matchId);
+        navigate(`/buddy/${matchId}`);
+    };
 
     const renderBuddyButton = (matchId) => {
         const isRequestSent = sentRequests.has(matchId);
@@ -150,6 +152,8 @@ function Matches() {
                             className='matched-buddy-image' 
                             src={match.profilePic} 
                             alt={`${match.fullName}'s profile`}
+                            onClick={() => navigateToProfile(match.id)}
+                            style={{ cursor: 'pointer' }}
                         />
                         <div className='matched-buddy-info'>
                             <h4 className="noto-sans">{match.fullName}</h4>

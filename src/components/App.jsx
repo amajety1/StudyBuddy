@@ -74,7 +74,7 @@ function App() {
           element={isAuthenticated ? <Home /> : <Navigate to="/login" />}
         />
         <Route
-          path="/buddy-profile/:id"
+          path="/buddy/:matchId"
           element={isAuthenticated ? <BuddyProfile /> : <Navigate to="/login" />}
         />
         <Route

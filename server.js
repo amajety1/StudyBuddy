@@ -41,141 +41,141 @@ const resend = new Resend(dotenv.RESEND_API_KEY);
 
 // Authentication middleware
 const authenticate = async (req, res, next) => {
-    try {
-        console.log('Authenticating request...');
-        const authHeader = req.headers.authorization;
-        
-        if (!authHeader) {
-            console.log('No authorization header found');
-            return res.status(401).json({ error: 'No authorization header' });
-        }
+  try {
+    console.log('Authenticating request...');
+    const authHeader = req.headers.authorization;
 
-        const token = authHeader.split(' ')[1];
-        if (!token) {
-            console.log('No token found in authorization header');
-            return res.status(401).json({ error: 'No token provided' });
-        }
-
-        const decoded = jwt.verify(token, SECRET_KEY);
-        console.log('Decoded token:', decoded);
-
-        // Use id instead of userId since that's what we stored in the token
-        const user = await User.findById(decoded.id);
-        if (!user) {
-            console.log('User not found:', decoded.id);
-            return res.status(404).json({ error: 'User not found' });
-        }
-
-        console.log('Authentication successful for user:', user._id);
-        req.user = user;
-        next();
-    } catch (error) {
-        console.error('Authentication error:', error);
-        res.status(401).json({ error: 'Invalid token' });
+    if (!authHeader) {
+      console.log('No authorization header found');
+      return res.status(401).json({ error: 'No authorization header' });
     }
+
+    const token = authHeader.split(' ')[1];
+    if (!token) {
+      console.log('No token found in authorization header');
+      return res.status(401).json({ error: 'No token provided' });
+    }
+
+    const decoded = jwt.verify(token, SECRET_KEY);
+    console.log('Decoded token:', decoded);
+
+    // Use id instead of userId since that's what we stored in the token
+    const user = await User.findById(decoded.id);
+    if (!user) {
+      console.log('User not found:', decoded.id);
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    console.log('Authentication successful for user:', user._id);
+    req.user = user;
+    next();
+  } catch (error) {
+    console.error('Authentication error:', error);
+    res.status(401).json({ error: 'Invalid token' });
+  }
 };
 
 // Generate Random 6-Digit Code
 function generateVerificationCode() {
-    return Math.floor(100000 + Math.random() * 900000).toString();
+  return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
 // MongoDB Connection with error handling
 mongoose.connect('mongodb://127.0.0.1:27017/StudyBuddy')
-    .then(() => console.log('MongoDB Connected Successfully'))
-    .catch(err => console.error('MongoDB Connection Error:', err));
+  .then(() => console.log('MongoDB Connected Successfully'))
+  .catch(err => console.error('MongoDB Connection Error:', err));
 
 // Initialize Socket.IO
 const io = new Server(server, {
-    cors: {
-        origin: "http://localhost:5173",
-        methods: ["GET", "POST"]
-    }
+  cors: {
+    origin: "http://localhost:5173",
+    methods: ["GET", "POST"]
+  }
 });
 
 // Socket.IO connection handling
 io.on('connection', (socket) => {
-    console.log('A user connected');
+  console.log('A user connected');
 
-    socket.on('join room', (roomId) => {
-        socket.join(roomId);
-        console.log(`User joined room: ${roomId}`);
-        // Reset unread count when user joins room
-        if (socket.user) {
-            ChatRoom.findById(roomId).then(chatroom => {
-                if (chatroom) {
-                    chatroom.setUnreadCountForUser(socket.user._id, 0);
-                    chatroom.save();
-                }
-            });
+  socket.on('join room', (roomId) => {
+    socket.join(roomId);
+    console.log(`User joined room: ${roomId}`);
+    // Reset unread count when user joins room
+    if (socket.user) {
+      ChatRoom.findById(roomId).then(chatroom => {
+        if (chatroom) {
+          chatroom.setUnreadCountForUser(socket.user._id, 0);
+          chatroom.save();
         }
-    });
+      });
+    }
+  });
 
-    socket.on('send message', async ({ roomId, content, sender }) => {
-        try {
-            const message = new Message({
-                content,
-                sender,
-                chatRoom: roomId,  // Add chatRoom reference
-                timestamp: new Date()
-            });
-            await message.save();
+  socket.on('send message', async ({ roomId, content, sender }) => {
+    try {
+      const message = new Message({
+        content,
+        sender,
+        chatRoom: roomId,  // Add chatRoom reference
+        timestamp: new Date()
+      });
+      await message.save();
 
-            const chatroom = await ChatRoom.findById(roomId);
-            if (!chatroom) return;
+      const chatroom = await ChatRoom.findById(roomId);
+      if (!chatroom) return;
 
-            chatroom.messages.push(message._id);
-            
-            // Initialize unread counts if needed
-            if (!chatroom.unreadCounts) {
-                chatroom.unreadCounts = {};
-            }
-            
-            // Increment unread count for other participants
-            chatroom.participants.forEach(participantId => {
-                const participantIdStr = participantId.toString();
-                if (participantIdStr !== sender.toString()) {
-                    chatroom.unreadCounts[participantIdStr] = 
-                        (chatroom.unreadCounts[participantIdStr] || 0) + 1;
-                }
-            });
+      chatroom.messages.push(message._id);
 
-            await chatroom.save();
+      // Initialize unread counts if needed
+      if (!chatroom.unreadCounts) {
+        chatroom.unreadCounts = {};
+      }
 
-            // Populate the message with sender info and include chatRoom ID
-            const populatedMessage = await Message.findById(message._id)
-                .populate('sender', 'firstName lastName profilePicture');
-
-            // Add chatRoom ID to the populated message
-            const messageWithRoom = {
-                ...populatedMessage.toObject(),
-                chatRoom: roomId
-            };
-
-            io.to(roomId).emit('new message', messageWithRoom);
-            
-            // Emit updated unread counts
-            chatroom.participants.forEach(participantId => {
-                const participantIdStr = participantId.toString();
-                io.to(participantIdStr).emit('unread count update', {
-                    roomId,
-                    count: chatroom.unreadCounts[participantIdStr] || 0
-                });
-            });
-        } catch (error) {
-            console.error('Error sending message:', error);
-            socket.emit('error', { message: 'Failed to send message' });
+      // Increment unread count for other participants
+      chatroom.participants.forEach(participantId => {
+        const participantIdStr = participantId.toString();
+        if (participantIdStr !== sender.toString()) {
+          chatroom.unreadCounts[participantIdStr] =
+            (chatroom.unreadCounts[participantIdStr] || 0) + 1;
         }
-    });
+      });
 
-    socket.on('leave room', (roomId) => {
-        socket.leave(roomId);
-        console.log(`User left room: ${roomId}`);
-    });
+      await chatroom.save();
 
-    socket.on('disconnect', () => {
-        console.log('User disconnected');
-    });
+      // Populate the message with sender info and include chatRoom ID
+      const populatedMessage = await Message.findById(message._id)
+        .populate('sender', 'firstName lastName profilePicture');
+
+      // Add chatRoom ID to the populated message
+      const messageWithRoom = {
+        ...populatedMessage.toObject(),
+        chatRoom: roomId
+      };
+
+      io.to(roomId).emit('new message', messageWithRoom);
+
+      // Emit updated unread counts
+      chatroom.participants.forEach(participantId => {
+        const participantIdStr = participantId.toString();
+        io.to(participantIdStr).emit('unread count update', {
+          roomId,
+          count: chatroom.unreadCounts[participantIdStr] || 0
+        });
+      });
+    } catch (error) {
+      console.error('Error sending message:', error);
+      socket.emit('error', { message: 'Failed to send message' });
+    }
+  });
+
+  socket.on('leave room', (roomId) => {
+    socket.leave(roomId);
+    console.log(`User left room: ${roomId}`);
+  });
+
+  socket.on('disconnect', () => {
+    console.log('User disconnected');
+  });
 });
 
 // Store verification codes temporarily (in production, use Redis or database)
@@ -190,170 +190,167 @@ const upload = multer({
 });
 
 app.get("/api/users/me", authenticate, async (req, res) => {
-    try {
-        const user = await User.findById(req.user._id).select('-password');
-        if (!user) {
-            return res.status(404).json({ error: 'User not found' });
-        }
-        res.json(user);
-    } catch (error) {
-        res.status(500).json({ error: 'Failed to fetch user' });
+  try {
+    const user = await User.findById(req.user._id).select('-password');
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
     }
-  });
+    res.json(user);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch user' });
+  }
+});
 
-
-
-  // Example backend route (Node.js/Express)
-  app.get("/api/users/verify", authenticate, async (req, res) => {
-    try {
-      res.status(200).json({ valid: true });
-    } catch (error) {
-      res.status(401).json({ error: "Invalid token" });
-    }
-  });
+// Example backend route (Node.js/Express)
+app.get("/api/users/verify", authenticate, async (req, res) => {
+  try {
+    res.status(200).json({ valid: true });
+  } catch (error) {
+    res.status(401).json({ error: "Invalid token" });
+  }
+});
 
 app.post("/api/users/login", async (req, res) => {
-    try {
-        const { email, password } = req.body;
-        const user = await User.findOne({ email });
+  try {
+    const { email, password } = req.body;
+    const user = await User.findOne({ email });
 
-        if (!user) {
-            return res.status(404).json({ error: "User not found" });
-        }
-
-        //const isMatch = await bcrypt.compare(password, user.password);
-        const isMatch = password === user.password;
-        if (!isMatch) {
-            return res.status(401).json({ error: "Invalid credentials" });
-        }
-
-        // Generate JWT Token with 'id'
-        const token = jwt.sign(
-            { id: user._id, email: user.email },
-            SECRET_KEY,
-            { expiresIn: "1000h" }
-        );
-
-        res.json({
-            token,
-            user: {
-                _id: user._id,
-                name: user.name,
-                email: user.email,
-                profileImage: user.profileImage
-            }
-        });
-    } catch (error) {
-        console.error("Login error:", error);
-        res.status(500).json({ error: "Login failed" });
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
     }
+
+    //const isMatch = await bcrypt.compare(password, user.password);
+    const isMatch = password === user.password;
+    if (!isMatch) {
+      return res.status(401).json({ error: "Invalid credentials" });
+    }
+
+    // Generate JWT Token with 'id'
+    const token = jwt.sign(
+      { id: user._id, email: user.email },
+      SECRET_KEY,
+      { expiresIn: "1000h" }
+    );
+
+    res.json({
+      token,
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        profileImage: user.profileImage
+      }
+    });
+  } catch (error) {
+    console.error("Login error:", error);
+    res.status(500).json({ error: "Login failed" });
+  }
 });
 
 app.put('/api/users/initial-profile-creation', async (req, res) => {
-    try {
-      const { email, github, selectedCourses, projects, profilePicture } = req.body;
-      
-      const updateData = {
-        github,
-        selectedCourses,
-        projects
-      };
+  try {
+    const { email, github, selectedCourses, projects, profilePicture } = req.body;
 
-      // Only include profilePicture in update if it was provided
-      if (profilePicture) {
-        updateData.profilePicture = profilePicture;
-      }
-      
-      const updatedUser = await User.findOneAndUpdate(
-        { email },
-        updateData,
-        { new: true }
-      );
-  
-      if (!updatedUser) {
-        return res.status(404).json({ error: 'User not found' });
-      }
-  
-      // Generate a session token (only for initial setup)
-      const token = jwt.sign(
-        { id: updatedUser._id, email: updatedUser.email },
-        SECRET_KEY,
-        { expiresIn: '1h' }
-      );
-  
-      res.json({ user: updatedUser, token });
-      console.log('token: '+ token);
-    } catch (error) {
-      console.error('Error during initial profile creation:', error);
-      res.status(500).json({ error: 'Server error' });
+    const updateData = {
+      github,
+      selectedCourses,
+      projects
+    };
+
+    // Only include profilePicture in update if it was provided
+    if (profilePicture) {
+      updateData.profilePicture = profilePicture;
     }
-  });
 
-  app.get('/api/users/fetch-recommended-matches', authenticate, async (req, res) => {
-    try {
-        // Get the user ID from the authenticated token
-        const userId = req.user.id;
-  
-        // Fetch user's matches
-        const user = await User.findById(userId);
-        if (!user) {
-            return res.status(404).json({ error: 'User not found' });
-        }
-  
-        // Fetch recommended users based on selected courses
-        const recommendedUsers = await User.find({
-            _id: { $ne: userId }
-        });
-  
-        res.json(recommendedUsers);
-    } catch (error) {
-        console.error('Error fetching recommended matches:', error);
-        res.status(500).json({ error: 'Server error' });
+    const updatedUser = await User.findOneAndUpdate(
+      { email },
+      updateData,
+      { new: true }
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({ error: 'User not found' });
     }
-  });
 
-  
+    // Generate a session token (only for initial setup)
+    const token = jwt.sign(
+      { id: updatedUser._id, email: updatedUser.email },
+      SECRET_KEY,
+      { expiresIn: '1h' }
+    );
 
-  app.post("/api/users/signup", async (req, res) => {
-    try {
-      const { firstName, lastName, email, password } = req.body;
-      console.log(email);
-  
-      // Input validation
-      if (!firstName || !lastName || !email || !password) {
-        return res.status(400).json({ error: "All fields are required" });
-      }
-  
-      // Email format validation
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(email)) {
-        return res.status(400).json({ error: "Invalid email format" });
-      }
-  
-      // Check if the user already exists
-      const existingUser = await User.findOne({ email });
-      if (existingUser) {
-        return res.status(400).json({ error: "User already exists" });
-      }
-  
-      // Hash the password
-      const saltRounds = 10; // Adjust the number of salt rounds as needed
-      const hashedPassword = await bcrypt.hash(password, saltRounds);
-  
-      // Create a new user with the hashed password
-      const newUser = new User({
-        firstName,
-        lastName,
-        email,
-        password: password,
-        isVerified: false, // Add verification status
-      });
-  
-      // Generate and store verification code
-      const verificationCode = generateVerificationCode();
-  
-      // Email template
-      const emailHtml = `
+    res.json({ user: updatedUser, token });
+    console.log('token: ' + token);
+  } catch (error) {
+    console.error('Error during initial profile creation:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+app.get('/api/users/fetch-recommended-matches', authenticate, async (req, res) => {
+  try {
+    // Get the user ID from the authenticated token
+    const userId = req.user.id;
+
+    // Fetch user's matches
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Fetch recommended users based on selected courses
+    const recommendedUsers = await User.find({
+      _id: { $ne: userId }
+    });
+
+    res.json(recommendedUsers);
+  } catch (error) {
+    console.error('Error fetching recommended matches:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Example backend route (Node.js/Express)
+app.post("/api/users/signup", async (req, res) => {
+  try {
+    const { firstName, lastName, email, password } = req.body;
+    console.log(email);
+
+    // Input validation
+    if (!firstName || !lastName || !email || !password) {
+      return res.status(400).json({ error: "All fields are required" });
+    }
+
+    // Email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ error: "Invalid email format" });
+    }
+
+    // Check if the user already exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ error: "User already exists" });
+    }
+
+    // Hash the password
+    const saltRounds = 10; // Adjust the number of salt rounds as needed
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+    // Create a new user with the hashed password
+    const newUser = new User({
+      firstName,
+      lastName,
+      email,
+      password: password,
+      isVerified: false, // Add verification status
+    });
+
+    // Generate and store verification code
+    const verificationCode = generateVerificationCode();
+
+    // Email template
+    const emailHtml = `
         <div style="font-family: Arial, sans-serif; font-size: 16px; color: #333;">
           <h1 style="color: #007BFF;">Welcome to StudyBuddy, ${firstName}!</h1>
           <p>Thank you for signing up. To complete your registration, please use the following verification code:</p>
@@ -363,148 +360,152 @@ app.put('/api/users/initial-profile-creation', async (req, res) => {
           <p>The StudyBuddy Team</p>
         </div>
       `;
-  
-      // Send email using Resend
-      await resend.emails.send({
-        from: "onboarding@resend.dev", // Replace with your sender email
-        to: 'studdybuddy875@gmail.com', // Send to the user's email
-        subject: "Your StudyBuddy Verification Code",
-        html: emailHtml,
-      });
-  
-      // Save user after sending email
-      newUser.verificationCode = verificationCode; // Attach the verification code to the user object
 
-      await newUser.save();
-  
-      res.status(201).json({
-        message: "User created successfully. Verification email sent.",
-        verificationCode,
-      });
-    } catch (error) {
-      console.error("Error creating user:", error);
-      res.status(500).json({
-        error: "Server error",
-        details: process.env.NODE_ENV === "development" ? error.message : undefined,
-      });
-    }
-  });
-  
+    // Send email using Resend
+    await resend.emails.send({
+      from: "onboarding@resend.dev", // Replace with your sender email
+      to: 'studdybuddy875@gmail.com', // Send to the user's email
+      subject: "Your StudyBuddy Verification Code",
+      html: emailHtml,
+    });
 
-  app.post('/api/users/send-buddy-request', authenticate, async (req, res) => {
-    const { matchId } = req.body;
-    const userId = req.user._id;
+    // Save user after sending email
+    newUser.verificationCode = verificationCode; // Attach the verification code to the user object
 
-    try {
-        // Validate matchId is provided
-        if (!matchId) {
-            return res.status(400).json({ 
-                error: 'matchId is required' 
-            });
-        }
+    await newUser.save();
 
-        // Find both users
-        const currentUser = await User.findById(userId);
-        const matchUser = await User.findById(matchId);
-
-        // Validate both users exist
-        if (!currentUser || !matchUser) {
-            return res.status(404).json({
-                error: 'One or both users not found'
-            });
-        }
-
-        // Initialize arrays if they don't exist
-        if (!currentUser.outgoingBuddyRequests) {
-            currentUser.outgoingBuddyRequests = [];
-        }
-        if (!matchUser.incomingBuddyRequests) {
-            matchUser.incomingBuddyRequests = [];
-        }
-
-        // Check if request already exists
-        if (currentUser.outgoingBuddyRequests.includes(matchId)) {
-            return res.status(400).json({
-                error: 'Buddy request already sent'
-            });
-        }
-
-        // Add the buddy request
-        currentUser.outgoingBuddyRequests.push(matchId);
-        matchUser.incomingBuddyRequests.push(userId);
-
-        // Save both users
-        await currentUser.save();
-        await matchUser.save();
-
-        console.log(`User ${userId} sent a buddy request to ${matchId}`);
-        
-        res.status(200).json({ 
-            message: 'Buddy request sent successfully!',
-            data: {
-                fromUser: userId,
-                toUser: matchId,
-                status: 'pending'
-            }
-        });
-    } catch (error) {
-        console.error('Error processing buddy request:', error);
-        res.status(500).json({ 
-            error: 'Failed to process buddy request',
-            details: error.message 
-        });
-    }
+    res.status(201).json({
+      message: "User created successfully. Verification email sent.",
+      verificationCode,
+    });
+  } catch (error) {
+    console.error("Error creating user:", error);
+    res.status(500).json({
+      error: "Server error",
+      details: process.env.NODE_ENV === "development" ? error.message : undefined,
+    });
+  }
 });
 
-  app.post("/api/users/verify", async (req, res) => {
-    try {
-      const { email } = req.body;
-  
-      // Find user by email
-      const user = await User.findOne({ email });
-      if (!user) {
-        return res.status(404).json({ error: "User not found" });
+app.post('/api/users/send-buddy-request', authenticate, async (req, res) => {
+  const { matchId } = req.body;
+  const userId = req.user._id;
+
+  try {
+    console.log('[BuddyRequest] Processing request:', { userId: userId.toString(), matchId });
+
+    // Validate matchId is provided
+    if (!matchId) {
+      console.log('[BuddyRequest] No matchId provided');
+      return res.status(400).json({
+        error: 'matchId is required'
+      });
+    }
+
+    // Find both users
+    const [user, match] = await Promise.all([
+      User.findById(userId),
+      User.findById(matchId)
+    ]);
+
+    // Validate both users exist
+    if (!user || !match) {
+      console.log('[BuddyRequest] User or match not found:', { userFound: !!user, matchFound: !!match });
+      return res.status(404).json({
+        error: 'One or both users not found'
+      });
+    }
+
+    // Check if buddy request already exists
+    if (user.outgoingBuddyRequests.includes(matchId) || match.incomingBuddyRequests.includes(userId)) {
+      console.log('[BuddyRequest] Request already exists');
+      return res.status(400).json({
+        error: 'Buddy request already exists'
+      });
+    }
+
+    // Check if they are already buddies
+    if (user.buddies.includes(matchId)) {
+      console.log('[BuddyRequest] Users are already buddies');
+      return res.status(400).json({
+        error: 'Users are already buddies'
+      });
+    }
+
+    // Add buddy request
+    user.outgoingBuddyRequests.push(matchId);
+    match.incomingBuddyRequests.push(userId);
+
+    // Save both users
+    await Promise.all([user.save(), match.save()]);
+
+    console.log('[BuddyRequest] Request sent successfully');
+    res.status(200).json({
+      message: 'Buddy request sent successfully!',
+      data: {
+        fromUser: userId,
+        toUser: matchId,
+        status: 'pending'
       }
-  
-      // Update `isVerified` field
-      user.isVerified = true;
-      await user.save();
-  
-      res.status(200).json({ message: "User verified successfully" });
-    } catch (error) {
-      console.error("Error verifying user:", error);
-      res.status(500).json({ error: "Server error" });
+    });
+  } catch (error) {
+    console.error('[BuddyRequest] Error:', error);
+    res.status(500).json({
+      error: 'Failed to process buddy request',
+      details: error.message
+    });
+  }
+});
+
+app.post("/api/users/verify", async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    // Find user by email
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
     }
-  });
 
-  app.get('/api/users/buddies', authenticate, async (req, res) => {
-    try {
-        // Get the user ID from the authenticated token
-        const userId = req.user.id;
+    // Update `isVerified` field
+    user.isVerified = true;
+    await user.save();
 
-        // Find the user and populate their buddies
-        const user = await User.findById(userId).populate('buddies', 'firstName lastName _id');
+    res.status(200).json({ message: "User verified successfully" });
+  } catch (error) {
+    console.error("Error verifying user:", error);
+    res.status(500).json({ error: "Server error" });
+  }
+});
 
-        if (!user) {
-            return res.status(404).json({ error: 'User not found' });
-        }
+app.get('/api/users/buddies', authenticate, async (req, res) => {
+  try {
+    // Get the user ID from the authenticated token
+    const userId = req.user.id;
 
-        // Send back the list of buddies
-        res.json(user.buddies);
-    } catch (error) {
-        console.error('Error fetching buddies:', error.message);
-        res.status(500).json({ error: 'Failed to fetch buddies' });
+    // Find the user and populate their buddies
+    const user = await User.findById(userId).populate('buddies', 'firstName lastName _id');
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
     }
+
+    // Send back the list of buddies
+    res.json(user.buddies);
+  } catch (error) {
+    console.error('Error fetching buddies:', error.message);
+    res.status(500).json({ error: 'Failed to fetch buddies' });
+  }
 });
 
 // Create chatroom endpoint
 app.post('/api/chatrooms', authenticate, async (req, res) => {
   try {
     const { participantId } = req.body;
-    
+
     // Check if a non-group chatroom already exists between these users
     const existingChatroom = await ChatRoom.findOne({
-      participants: { 
+      participants: {
         $all: [req.user._id, participantId],
         $size: 2
       },
@@ -526,17 +527,19 @@ app.post('/api/chatrooms', authenticate, async (req, res) => {
     // Add chatroom to both users' chatrooms array
     await User.updateOne(
       { _id: req.user._id },
-      { $addToSet: { 
-        chatrooms: chatroom._id
-      }
-    });
+      {
+        $addToSet: {
+          chatrooms: chatroom._id
+        }
+      });
 
     await User.updateOne(
       { _id: participantId },
-      { $addToSet: { 
-        chatrooms: chatroom._id
-      }
-    });
+      {
+        $addToSet: {
+          chatrooms: chatroom._id
+        }
+      });
 
     res.status(201).json(chatroom);
   } catch (error) {
@@ -585,7 +588,7 @@ app.post('/api/chatrooms/:chatroomId/messages', authenticate, async (req, res) =
 
     // Populate sender info before sending response
     await message.populate('sender', 'firstName lastName profilePicture');
-    
+
     res.json({
       message,
       isGroupChat: chatroom.isGroupChat,
@@ -599,70 +602,70 @@ app.post('/api/chatrooms/:chatroomId/messages', authenticate, async (req, res) =
 
 // Get user's chatrooms
 app.get('/api/chatrooms', authenticate, async (req, res) => {
-    try {
-        // Fetch chatrooms with participants and messages
-        const chatrooms = await ChatRoom.find({
-            participants: req.user._id
-        })
-        .populate('participants', 'firstName lastName profilePicture email')
-        .populate({
-            path: 'messages',
-            options: { sort: { 'timestamp': -1 }, limit: 1 },
-            populate: {
-                path: 'sender',
-                select: 'firstName lastName profilePicture'
-            }
-        })
-        .lean();
+  try {
+    // Fetch chatrooms with participants and messages
+    const chatrooms = await ChatRoom.find({
+      participants: req.user._id
+    })
+      .populate('participants', 'firstName lastName profilePicture email')
+      .populate({
+        path: 'messages',
+        options: { sort: { 'timestamp': -1 }, limit: 1 },
+        populate: {
+          path: 'sender',
+          select: 'firstName lastName profilePicture'
+        }
+      })
+      .lean();
 
-        // For group chats, we need to fetch the associated groups to get their names
-        const groupChatrooms = chatrooms.filter(chat => chat.isGroupChat);
-        const groups = await Group.find({
-            chatRoom: { $in: groupChatrooms.map(chat => chat._id) }
-        }).lean();
+    // For group chats, we need to fetch the associated groups to get their names
+    const groupChatrooms = chatrooms.filter(chat => chat.isGroupChat);
+    const groups = await Group.find({
+      chatRoom: { $in: groupChatrooms.map(chat => chat._id) }
+    }).lean();
 
-        // Create a map of chatroom ID to group name
-        const chatroomToGroupName = {};
-        groups.forEach(group => {
-            if (group.chatRoom) {
-                chatroomToGroupName[group.chatRoom.toString()] = group.name;
-            }
-        });
+    // Create a map of chatroom ID to group name
+    const chatroomToGroupName = {};
+    groups.forEach(group => {
+      if (group.chatRoom) {
+        chatroomToGroupName[group.chatRoom.toString()] = group.name;
+      }
+    });
 
-        // Process each chatroom to add display information
-        const chatroomsWithInfo = chatrooms.map(chatroom => {
-            const unreadCount = chatroom.unreadCounts?.[req.user._id.toString()] || 0;
-            let displayTitle, displayPhoto;
+    // Process each chatroom to add display information
+    const chatroomsWithInfo = chatrooms.map(chatroom => {
+      const unreadCount = chatroom.unreadCounts?.[req.user._id.toString()] || 0;
+      let displayTitle, displayPhoto;
 
-            if (chatroom.isGroupChat) {
-                // Use the group name from our map
-                displayTitle = chatroomToGroupName[chatroom._id.toString()] || 'Unnamed Group';
-                displayPhoto = chatroom.groupPhoto || '/images/default-group.jpeg';
-            } else {
-                // For direct messages, show the other participant's name
-                const otherParticipant = chatroom.participants.find(
-                    p => p._id.toString() !== req.user._id.toString()
-                );
-                displayTitle = otherParticipant ? 
-                    `${otherParticipant.firstName} ${otherParticipant.lastName}` : 
-                    'Unknown User';
-                displayPhoto = otherParticipant?.profilePicture || '/images/default-profile.jpeg';
-            }
+      if (chatroom.isGroupChat) {
+        // Use the group name from our map
+        displayTitle = chatroomToGroupName[chatroom._id.toString()] || 'Unnamed Group';
+        displayPhoto = chatroom.groupPhoto || '/images/default-group.jpeg';
+      } else {
+        // For direct messages, show the other participant's name
+        const otherParticipant = chatroom.participants.find(
+          p => p._id.toString() !== req.user._id.toString()
+        );
+        displayTitle = otherParticipant ?
+          `${otherParticipant.firstName} ${otherParticipant.lastName}` :
+          'Unknown User';
+        displayPhoto = otherParticipant?.profilePicture || '/images/default-profile.jpeg';
+      }
 
-            return {
-                ...chatroom,
-                unreadCount,
-                displayTitle,
-                displayPhoto,
-                lastMessage: chatroom.messages?.[0] || null
-            };
-        });
-        
-        res.json(chatroomsWithInfo);
-    } catch (error) {
-        console.error('Error fetching chatrooms:', error);
-        res.status(500).json({ error: 'Failed to fetch chatrooms' });
-    }
+      return {
+        ...chatroom,
+        unreadCount,
+        displayTitle,
+        displayPhoto,
+        lastMessage: chatroom.messages?.[0] || null
+      };
+    });
+
+    res.json(chatroomsWithInfo);
+  } catch (error) {
+    console.error('Error fetching chatrooms:', error);
+    res.status(500).json({ error: 'Failed to fetch chatrooms' });
+  }
 });
 
 // Create group chatroom as part of group creation
@@ -711,15 +714,15 @@ app.post('/api/users/create-group', authenticate, upload.single('photo'), async 
     // Update all participants' groups and chatrooms arrays
     await User.updateMany(
       { _id: { $in: allParticipants } },
-      { 
-        $addToSet: { 
+      {
+        $addToSet: {
           groups: group._id,
           chatrooms: chatRoom._id
         }
       }
     );
 
-    res.status(201).json({ 
+    res.status(201).json({
       message: 'Group created successfully',
       groupId: group._id,
       chatRoomId: chatRoom._id
@@ -730,229 +733,338 @@ app.post('/api/users/create-group', authenticate, upload.single('photo'), async 
   }
 });
 
-  // Get group details
-  app.get('/api/groups/:groupId', authenticate, async (req, res) => {
-    try {
-      const group = await Group.findById(req.params.groupId)
-        .populate('owner', 'firstName lastName profilePicture')
-        .populate('members', 'firstName lastName profilePicture')
-        .populate('pendingRequests.user', 'firstName lastName profilePicture');
-      
-      if (!group) {
-        return res.status(404).json({ error: 'Group not found' });
-      }
+// Get group details
+app.get('/api/groups/:groupId', authenticate, async (req, res) => {
+  try {
+    const group = await Group.findById(req.params.groupId)
+      .populate('owner', 'firstName lastName profilePicture')
+      .populate('members', 'firstName lastName profilePicture')
+      .populate('pendingRequests.user', 'firstName lastName profilePicture');
 
-      res.json(group);
-    } catch (error) {
-      console.error('Error fetching group:', error);
-      res.status(500).json({ error: 'Server error' });
+    if (!group) {
+      return res.status(404).json({ error: 'Group not found' });
     }
-  });
 
-  // Request to join group
-  app.post('/api/groups/:groupId/join', authenticate, async (req, res) => {
-    try {
-      const group = await Group.findById(req.params.groupId);
-      
-      if (!group) {
-        return res.status(404).json({ error: 'Group not found' });
-      }
+    res.json(group);
+  } catch (error) {
+    console.error('Error fetching group:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
 
-      // Check if user is already a member or has a pending request
-      if (group.members.includes(req.user._id)) {
-        return res.status(400).json({ error: 'Already a member' });
-      }
+// Request to join group
+app.post('/api/groups/:groupId/join', authenticate, async (req, res) => {
+  try {
+    const group = await Group.findById(req.params.groupId);
 
-      const existingRequest = group.pendingRequests.find(
-        request => request.user.toString() === req.user._id.toString()
-      );
-      if (existingRequest) {
-        return res.status(400).json({ error: 'Request already pending' });
-      }
-
-      // Add join request
-      group.pendingRequests.push({
-        user: req.user._id,
-        status: 'pending'
-      });
-      await group.save();
-
-      res.status(200).json({ message: 'Join request sent' });
-    } catch (error) {
-      console.error('Error sending join request:', error);
-      res.status(500).json({ error: 'Server error' });
+    if (!group) {
+      return res.status(404).json({ error: 'Group not found' });
     }
-  });
 
-  app.post("/api/users/upload-profile-picture", upload.single('profilePicture'), async (req, res) => {
-    console.log('[Server] Profile picture upload request received');
-    try {
-      if (!req.file) {
-        console.log('[Server] No file in request');
-        return res.status(400).json({ error: 'No file uploaded' });
-      }
-
-      console.log('[Server] File received:', {
-        originalname: req.file.originalname,
-        size: req.file.size,
-        mimetype: req.file.mimetype
-      });
-
-      let user;
-      // Check if this is an authenticated request
-      if (req.headers.authorization) {
-        try {
-          const token = req.headers.authorization.split(' ')[1];
-          const decoded = jwt.verify(token, SECRET_KEY);
-          user = await User.findById(decoded.id);
-          console.log('[Server] Authenticated user found:', user._id);
-        } catch (error) {
-          console.log('[Server] Token verification failed:', error.message);
-        }
-      }
-
-      // If not authenticated or token invalid, try to find user by email
-      if (!user && req.body.email) {
-        user = await User.findOne({ email: req.body.email });
-        console.log('[Server] User found by email:', user ? user._id : 'Not found');
-      }
-
-      if (!user) {
-        console.log('[Server] No user found');
-        return res.status(404).json({ error: 'User not found' });
-      }
-
-      // Upload new picture to Filen cloud
-      console.log('[Server] Uploading to Filen cloud...');
-      const filePath = await uploadProfilePicture(req.file.buffer, user._id.toString());
-      console.log('[Server] Upload successful, path:', filePath);
-
-      // Add server URL prefix if path is relative
-      const fullPath = filePath.startsWith('http') ? filePath : `http://localhost:5001${filePath}`;
-      console.log('[Server] Full path:', fullPath);
-
-      // Update user's profile picture path in database
-      console.log('[Server] Updating user document...');
-      const updatedUser = await User.findByIdAndUpdate(
-        user._id,
-        { profilePicture: fullPath },
-        { new: true }
-      );
-
-      if (!updatedUser) {
-        console.log('[Server] Failed to update user document');
-        throw new Error('Failed to update user document');
-      }
-
-      console.log('[Server] User document updated successfully');
-      res.json({ profilePicturePath: fullPath });
-    } catch (error) {
-      console.error('[Server] Error in profile picture upload:', error);
-      res.status(500).json({ 
-        error: 'Failed to upload profile picture',
-        details: error.message
-      });
+    // Check if user is already a member or has a pending request
+    if (group.members.includes(req.user._id)) {
+      return res.status(400).json({ error: 'Already a member' });
     }
-  });
 
-  // Endpoint to serve profile pictures
-  app.get('/api/profile-picture/:userId', async (req, res) => {
-    try {
-      const user = await User.findById(req.params.userId);
-      if (!user || !user.profilePicture) {
-        return res.status(404).send('Profile picture not found');
-      }
-
-      // Set cache control headers to prevent caching
-      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-      res.setHeader('Pragma', 'no-cache');
-      res.setHeader('Expires', '0');
-
-      const imageBuffer = await getProfilePicture(user.profilePicture);
-      res.type('image/jpeg').send(imageBuffer);
-    } catch (error) {
-      console.error('Error getting profile picture:', error);
-      res.status(500).send('Failed to get profile picture');
+    const existingRequest = group.pendingRequests.find(
+      request => request.user.toString() === req.user._id.toString()
+    );
+    if (existingRequest) {
+      return res.status(400).json({ error: 'Request already pending' });
     }
-  });
 
-  // Get messages for a specific chatroom
-  app.get('/api/chatrooms/:chatroomId/messages', authenticate, async (req, res) => {
+    // Add join request
+    group.pendingRequests.push({
+      user: req.user._id,
+      status: 'pending'
+    });
+    await group.save();
+
+    res.status(200).json({ message: 'Join request sent' });
+  } catch (error) {
+    console.error('Error sending join request:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+app.post("/api/users/upload-profile-picture", upload.single('profilePicture'), async (req, res) => {
+  console.log('[Server] Profile picture upload request received');
+  try {
+    if (!req.file) {
+      console.log('[Server] No file in request');
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+
+    console.log('[Server] File received:', {
+      originalname: req.file.originalname,
+      size: req.file.size,
+      mimetype: req.file.mimetype
+    });
+
+    let user;
+    // Check if this is an authenticated request
+    if (req.headers.authorization) {
       try {
-          const chatroom = await ChatRoom.findById(req.params.chatroomId)
-              .populate({
-                  path: 'messages',
-                  populate: {
-                      path: 'sender',
-                      select: 'name profilePicture'
-                  }
-              });
-
-          if (!chatroom) {
-              return res.status(404).json({ error: 'Chatroom not found' });
-          }
-
-          // Check if user is participant
-          if (!chatroom.participants.includes(req.user._id)) {
-              return res.status(403).json({ error: 'Not authorized to view these messages' });
-          }
-
-          res.json(chatroom.messages);
+        const token = req.headers.authorization.split(' ')[1];
+        const decoded = jwt.verify(token, SECRET_KEY);
+        user = await User.findById(decoded.id);
+        console.log('[Server] Authenticated user found:', user._id);
       } catch (error) {
-          console.error('Error fetching messages:', error);
-          res.status(500).json({ error: 'Failed to fetch messages' });
+        console.log('[Server] Token verification failed:', error.message);
       }
-  });
-
-  // Update user profile
-  app.put('/api/users/update-profile', authenticate, async (req, res) => {
-    console.log('[Server] Update profile request received');
-    try {
-      console.log('[Server] Request body:', req.body);
-      console.log('[Server] User from token:', req.user);
-
-      // Find and update user
-      const updatedUser = await User.findByIdAndUpdate(
-        req.user._id,
-        { $set: req.body },
-        { new: true }
-      );
-
-      if (!updatedUser) {
-        console.log('[Server] User not found for update');
-        return res.status(404).json({ error: 'User not found' });
-      }
-
-      console.log('[Server] User updated successfully:', updatedUser);
-      res.json(updatedUser);
-    } catch (error) {
-      console.error('[Server] Error updating user profile:', error);
-      res.status(500).json({ error: 'Failed to update profile', details: error.message });
     }
-  });
 
-  // Serve profile pictures
-  app.get('/profile-pictures/:filename', async (req, res) => {
-    try {
-      const filePath = `/profile-pictures/${req.params.filename}`;
-      console.log('[Server] Fetching profile picture:', filePath);
-      
-      const imageBuffer = await getProfilePicture(filePath);
-      
-      // Set appropriate headers
-      res.setHeader('Content-Type', 'image/jpeg');
-      res.setHeader('Cache-Control', 'public, max-age=31557600'); // Cache for 1 year
-      
-      res.send(imageBuffer);
-    } catch (error) {
-      console.error('[Server] Error serving profile picture:', error);
-      res.status(404).send('Profile picture not found');
+    // If not authenticated or token invalid, try to find user by email
+    if (!user && req.body.email) {
+      user = await User.findOne({ email: req.body.email });
+      console.log('[Server] User found by email:', user ? user._id : 'Not found');
     }
+
+    if (!user) {
+      console.log('[Server] No user found');
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Upload new picture to Filen cloud
+    console.log('[Server] Uploading to Filen cloud...');
+    const filePath = await uploadProfilePicture(req.file.buffer, user._id.toString());
+    console.log('[Server] Upload successful, path:', filePath);
+
+    // Add server URL prefix if path is relative
+    const fullPath = filePath.startsWith('http') ? filePath : `http://localhost:5001${filePath}`;
+    console.log('[Server] Full path:', fullPath);
+
+    // Update user's profile picture path in database
+    console.log('[Server] Updating user document...');
+    const updatedUser = await User.findByIdAndUpdate(
+      user._id,
+      { profilePicture: fullPath },
+      { new: true }
+    );
+
+    if (!updatedUser) {
+      console.log('[Server] Failed to update user document');
+      throw new Error('Failed to update user document');
+    }
+
+    console.log('[Server] User document updated successfully');
+    res.json({ profilePicturePath: fullPath });
+  } catch (error) {
+    console.error('[Server] Error in profile picture upload:', error);
+    res.status(500).json({
+      error: 'Failed to upload profile picture',
+      details: error.message
+    });
+  }
+});
+
+// Endpoint to serve profile pictures
+app.get('/api/profile-picture/:userId', async (req, res) => {
+  try {
+    const user = await User.findById(req.params.userId);
+    if (!user || !user.profilePicture) {
+      return res.status(404).send('Profile picture not found');
+    }
+
+    // Set cache control headers to prevent caching
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+
+    const imageBuffer = await getProfilePicture(user.profilePicture);
+    res.type('image/jpeg').send(imageBuffer);
+  } catch (error) {
+    console.error('Error getting profile picture:', error);
+    res.status(500).send('Failed to get profile picture');
+  }
+});
+
+// Get messages for a specific chatroom
+app.get('/api/chatrooms/:chatroomId/messages', authenticate, async (req, res) => {
+  try {
+    const chatroom = await ChatRoom.findById(req.params.chatroomId)
+      .populate({
+        path: 'messages',
+        populate: {
+          path: 'sender',
+          select: 'name profilePicture'
+        }
+      });
+
+    if (!chatroom) {
+      return res.status(404).json({ error: 'Chatroom not found' });
+    }
+
+    // Check if user is participant
+    if (!chatroom.participants.includes(req.user._id)) {
+      return res.status(403).json({ error: 'Not authorized to view these messages' });
+    }
+
+    res.json(chatroom.messages);
+  } catch (error) {
+    console.error('Error fetching messages:', error);
+    res.status(500).json({ error: 'Failed to fetch messages' });
+  }
+});
+
+// Update user profile
+app.put('/api/users/update-profile', authenticate, async (req, res) => {
+  console.log('[Server] Update profile request received');
+  try {
+    console.log('[Server] Request body:', req.body);
+    console.log('[Server] User from token:', req.user);
+
+    // Find and update user
+    const updatedUser = await User.findByIdAndUpdate(
+      req.user._id,
+      { $set: req.body },
+      { new: true }
+    );
+
+    if (!updatedUser) {
+      console.log('[Server] User not found for update');
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    console.log('[Server] User updated successfully:', updatedUser);
+    res.json(updatedUser);
+  } catch (error) {
+    console.error('[Server] Error updating user profile:', error);
+    res.status(500).json({ error: 'Failed to update profile', details: error.message });
+  }
+});
+
+// Serve profile pictures
+app.get('/profile-pictures/:filename', async (req, res) => {
+  try {
+    const filePath = `/profile-pictures/${req.params.filename}`;
+    console.log('[Server] Fetching profile picture:', filePath);
+
+    const imageBuffer = await getProfilePicture(filePath);
+
+    // Set appropriate headers
+    res.setHeader('Content-Type', 'image/jpeg');
+    res.setHeader('Cache-Control', 'public, max-age=31557600'); // Cache for 1 year
+
+    res.send(imageBuffer);
+  } catch (error) {
+    console.error('[Server] Error serving profile picture:', error);
+    res.status(404).send('Profile picture not found');
+  }
+});
+
+// Serve static files from the public directory
+app.use('/images', express.static(path.join(__dirname, 'public/images')));
+
+// Get specific user's profile
+app.get('/api/users/:userId', authenticate, async (req, res) => {
+  try {
+    const user = await User.findById(req.params.userId)
+      .select('-password -verificationCode -email'); // Exclude sensitive information
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    res.json(user);
+  } catch (error) {
+    console.error('Error fetching user profile:', error);
+    res.status(500).json({ error: 'Failed to fetch user profile' });
+  }
+});
+
+// Accept buddy request endpoint
+app.post('/api/users/accept-buddy-request', authenticate, async (req, res) => {
+  try {
+    const { fromUser } = req.body;
+    const toUser = req.user._id;
+
+    // Find both users
+    const [requestingUser, acceptingUser] = await Promise.all([
+      User.findById(fromUser),
+      User.findById(toUser)
+    ]);
+
+    if (!requestingUser || !acceptingUser) {
+      return res.status(404).json({ error: 'One or both users not found' });
+    }
+
+    // Verify request exists
+    if (!acceptingUser.incomingBuddyRequests.includes(fromUser)) {
+      return res.status(400).json({ error: 'No buddy request found' });
+    }
+
+    // Update both users' buddy lists and remove requests
+    await Promise.all([
+      User.findByIdAndUpdate(fromUser, {
+        $pull: { outgoingBuddyRequests: toUser },
+        $addToSet: { buddies: toUser }
+      }),
+      User.findByIdAndUpdate(toUser, {
+        $pull: { incomingBuddyRequests: fromUser },
+        $addToSet: { buddies: fromUser }
+      })
+    ]);
+
+    res.json({ message: 'Buddy request accepted' });
+  } catch (error) {
+    console.error('Error accepting buddy request:', error);
+    res.status(500).json({ error: 'Failed to accept buddy request' });
+  }
+});
+
+// Get user profile endpoint
+app.get('/api/users/profile/:matchId', authenticate, async (req, res) => {
+  const { matchId } = req.params;
+  const requestingUserId = req.user._id;
+  console.log('[UserProfile] Received request:', {
+    matchId,
+    requestingUserId: requestingUserId.toString(),
+    path: req.path,
+    method: req.method
   });
 
-  // Serve static files from the public directory
-  app.use('/images', express.static(path.join(__dirname, 'public/images')));
+  try {
+    console.log('[UserProfile] Fetching user from database...');
+    const user = await User.findById(matchId)
+      .select('-password -verificationCode -email')
+      .lean();
+
+    if (!user) {
+      console.log('[UserProfile] User not found:', matchId);
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    console.log('[UserProfile] Successfully found user:', {
+      id: user._id,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      hasProfilePic: !!user.profilePicture,
+      hasCourses: user.selectedCourses?.length > 0,
+      hasProjects: user.projects?.length > 0
+    });
+
+    // Check if the requesting user is buddies with this user
+    const requestingUser = await User.findById(requestingUserId);
+    const buddyStatus = {
+      isBuddy: requestingUser.buddies?.includes(matchId),
+      hasOutgoingRequest: requestingUser.outgoingBuddyRequests?.includes(matchId),
+      hasIncomingRequest: requestingUser.incomingBuddyRequests?.includes(matchId)
+    };
+    console.log('[UserProfile] Buddy status:', buddyStatus);
+
+    res.json(user);
+  } catch (error) {
+    console.error('[UserProfile] Error:', {
+      message: error.message,
+      stack: error.stack,
+      matchId,
+      requestingUserId: requestingUserId.toString()
+    });
+    res.status(500).json({ error: 'Failed to fetch user profile' });
+  }
+});
 
 server.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
-  });
+  console.log(`Server is running on http://localhost:${PORT}`);
+});
