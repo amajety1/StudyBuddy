@@ -610,6 +610,62 @@ h4{
   object-fit: cover;
 }
 
+.buddy-up-button {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 16px;
+  border-radius: 8px;
+  background-color: #1e293b; /* Sleek dark slate blue */
+  color: white;
+  font-family: 'Noto Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  gap: 8px; /* Space between icon and text */
+  cursor: pointer;
+  transition: background-color 0.2s ease-in-out, transform 0.2s ease-in-out;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.buddy-up-button:hover {
+  background-color: #111827; /* Slightly darker on hover */
+  transform: translateY(-2px); /* Subtle hover lift */
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+.plus-icon {
+  width: 18px;
+  height: 18px;
+  fill: #10b981; /* Vibrant green for the plus icon */
+  transition: transform 0.2s ease-in-out;
+}
+
+.buddy-up-button:hover .plus-icon {
+  transform: rotate(90deg); /* Rotate on hover for interactivity */
+}
+
+.buddy-up-button p {
+  margin: 0;
+  color: #e5e7eb; /* Light gray for contrast */
+  transition: color 0.2s ease-in-out;
+}
+
+.buddy-up-button:hover p {
+  color: #10b981; /* Matches the plus icon */
+}
+
+.sent-icon {
+  width: 18px;
+  height: 18px;
+  fill: #60a5fa; /* Vibrant blue for "Sent" */
+  transition: transform 0.2s ease-in-out;
+}
+
+.buddy-up-button:hover .sent-icon {
+  transform: scale(1.1); /* Slight scale on hover */
+}
+
 /* Messages */
 
 .messages {

@@ -191,16 +191,12 @@ const upload = multer({
 
 app.get("/api/users/me", authenticate, async (req, res) => {
     try {
-        console.log('Fetching current user:', req.user._id);
         const user = await User.findById(req.user._id).select('-password');
         if (!user) {
-            console.log('User not found');
             return res.status(404).json({ error: 'User not found' });
         }
-        console.log('User found:', user);
         res.json(user);
     } catch (error) {
-        console.error('Error fetching user:', error);
         res.status(500).json({ error: 'Failed to fetch user' });
     }
   });
@@ -395,7 +391,70 @@ app.put('/api/users/initial-profile-creation', async (req, res) => {
   });
   
 
+  app.post('/api/users/send-buddy-request', authenticate, async (req, res) => {
+    const { matchId } = req.body;
+    const userId = req.user._id;
 
+    try {
+        // Validate matchId is provided
+        if (!matchId) {
+            return res.status(400).json({ 
+                error: 'matchId is required' 
+            });
+        }
+
+        // Find both users
+        const currentUser = await User.findById(userId);
+        const matchUser = await User.findById(matchId);
+
+        // Validate both users exist
+        if (!currentUser || !matchUser) {
+            return res.status(404).json({
+                error: 'One or both users not found'
+            });
+        }
+
+        // Initialize arrays if they don't exist
+        if (!currentUser.outgoingBuddyRequests) {
+            currentUser.outgoingBuddyRequests = [];
+        }
+        if (!matchUser.incomingBuddyRequests) {
+            matchUser.incomingBuddyRequests = [];
+        }
+
+        // Check if request already exists
+        if (currentUser.outgoingBuddyRequests.includes(matchId)) {
+            return res.status(400).json({
+                error: 'Buddy request already sent'
+            });
+        }
+
+        // Add the buddy request
+        currentUser.outgoingBuddyRequests.push(matchId);
+        matchUser.incomingBuddyRequests.push(userId);
+
+        // Save both users
+        await currentUser.save();
+        await matchUser.save();
+
+        console.log(`User ${userId} sent a buddy request to ${matchId}`);
+        
+        res.status(200).json({ 
+            message: 'Buddy request sent successfully!',
+            data: {
+                fromUser: userId,
+                toUser: matchId,
+                status: 'pending'
+            }
+        });
+    } catch (error) {
+        console.error('Error processing buddy request:', error);
+        res.status(500).json({ 
+            error: 'Failed to process buddy request',
+            details: error.message 
+        });
+    }
+});
 
   app.post("/api/users/verify", async (req, res) => {
     try {

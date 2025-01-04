@@ -76,7 +76,7 @@ function OwnProfileSection() {
                     // Update profile image URL
                     if (userData.profilePicture) {
                         console.log("[Profile] Raw profile picture path:", userData.profilePicture);
-                        setImageError(false); // Reset error state
+                        
 
                     } else {
                         console.log("[Profile] No profile picture in user data");
