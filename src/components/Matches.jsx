@@ -118,8 +118,11 @@ function Matches() {
                 const response = await fetch('http://localhost:5001/api/users/fetch-recommended-matches', {
                     headers: {
                         'Authorization': `Bearer ${token}`
-                    }
+                    },
+
                 });
+
+                
 
                 if (!response.ok) {
                     throw new Error('Failed to fetch matches');

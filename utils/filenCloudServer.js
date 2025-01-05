@@ -10,13 +10,13 @@ const initializeFilenSDK = async () => {
     if (!isInitialized) {
         try {
             // Debug: Check environment variables
-            console.log('Environment check:');
-            console.log('FILEN_EMAIL exists:', !!process.env.FILEN_EMAIL);
-            console.log('FILEN_PASSWORD exists:', !!process.env.FILEN_PASSWORD);
+            // // console.log('Environment check:');
+            // console.log('FILEN_EMAIL exists:', !!process.env.FILEN_EMAIL);
+            // console.log('FILEN_PASSWORD exists:', !!process.env.FILEN_PASSWORD);
 
-            if (!process.env.FILEN_EMAIL || !process.env.FILEN_PASSWORD) {
-                throw new Error('Missing Filen credentials in environment variables');
-            }
+            // if (!process.env.FILEN_EMAIL || !process.env.FILEN_PASSWORD) {
+            //     throw new Error('Missing Filen credentials in environment variables');
+            // }
 
             // Initialize SDK first
             filen = new FilenSDK({
@@ -43,9 +43,9 @@ const initializeFilenSDK = async () => {
             }
 
             isInitialized = true;
-            console.log("Successfully initialized Filen SDK");
+            // console.log("Successfully initialized Filen SDK");
         } catch (error) {
-            console.error("Failed to initialize Filen SDK:", error);
+            // console.error("Failed to initialize Filen SDK:", error);
             isInitialized = false;
             filen = null;
             throw error;

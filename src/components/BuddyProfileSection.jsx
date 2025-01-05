@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useParams } from 'react-router-dom';
 import Matches from "./Matches";
 import ProjectCard from "./ProjectCard";
+import { io } from "socket.io-client";
 
 function BuddyProfileSection() {
     const { matchId } = useParams();
@@ -21,6 +22,7 @@ function BuddyProfileSection() {
     const [buddyStatus, setBuddyStatus] = useState('none');
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [socket, setSocket] = useState(null);
     const token = localStorage.getItem('token');
 
     // Fetch buddy data and determine status
@@ -93,6 +95,17 @@ function BuddyProfileSection() {
         }
     }, [matchId, token]);
 
+    useEffect(() => {
+        const socketUrl = 'http://localhost:5001';
+        const socketOptions = {
+            query: {
+                token: token
+            }
+        };
+        const socketInstance = io(socketUrl, socketOptions);
+        setSocket(socketInstance);
+    }, [token]);
+
     const handleBuddyAction = async () => {
         try {
             console.log("[BuddyProfile] Handling buddy action. Current status:", buddyStatus);
@@ -128,10 +141,36 @@ function BuddyProfileSection() {
                 if (response.ok) {
                     console.log("[BuddyProfile] Buddy request accepted successfully");
                     setBuddyStatus('connected');
+
+                    // // Create a chat room between the buddies
+                    // const chatResponse = await fetch('http://localhost:5001/api/chatrooms', {
+                    //     method: 'POST',
+                    //     headers: {
+                    //         'Authorization': `Bearer ${token}`,
+                    //         'Content-Type': 'application/json'
+                    //     },
+                    //     body: JSON.stringify({
+                    //         participants: [matchId],
+                    //         isGroupChat: false
+                    //     })
+                    // });
+
+                    // if (chatResponse.ok) {
+                    //     const chatData = await chatResponse.json();
+                    //     // Emit socket event to notify about new chat
+                    //     socket.emit('new_chat', {
+                    //         chatId: chatData._id,
+                    //         participants: chatData.participants
+                    //     });
+                    // } else {
+                    //     console.error("[BuddyProfile] Failed to create chat room");
+                    // }
                 } else {
                     console.log("[BuddyProfile] Failed to accept buddy request:", response.status);
                     throw new Error('Failed to accept buddy request');
                 }
+
+                
             }
         } catch (err) {
             console.error('[BuddyProfile] Error in buddy action:', err);

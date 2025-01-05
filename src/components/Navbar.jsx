@@ -12,13 +12,13 @@ function Navbar() {
   const navigate = useNavigate();
 
   const navigateToProfile = (user) => {
-    console.log('USER I AM LOGGING IN NAVBAR:  ', user);
+    //console.log('USER I AM LOGGING IN NAVBAR:  ', user);
     navigate(`/buddy/${user._id}`);
 };
 
   const seenNotifications = async () => {
     setHasUnseen(false);
-    console.log('Has Unseen: ', hasUnseen);
+    //console.log('Has Unseen: ', hasUnseen);
     try {
       const response = await fetch('http://localhost:5001/api/users/seen-notifications', {
         headers: {
@@ -29,7 +29,7 @@ function Navbar() {
         throw new Error('Failed to mark notifications as seen');
       }
     } catch (error) {
-      console.error('Error marking notifications as seen:', error);
+      //console.error('Error marking notifications as seen:', error);
     }
   };
 
@@ -95,7 +95,7 @@ function Navbar() {
           );
           setHasUnseen(false); // Remove the unseen indicator
         } catch (error) {
-          console.error("Error marking notifications as seen:", error);
+          //console.error("Error marking notifications as seen:", error);
         }
       }, 1000); // 1-second delay
     }
@@ -107,7 +107,7 @@ function Navbar() {
   useEffect(() => {
     const fetchNotifications = async () => {
       if (!token) return;
-      console.log("Token: ", token);
+      //console.log("Token: ", token);
 
       try {
         const response = await fetch("http://localhost:5001/api/users/get-notifications", {
@@ -126,10 +126,10 @@ function Navbar() {
         setNotifications(receivedNotifications);
         setHasUnseen(unseen);
 
-        console.log("Fetched Notifications: ", receivedNotifications);
-        console.log("Has Unseen Notifications: ", unseen);
+        //console.log("Fetched Notifications: ", receivedNotifications);
+        //console.log("Has Unseen Notifications: ", unseen);
       } catch (error) {
-        console.error("Error fetching notifications:", error);
+        //console.error("Error fetching notifications:", error);
       }
     };
 

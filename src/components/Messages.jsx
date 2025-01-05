@@ -12,6 +12,8 @@ function Messages() {
     const [isChatWindowMinimized, setIsChatWindowMinimized] = useState(false);
     const [error, setError] = useState(null);
     const [socket, setSocket] = useState(null);
+    const token = localStorage.getItem('token');
+
 
     useEffect(() => {
         // Initialize socket connection
@@ -24,8 +26,7 @@ function Messages() {
 
     const fetchChatrooms = async () => {
         try {
-            const token = localStorage.getItem('token');
-            const chatsResponse = await fetch('http://localhost:5001/api/chatrooms', {
+            const chatsResponse = await fetch('http://localhost:5001/api/users/get-chats', {
                 headers: { 
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
@@ -37,18 +38,11 @@ function Messages() {
             }
             
             const chatsData = await chatsResponse.json();
-            console.log('Chatrooms received:', chatsData);
+            console.log('Chatrooms received AAAAAHHHHHHH:', chatsData);
             setChatrooms(chatsData);
 
-            // Update selected chat if it exists
-            if (selectedChat) {
-                const updatedSelectedChat = chatsData.find(chat => chat._id === selectedChat._id);
-                if (updatedSelectedChat) {
-                    setSelectedChat(updatedSelectedChat);
-                }
-            }
         } catch (error) {
-            console.error('Error fetching chatrooms:', error);
+            //console.error('Error fetching chatrooms:', error);
             setError(error.message);
         }
     };
@@ -95,16 +89,6 @@ function Messages() {
     useEffect(() => {
         const fetchUserAndChats = async () => {
             try {
-                console.log('Fetching user and chats...');
-                const token = localStorage.getItem('token');
-                if (!token) {
-                    console.error('No token found');
-                    setError('Please log in to view messages');
-                    return;
-                }
-
-                // Fetch current user
-                console.log('Fetching current user...');
                 const userResponse = await fetch('http://localhost:5001/api/users/me', {
                     headers: { 
                         'Authorization': `Bearer ${token}`,
@@ -117,13 +101,13 @@ function Messages() {
                 }
                 
                 const userData = await userResponse.json();
-                console.log('User data received:', userData);
+                //console.log('User data received:', userData);
                 setCurrentUser(userData);
 
                 // Fetch chatrooms
                 await fetchChatrooms();
             } catch (error) {
-                console.error('Error in fetchUserAndChats:', error);
+                //console.error('Error in fetchUserAndChats:', error);
                 setError(error.message);
             }
         };
@@ -150,7 +134,7 @@ function Messages() {
     };
 
     const handleChatSelect = (chatroom) => {
-        console.log('Selected chatroom:', chatroom);
+        //console.log('Selected chatroom:', chatroom);
         setSelectedChat(chatroom);
         setIsChatWindowOpen(true);
         setIsChatWindowMinimized(false);

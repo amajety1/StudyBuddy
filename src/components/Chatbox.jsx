@@ -24,9 +24,11 @@ const Chatbox = ({ chatroom, currentUser }) => {
     if (chatroom.isGroupChat) {
       return chatroom.displayPhoto || '/images/default-group.jpeg';
     } else {
+      console.log('HEREEEEE')
       const otherParticipant = chatroom.participants.find(
         p => p._id !== currentUser._id
       );
+      console.log("OTHER PARTICIPANT: ", otherParticipant)
       return otherParticipant?.profilePicture || '/images/default-profile.jpeg';
     }
   };

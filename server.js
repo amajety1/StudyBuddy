@@ -44,7 +44,7 @@ const resend = new Resend(dotenv.RESEND_API_KEY);
 // Authentication middleware
 const authenticate = async (req, res, next) => {
   try {
-    console.log('Authenticating request...');
+    //console.log('Authenticating request...');
     const authHeader = req.headers.authorization;
 
     if (!authHeader) {
@@ -59,7 +59,7 @@ const authenticate = async (req, res, next) => {
     }
 
     const decoded = jwt.verify(token, SECRET_KEY);
-    console.log('Decoded token:', decoded);
+   // console.log('Decoded token:', decoded);
 
     // Use id instead of userId since that's what we stored in the token
     const user = await User.findById(decoded.id);
@@ -68,7 +68,7 @@ const authenticate = async (req, res, next) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    console.log('Authentication successful for user:', user._id);
+    // console.log('Authentication successful for user:', user._id);
     req.user = user;
     next();
   } catch (error) {
@@ -84,8 +84,8 @@ function generateVerificationCode() {
 
 // MongoDB Connection with error handling
 mongoose.connect('mongodb://127.0.0.1:27017/StudyBuddy')
-  .then(() => console.log('MongoDB Connected Successfully'))
-  .catch(err => console.error('MongoDB Connection Error:', err));
+  // .then(() => console.log('MongoDB Connected Successfully'))
+  // .catch(err => console.error('MongoDB Connection Error:', err));
 
 // Initialize Socket.IO
 const io = new Server(server, {
@@ -97,86 +97,28 @@ const io = new Server(server, {
 
 // Socket.IO connection handling
 io.on('connection', (socket) => {
-  console.log('A user connected');
+ // console.log('A user connected');
 
-  socket.on('join room', (roomId) => {
-    socket.join(roomId);
-    console.log(`User joined room: ${roomId}`);
-    // Reset unread count when user joins room
-    if (socket.user) {
-      ChatRoom.findById(roomId).then(chatroom => {
-        if (chatroom) {
-          chatroom.setUnreadCountForUser(socket.user._id, 0);
-          chatroom.save();
-        }
-      });
-    }
+  // Handle joining a chat room
+  socket.on('join_chat', (chatId) => {
+    socket.join(chatId);
+    console.log(`User joined chat: ${chatId}`);
   });
 
-  socket.on('send message', async ({ roomId, content, sender }) => {
-    try {
-      const message = new Message({
-        content,
-        sender,
-        chatRoom: roomId,  // Add chatRoom reference
-        timestamp: new Date()
+  // Handle new chat creation
+  socket.on('new_chat', (data) => {
+    const { chatId, participants } = data;
+    // Notify all participants about the new chat
+    participants.forEach(participantId => {
+      io.to(participantId.toString()).emit('chat_created', {
+        chatId,
+        participants
       });
-      await message.save();
-
-      const chatroom = await ChatRoom.findById(roomId);
-      if (!chatroom) return;
-
-      chatroom.messages.push(message._id);
-
-      // Initialize unread counts if needed
-      if (!chatroom.unreadCounts) {
-        chatroom.unreadCounts = {};
-      }
-
-      // Increment unread count for other participants
-      chatroom.participants.forEach(participantId => {
-        const participantIdStr = participantId.toString();
-        if (participantIdStr !== sender.toString()) {
-          chatroom.unreadCounts[participantIdStr] =
-            (chatroom.unreadCounts[participantIdStr] || 0) + 1;
-        }
-      });
-
-      await chatroom.save();
-
-      // Populate the message with sender info and include chatRoom ID
-      const populatedMessage = await Message.findById(message._id)
-        .populate('sender', 'firstName lastName profilePicture');
-
-      // Add chatRoom ID to the populated message
-      const messageWithRoom = {
-        ...populatedMessage.toObject(),
-        chatRoom: roomId
-      };
-
-      io.to(roomId).emit('new message', messageWithRoom);
-
-      // Emit updated unread counts
-      chatroom.participants.forEach(participantId => {
-        const participantIdStr = participantId.toString();
-        io.to(participantIdStr).emit('unread count update', {
-          roomId,
-          count: chatroom.unreadCounts[participantIdStr] || 0
-        });
-      });
-    } catch (error) {
-      console.error('Error sending message:', error);
-      socket.emit('error', { message: 'Failed to send message' });
-    }
-  });
-
-  socket.on('leave room', (roomId) => {
-    socket.leave(roomId);
-    console.log(`User left room: ${roomId}`);
+    });
   });
 
   socket.on('disconnect', () => {
-    console.log('User disconnected');
+    console.log('A user disconnected');
   });
 });
 
@@ -296,15 +238,23 @@ app.get('/api/users/fetch-recommended-matches', authenticate, async (req, res) =
     // Get the user ID from the authenticated token
     const userId = req.user.id;
 
-    // Fetch user's matches
+    // Fetch the current user's data
     const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    // Fetch recommended users based on selected courses
+    // Combine IDs to exclude (user's ID, buddies, outgoing and incoming requests)
+    const excludedIds = [
+      userId,
+      ...user.buddies,
+      ...user.outgoingBuddyRequests,
+      ...user.incomingBuddyRequests,
+    ];
+
+    // Fetch recommended users excluding the specified IDs
     const recommendedUsers = await User.find({
-      _id: { $ne: userId }
+      _id: { $nin: excludedIds },
     });
 
     res.json(recommendedUsers);
@@ -313,6 +263,7 @@ app.get('/api/users/fetch-recommended-matches', authenticate, async (req, res) =
     res.status(500).json({ error: 'Server error' });
   }
 });
+
 
 // Example backend route (Node.js/Express)
 app.post("/api/users/signup", async (req, res) => {
@@ -481,18 +432,6 @@ app.get("/api/users/seen-notifications", authenticate, async (req, res) => {
 });
 
 
-// app.get("/api/users/me", authenticate, async (req, res) => {
-//   try {
-//     const user = await User.findById(req.user._id).select('-password');
-//     if (!user) {
-//       return res.status(404).json({ error: 'User not found' });
-//     }
-//     res.json(user);
-//   } catch (error) {
-//     res.status(500).json({ error: 'Failed to fetch user' });
-//   }
-// });
-
 app.post('/api/users/send-buddy-request', authenticate, async (req, res) => {
   const { matchId } = req.body;
   const userId = req.user._id;
@@ -605,52 +544,67 @@ app.get('/api/users/buddies', authenticate, async (req, res) => {
 });
 
 // Create chatroom endpoint
-app.post('/api/chatrooms', authenticate, async (req, res) => {
+app.get('/api/users/get-chats', authenticate, async (req, res) => {
   try {
-    const { participantId } = req.body;
+    const userId = req.user._id;
 
-    // Check if a non-group chatroom already exists between these users
-    const existingChatroom = await ChatRoom.findOne({
-      participants: {
-        $all: [req.user._id, participantId],
-        $size: 2
+    // Find the user and populate chatrooms
+    const user = await User.findById(userId)
+  .populate({
+    path: 'chatrooms',
+    populate: [
+      {
+        path: 'messages', // Populate messages in chatrooms
+        select: 'content sender timestamp', // Select specific fields in messages
+        populate: { path: 'sender', select: 'firstName lastName email' } // Populate sender details in messages
       },
-      isGroupChat: false
-    });
+      {
+        path: 'participants', // Populate participants in chatrooms
+        select: 'firstName lastName profilePicture' // Select specific fields in participants
+      }
+    ]
+  })
+  .select('-password'); // Exclude password from user data
 
-    if (existingChatroom) {
-      return res.json(existingChatroom);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
     }
 
-    // Create new chatroom
-    const chatroom = new ChatRoom({
-      participants: [req.user._id, participantId],
-      messages: [],
-      isGroupChat: false
-    });
-    await chatroom.save();
-
-    // Add chatroom to both users' chatrooms array
-    await User.updateOne(
-      { _id: req.user._id },
-      {
-        $addToSet: {
-          chatrooms: chatroom._id
-        }
-      });
-
-    await User.updateOne(
-      { _id: participantId },
-      {
-        $addToSet: {
-          chatrooms: chatroom._id
-        }
-      });
-
-    res.status(201).json(chatroom);
+    // Send populated chatrooms
+    res.json(user.chatrooms);
   } catch (error) {
-    console.error('Error creating chatroom:', error);
-    res.status(500).json({ error: 'Failed to create chatroom' });
+    console.error('Error fetching chatrooms:', error);
+    res.status(500).json({ error: 'Failed to fetch chatrooms' });
+  }
+});
+
+
+// Create a new chat room
+app.post('/api/chatrooms', authenticate, async (req, res) => {
+  try {
+    const { participants, isGroupChat, groupName, groupPhoto } = req.body;
+    
+    // Add the current user to participants
+    const allParticipants = [...new Set([req.user._id, ...participants])];
+    
+    const chatRoom = new ChatRoom({
+      participants: allParticipants,
+      isGroupChat: isGroupChat || false,
+      groupName: groupName,
+      groupPhoto: groupPhoto,
+      chatTitle: isGroupChat ? groupName : undefined
+    });
+
+    await chatRoom.save();
+
+    // Populate participants information
+    const populatedChatRoom = await ChatRoom.findById(chatRoom._id)
+      .populate('participants', 'firstName lastName profilePicture');
+
+    res.status(201).json(populatedChatRoom);
+  } catch (error) {
+    console.error('Error creating chat room:', error);
+    res.status(500).json({ error: 'Failed to create chat room' });
   }
 });
 
