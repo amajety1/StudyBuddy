@@ -11,6 +11,11 @@ function Navbar() {
   const token = localStorage.getItem('token');
   const navigate = useNavigate();
 
+  const navigateToProfile = (user) => {
+    console.log('USER I AM LOGGING IN NAVBAR:  ', user);
+    navigate(`/buddy/${user._id}`);
+};
+
   const seenNotifications = async () => {
     setHasUnseen(false);
     console.log('Has Unseen: ', hasUnseen);
@@ -193,8 +198,8 @@ function Navbar() {
                       className={`notification-drop-item ${notification.seen ? "seen" : "unseen"}`}
                     >
                       <p className="noto-sans">{notification.content}</p>
+                      <img src={notification.user.profilePicture} onClick={() => {navigateToProfile(notification.user)}}></img>
                       <p className="noto-sans">{getTimeAgo(notification.date)}</p>
-                      <p> {"Notification seen?: "+ notification.seen}</p>
                     </div>
                   ))}
               </div>

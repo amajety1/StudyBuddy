@@ -397,7 +397,7 @@ app.get("/api/users/get-notifications", authenticate, async (req, res) => {
       .select("-password")
       .populate({
         path: "notifications",
-        populate: { path: "user", select: "firstName lastName email" },
+        populate: { path: "user", select: "firstName lastName email profilePicture" },
         options: { limit: 10, sort: { date: -1 } }, // Limit to 10, sorted by date descending
       });
 
@@ -414,6 +414,46 @@ app.get("/api/users/get-notifications", authenticate, async (req, res) => {
     res.status(500).json({ error: "Failed to fetch notifications" });
   }
 });
+
+
+app.post("/api/users/notify-match-of-request", authenticate, async (req, res) => {
+  try {
+    console.log("Starting notification creation...");
+
+    const user = await User.findById(req.user._id).select("-password");
+    console.log("User creating the notification:", user);
+
+    const { matchId } = req.body;
+    console.log("Target matchId:", matchId);
+
+    const newNotification = new Notification({
+      content: `${user.firstName} ${user.lastName} has sent you a buddy request`,
+      user: user._id,
+      type: "buddy_request",
+    });
+
+    const savedNotification = await newNotification.save();
+    console.log("Notification saved:", savedNotification);
+
+    const match = await User.findById(matchId);
+    if (!match) {
+      console.error("Match user not found for ID:", matchId);
+      return res.status(404).json({ error: "Match user not found" });
+    }
+
+    console.log("Match user found:", match);
+    match.notifications.push(savedNotification._id);
+    await match.save();
+    console.log("Match user updated with notification");
+
+    res.json({ message: "Notification sent successfully" });
+  } catch (error) {
+    console.error("Error sending notifications:", error);
+    res.status(500).json({ error: "Failed to send notifications" });
+  }
+});
+
+
 
 
 

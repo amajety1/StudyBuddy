@@ -9,10 +9,9 @@ function Matches() {
     const token = localStorage.getItem('token');
     const navigate = useNavigate();
 
-    const notifyMatchOfRequest = async (matchId)=>{
-        try{
-
-            const response = await fetch('http://localhost:5001/api/users/send-buddy-request', {
+    const notifyMatchOfRequest = async (matchId) => {
+        try {
+            const response = await fetch('http://localhost:5001/api/users/notify-match-of-request', {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -25,11 +24,19 @@ function Matches() {
 
             const data = await response.json();
 
-            
-        }catch(error){
-            console.error('Error notifying match of request:', error);
+            if (response.ok) {
+                console.log('Notification sent successfully');
+            } else {
+                throw new Error(data.error || 'Failed to send notification');
+            }
+        } catch (error) {
+            console.error('Error sending notification:', error);
+            alert(error.message || 'An error occurred. Please try again.');
         }
-    }
+
+       }
+
+   
 
     useEffect(() => {
         // Fetch current user's ID
