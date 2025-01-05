@@ -75,8 +75,29 @@ function Navbar() {
   const handleNotificationClick = (e) => {
     e.stopPropagation(); // Prevent closing on inside clicks
     setIsNotificationOpen(!isNotificationOpen);
-    seenNotifications();
+  
+    if (!isNotificationOpen) {
+      // Add a slight delay before marking notifications as seen
+      setTimeout(async () => {
+        try {
+          await seenNotifications(); // Update the server
+          // Update local state after the delay
+          setNotifications((prevNotifications) =>
+            prevNotifications.map((notification) => ({
+              ...notification,
+              seen: true,
+            }))
+          );
+          setHasUnseen(false); // Remove the unseen indicator
+        } catch (error) {
+          console.error("Error marking notifications as seen:", error);
+        }
+      }, 1000); // 1-second delay
+    }
   };
+  
+  
+  
 
   useEffect(() => {
     const fetchNotifications = async () => {
@@ -165,13 +186,19 @@ function Navbar() {
               onClick={(e) => e.stopPropagation()} // Prevent clicks inside from closing
             >
               <div className="notification-drop-flexbox">
-              {notifications.map((notification, index) => (
-                <div key={index} className="notification-drop-item">
-                  <p className="noto-sans">{notification.content}</p>
-                  <p className="noto-sans">{getTimeAgo(notification.date)}</p>
-                </div>
-              ))}
+                  {notifications.map((notification, index) => (
+                   
+                    <div
+                      key={index}
+                      className={`notification-drop-item ${notification.seen ? "seen" : "unseen"}`}
+                    >
+                      <p className="noto-sans">{notification.content}</p>
+                      <p className="noto-sans">{getTimeAgo(notification.date)}</p>
+                      <p> {"Notification seen?: "+ notification.seen}</p>
+                    </div>
+                  ))}
               </div>
+
             </div>
           )}
         </div>

@@ -446,43 +446,41 @@ h4{
   gap: 40px;
 
 }
+/* Base styling for notification items */
 
-.notification-dropdown-window{
+.notification-drop-flexbox .unseen{
+  color: #2b0f0f;
+}
+.notification-drop-flexbox .seen{
+  color: #ffa5a5;
+}
+
+.notification-drop-item:hover {
+  background: #f0f0f0;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transform: scale(1.05);
+}
+
+
+
+
+/* Dropdown window */
+.notification-dropdown-window {
   position: absolute;
   background-color: #ffffff;
   border: 1px solid #ddd;
   border-radius: 8px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  width: 150px; /* Set the width of the dropdown */
+  width: 150px;
   z-index: 1000;
   padding: 10px;
 }
 
+/* Notification flexbox */
 .notification-drop-flexbox {
   display: flex;
   flex-direction: column;
-  gap: 10px; /* Spacing between notification items */
-}
-
-.notification-drop-item {
-  background-color: #f9f9f9;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  padding: 10px;
-  font-family: "Noto Sans", sans-serif;
-  font-size: 14px;
-  color: #333;
-  transition: background-color 0.3s ease, box-shadow 0.3s ease;
-  display: flex;
-  align-items: center;
-  flex-direction: column;
-  justify-content: space-between; /* Allows for adding icons if needed */
-  cursor: pointer;
-}
-
-.notification-drop-item:hover {
-  background-color: #eaeaea;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  gap: 10px;
 }
 
 .notification-dot{
