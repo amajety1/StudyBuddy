@@ -84,8 +84,6 @@ function generateVerificationCode() {
 
 // MongoDB Connection with error handling
 mongoose.connect('mongodb://127.0.0.1:27017/StudyBuddy')
-  // .then(() => console.log('MongoDB Connected Successfully'))
-  // .catch(err => console.error('MongoDB Connection Error:', err));
 
 // Initialize Socket.IO
 const io = new Server(server, {
@@ -97,7 +95,7 @@ const io = new Server(server, {
 
 // Socket.IO connection handling
 io.on('connection', (socket) => {
- // console.log('A user connected');
+ console.log('A user connected');
 
   // Handle joining a chat room
   socket.on('join_chat', (chatId) => {
@@ -122,17 +120,13 @@ io.on('connection', (socket) => {
   });
 });
 
-// Store verification codes temporarily (in production, use Redis or database)
 const verificationCodes = new Map();
-
-// Multer configuration for handling file uploads
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
     fileSize: 5 * 1024 * 1024 // 5MB limit
   }
 });
-
 app.get("/api/users/me", authenticate, async (req, res) => {
   try {
     const user = await User.findById(req.user._id).select('-password');
@@ -144,8 +138,6 @@ app.get("/api/users/me", authenticate, async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch user' });
   }
 });
-
-// Example backend route (Node.js/Express)
 app.get("/api/users/verify", authenticate, async (req, res) => {
   try {
     res.status(200).json({ valid: true });
@@ -153,9 +145,6 @@ app.get("/api/users/verify", authenticate, async (req, res) => {
     res.status(401).json({ error: "Invalid token" });
   }
 });
-
-
-
 app.post("/api/users/login", async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -192,7 +181,6 @@ app.post("/api/users/login", async (req, res) => {
     res.status(500).json({ error: "Login failed" });
   }
 });
-
 app.put('/api/users/initial-profile-creation', async (req, res) => {
   try {
     const { email, github, selectedCourses, projects, profilePicture } = req.body;
@@ -232,7 +220,6 @@ app.put('/api/users/initial-profile-creation', async (req, res) => {
     res.status(500).json({ error: 'Server error' });
   }
 });
-
 app.get('/api/users/fetch-recommended-matches', authenticate, async (req, res) => {
   try {
     // Get the user ID from the authenticated token
@@ -263,9 +250,6 @@ app.get('/api/users/fetch-recommended-matches', authenticate, async (req, res) =
     res.status(500).json({ error: 'Server error' });
   }
 });
-
-
-// Example backend route (Node.js/Express)
 app.post("/api/users/signup", async (req, res) => {
   try {
     const { firstName, lastName, email, password } = req.body;
@@ -341,7 +325,6 @@ app.post("/api/users/signup", async (req, res) => {
     });
   }
 });
-
 app.get("/api/users/get-notifications", authenticate, async (req, res) => {
   try {
     const user = await User.findById(req.user._id)
@@ -365,8 +348,6 @@ app.get("/api/users/get-notifications", authenticate, async (req, res) => {
     res.status(500).json({ error: "Failed to fetch notifications" });
   }
 });
-
-
 app.post("/api/users/notify-match-of-request", authenticate, async (req, res) => {
   try {
     console.log("Starting notification creation...");
@@ -403,11 +384,6 @@ app.post("/api/users/notify-match-of-request", authenticate, async (req, res) =>
     res.status(500).json({ error: "Failed to send notifications" });
   }
 });
-
-
-
-
-
 app.get("/api/users/seen-notifications", authenticate, async (req, res) => {
   try {
     // Find the user by ID and populate notifications
@@ -430,8 +406,6 @@ app.get("/api/users/seen-notifications", authenticate, async (req, res) => {
     res.status(500).json({ error: "Failed to mark notifications as seen" });
   }
 });
-
-
 app.post('/api/users/send-buddy-request', authenticate, async (req, res) => {
   const { matchId } = req.body;
   const userId = req.user._id;
@@ -501,7 +475,6 @@ app.post('/api/users/send-buddy-request', authenticate, async (req, res) => {
     });
   }
 });
-
 app.post("/api/users/verify", async (req, res) => {
   try {
     const { email } = req.body;
@@ -522,7 +495,6 @@ app.post("/api/users/verify", async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 });
-
 app.get('/api/users/buddies', authenticate, async (req, res) => {
   try {
     // Get the user ID from the authenticated token
@@ -543,7 +515,7 @@ app.get('/api/users/buddies', authenticate, async (req, res) => {
   }
 });
 
-// Create chatroom endpoint
+// Fetch all chat of a user
 app.get('/api/users/get-chats', authenticate, async (req, res) => {
   try {
     const userId = req.user._id;
@@ -556,7 +528,7 @@ app.get('/api/users/get-chats', authenticate, async (req, res) => {
       {
         path: 'messages', // Populate messages in chatrooms
         select: 'content sender timestamp', // Select specific fields in messages
-        populate: { path: 'sender', select: 'firstName lastName email' } // Populate sender details in messages
+        populate: { path: 'sender', select: 'firstName lastName email profilePicture' } // Populate sender details in messages
       },
       {
         path: 'participants', // Populate participants in chatrooms
@@ -578,155 +550,34 @@ app.get('/api/users/get-chats', authenticate, async (req, res) => {
   }
 });
 
-
-// Create a new chat room
-app.post('/api/chatrooms', authenticate, async (req, res) => {
+app.post('/api/users/add-message-to-chatroom', authenticate, async (req, res) => {
   try {
-    const { participants, isGroupChat, groupName, groupPhoto } = req.body;
-    
-    // Add the current user to participants
-    const allParticipants = [...new Set([req.user._id, ...participants])];
-    
-    const chatRoom = new ChatRoom({
-      participants: allParticipants,
-      isGroupChat: isGroupChat || false,
-      groupName: groupName,
-      groupPhoto: groupPhoto,
-      chatTitle: isGroupChat ? groupName : undefined
-    });
+    const { chatroomId, content, sender } = req.body;
 
-    await chatRoom.save();
-
-    // Populate participants information
-    const populatedChatRoom = await ChatRoom.findById(chatRoom._id)
-      .populate('participants', 'firstName lastName profilePicture');
-
-    res.status(201).json(populatedChatRoom);
-  } catch (error) {
-    console.error('Error creating chat room:', error);
-    res.status(500).json({ error: 'Failed to create chat room' });
-  }
-});
-
-// Send a message in a chatroom
-app.post('/api/chatrooms/:chatroomId/messages', authenticate, async (req, res) => {
-  try {
-    const { content } = req.body;
-    const chatroom = await ChatRoom.findById(req.params.chatroomId)
-      .populate('participants', 'firstName lastName profilePicture');
-
+    const chatroom = await ChatRoom.findById(chatroomId);
     if (!chatroom) {
       return res.status(404).json({ error: 'Chatroom not found' });
     }
 
-    // Check if user is participant
-    if (!chatroom.participants.some(p => p._id.equals(req.user._id))) {
-      return res.status(403).json({ error: 'Not authorized to send messages in this chat' });
-    }
-
-    // Create new message
-    const message = new Message({
-      sender: req.user._id,
-      content,
-      timestamp: new Date()
-    });
+    const message = new Message({ content, sender, chatRoom: chatroomId }); // Include chatRoom
     await message.save();
 
-    // Add message to chatroom
-    chatroom.messages.push(message._id);
-    chatroom.lastUpdated = new Date();
-
-    // Update unread counts for all participants except sender
-    chatroom.participants.forEach(participant => {
-      if (!participant._id.equals(req.user._id)) {
-        if (!chatroom.unreadCounts) chatroom.unreadCounts = {};
-        chatroom.unreadCounts[participant._id] = (chatroom.unreadCounts[participant._id] || 0) + 1;
-      }
-    });
-
+    chatroom.messages.push(message._id); // Add the message ID to the chatroom's messages array
     await chatroom.save();
 
-    // Populate sender info before sending response
-    await message.populate('sender', 'firstName lastName profilePicture');
-
-    res.json({
-      message,
-      isGroupChat: chatroom.isGroupChat,
-      participants: chatroom.participants
-    });
+    const updatedChatroom = await ChatRoom.findById(chatroomId).populate('messages');
+    console.log('Updated chatroom:', updatedChatroom);
+    
+    res.json(updatedChatroom.messages);
   } catch (error) {
-    console.error('Error sending message:', error);
-    res.status(500).json({ error: 'Failed to send message' });
+    console.error('Error adding message:', error);
+    res.status(500).json({ error: 'Failed to add message' });
   }
 });
 
-// Get user's chatrooms
-app.get('/api/chatrooms', authenticate, async (req, res) => {
-  try {
-    // Fetch chatrooms with participants and messages
-    const chatrooms = await ChatRoom.find({
-      participants: req.user._id
-    })
-      .populate('participants', 'firstName lastName profilePicture email')
-      .populate({
-        path: 'messages',
-        options: { sort: { 'timestamp': -1 }, limit: 1 },
-        populate: {
-          path: 'sender',
-          select: 'firstName lastName profilePicture'
-        }
-      })
-      .lean();
 
-    // For group chats, we need to fetch the associated groups to get their names
-    const groupChatrooms = chatrooms.filter(chat => chat.isGroupChat);
-    const groups = await Group.find({
-      chatRoom: { $in: groupChatrooms.map(chat => chat._id) }
-    }).lean();
 
-    // Create a map of chatroom ID to group name
-    const chatroomToGroupName = {};
-    groups.forEach(group => {
-      if (group.chatRoom) {
-        chatroomToGroupName[group.chatRoom.toString()] = group.name;
-      }
-    });
 
-    // Process each chatroom to add display information
-    const chatroomsWithInfo = chatrooms.map(chatroom => {
-      const unreadCount = chatroom.unreadCounts?.[req.user._id.toString()] || 0;
-      let displayTitle, displayPhoto;
-
-      if (chatroom.isGroupChat) {
-        // Use the group name from our map
-        displayTitle = chatroomToGroupName[chatroom._id.toString()] || 'Unnamed Group';
-        displayPhoto = chatroom.groupPhoto || '/images/default-group.jpeg';
-      } else {
-        // For direct messages, show the other participant's name
-        const otherParticipant = chatroom.participants.find(
-          p => p._id.toString() !== req.user._id.toString()
-        );
-        displayTitle = otherParticipant ?
-          `${otherParticipant.firstName} ${otherParticipant.lastName}` :
-          'Unknown User';
-        displayPhoto = otherParticipant?.profilePicture || '/images/default-profile.jpeg';
-      }
-
-      return {
-        ...chatroom,
-        unreadCount,
-        displayTitle,
-        displayPhoto,
-        lastMessage: chatroom.messages?.[0] || null
-      };
-    });
-
-    res.json(chatroomsWithInfo);
-  } catch (error) {
-    console.error('Error fetching chatrooms:', error);
-    res.status(500).json({ error: 'Failed to fetch chatrooms' });
-  }
-});
 
 // Create group chatroom as part of group creation
 app.post('/api/users/create-group', authenticate, upload.single('photo'), async (req, res) => {
@@ -792,7 +643,6 @@ app.post('/api/users/create-group', authenticate, upload.single('photo'), async 
     res.status(500).json({ error: error.message || 'Server error' });
   }
 });
-
 // Get group details
 app.get('/api/groups/:groupId', authenticate, async (req, res) => {
   try {
@@ -811,7 +661,6 @@ app.get('/api/groups/:groupId', authenticate, async (req, res) => {
     res.status(500).json({ error: 'Server error' });
   }
 });
-
 // Request to join group
 app.post('/api/groups/:groupId/join', authenticate, async (req, res) => {
   try {
@@ -846,7 +695,6 @@ app.post('/api/groups/:groupId/join', authenticate, async (req, res) => {
     res.status(500).json({ error: 'Server error' });
   }
 });
-
 app.post("/api/users/upload-profile-picture", upload.single('profilePicture'), async (req, res) => {
   console.log('[Server] Profile picture upload request received');
   try {
@@ -917,7 +765,6 @@ app.post("/api/users/upload-profile-picture", upload.single('profilePicture'), a
     });
   }
 });
-
 // Endpoint to serve profile pictures
 app.get('/api/profile-picture/:userId', async (req, res) => {
   try {
@@ -938,35 +785,6 @@ app.get('/api/profile-picture/:userId', async (req, res) => {
     res.status(500).send('Failed to get profile picture');
   }
 });
-
-// Get messages for a specific chatroom
-app.get('/api/chatrooms/:chatroomId/messages', authenticate, async (req, res) => {
-  try {
-    const chatroom = await ChatRoom.findById(req.params.chatroomId)
-      .populate({
-        path: 'messages',
-        populate: {
-          path: 'sender',
-          select: 'name profilePicture'
-        }
-      });
-
-    if (!chatroom) {
-      return res.status(404).json({ error: 'Chatroom not found' });
-    }
-
-    // Check if user is participant
-    if (!chatroom.participants.includes(req.user._id)) {
-      return res.status(403).json({ error: 'Not authorized to view these messages' });
-    }
-
-    res.json(chatroom.messages);
-  } catch (error) {
-    console.error('Error fetching messages:', error);
-    res.status(500).json({ error: 'Failed to fetch messages' });
-  }
-});
-
 // Update user profile
 app.put('/api/users/update-profile', authenticate, async (req, res) => {
   console.log('[Server] Update profile request received');
@@ -993,7 +811,6 @@ app.put('/api/users/update-profile', authenticate, async (req, res) => {
     res.status(500).json({ error: 'Failed to update profile', details: error.message });
   }
 });
-
 // Serve profile pictures
 app.get('/profile-pictures/:filename', async (req, res) => {
   try {
@@ -1012,10 +829,8 @@ app.get('/profile-pictures/:filename', async (req, res) => {
     res.status(404).send('Profile picture not found');
   }
 });
-
 // Serve static files from the public directory
 app.use('/images', express.static(path.join(__dirname, 'public/images')));
-
 // Get specific user's profile
 app.get('/api/users/:userId', authenticate, async (req, res) => {
   try {
@@ -1032,7 +847,6 @@ app.get('/api/users/:userId', authenticate, async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch user profile' });
   }
 });
-
 // Accept buddy request endpoint
 app.post('/api/users/accept-buddy-request', authenticate, async (req, res) => {
   try {
@@ -1072,7 +886,6 @@ app.post('/api/users/accept-buddy-request', authenticate, async (req, res) => {
     res.status(500).json({ error: 'Failed to accept buddy request' });
   }
 });
-
 // Get user profile endpoint
 app.get('/api/users/profile/:matchId', authenticate, async (req, res) => {
   const { matchId } = req.params;
@@ -1124,7 +937,6 @@ app.get('/api/users/profile/:matchId', authenticate, async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch user profile' });
   }
 });
-
 server.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });

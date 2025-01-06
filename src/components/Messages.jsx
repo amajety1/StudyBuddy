@@ -38,7 +38,7 @@ function Messages() {
             }
             
             const chatsData = await chatsResponse.json();
-            console.log('Chatrooms received AAAAAHHHHHHH:', chatsData);
+            //console.log('Chatrooms received AAAAAHHHHHHH:', chatsData);
             setChatrooms(chatsData);
 
         } catch (error) {
@@ -52,21 +52,7 @@ function Messages() {
 
         // Listen for new messages
         socket.on('new message', (message) => {
-            setChatrooms(prevChatrooms => 
-                prevChatrooms.map(chatroom => {
-                    // If this is the chatroom that received the message
-                    if (chatroom._id === message.chatRoom) {
-                        return {
-                            ...chatroom,
-                            lastMessage: message, // Update the last message
-                            messages: chatroom.messages 
-                                ? [message, ...chatroom.messages]
-                                : [message]
-                        };
-                    }
-                    return chatroom;
-                })
-            );
+            console.log('WORKING')
         });
 
         // Listen for unread count updates

@@ -93,18 +93,8 @@ function ChatExpandedWindow({
 
     const fetchMessages = async () => {
         try {
-            const token = localStorage.getItem('token');
-            const response = await fetch(`http://localhost:5001/api/chatrooms/${chatroom._id}/messages`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-            if (response.ok) {
-                const data = await response.json();
-                setMessages(data);
-                setIsLoading(false);
-                scrollToBottom();
-            }
+            setMessages(chatroom.messages);
+            // console.log('CHATROOM:    ', chatroom.messages)
         } catch (error) {
             console.error('Error fetching messages:', error);
         }
@@ -123,9 +113,33 @@ function ChatExpandedWindow({
             });
 
             setNewMessage('');
+            console.log("AHHHHHH chatroom id:", chatroom._id);
+            console.log("AHHHHHH user id:", currentUser._id);
+            console.log("AHHHHHH message:", newMessage);
         } catch (error) {
             console.error('Error sending message:', error);
         }
+
+        try{
+            const response = await fetch(`http://localhost:5001/api/users/add-message-to-chatroom`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    chatroomId: chatroom._id,
+                    content: newMessage,
+                    sender: currentUser._id
+                })
+                
+            })
+
+            console.log(response)
+        } catch (error) {
+            console.error('Error sending message:', error);
+        }
+        
     };
 
     const scrollToBottom = () => {
@@ -191,16 +205,12 @@ function ChatExpandedWindow({
                 </div>
             )}
 
-            <div style={chatMessagesStyle}>
-                {isLoading ? (
-                    <div className="loading">Loading messages...</div>
-                ) : (
-                    <ChatExpandedWindowMessages 
-                        messages={messages} 
-                        currentUser={currentUser}
-                        isGroupChat={chatroom.isGroupChat}
-                    />
-                )}
+            <div style={chatMessagesStyle}>    
+                <ChatExpandedWindowMessages 
+                    messages={messages} 
+                    currentUser={currentUser}
+                    isGroupChat={chatroom.isGroupChat}/>
+               
                 <div ref={messagesEndRef} />
             </div>
 
