@@ -916,6 +916,17 @@ app.post('/api/users/accept-buddy-request', authenticate, async (req, res) => {
       })
     ]);
 
+    const chatroom = new ChatRoom({
+      participants: [fromUser, toUser],
+      isGroupChat: false
+    });
+    await chatroom.save();
+
+    await Promise.all([
+      User.findByIdAndUpdate(fromUser, { $addToSet: { chatrooms: chatroom._id } }),
+      User.findByIdAndUpdate(toUser, { $addToSet: { chatrooms: chatroom._id } })
+    ]);
+
 
 
 
