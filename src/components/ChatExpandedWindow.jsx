@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { io } from 'socket.io-client';
 import ChatExpandedWindowMessages from './ChatExpandedWindowMessages';
+import { io } from 'socket.io-client';
 
 const chatWindowStyle = {
     position: 'fixed',
     bottom: '0',
-    right: '350px', // Moved more to the left to not cover Messages
+    right: '350px',
     width: '300px',
     height: '400px',
     backgroundColor: 'white',
@@ -15,7 +15,6 @@ const chatWindowStyle = {
     flexDirection: 'column',
     zIndex: 1000,
 };
-
 const chatHeaderStyle = {
     padding: '10px',
     borderBottom: '1px solid #eee',
@@ -23,7 +22,6 @@ const chatHeaderStyle = {
     justifyContent: 'space-between',
     alignItems: 'center',
 };
-
 const chatMessagesStyle = {
     flex: 1,
     overflowY: 'auto',
@@ -31,7 +29,6 @@ const chatMessagesStyle = {
     display: 'flex',
     flexDirection: 'column',
 };
-
 const chatInputStyle = {
     padding: '10px',
     borderTop: '1px solid #eee',
@@ -44,101 +41,82 @@ function ChatExpandedWindow({
     onClose,
     isChatWindowMinimized,
     handleChatMinimizeClick,
-    setUnreadCount
 }) {
     const [messages, setMessages] = useState([]);
     const [newMessage, setNewMessage] = useState('');
-    const [isLoading, setIsLoading] = useState(true);
     const [showParticipants, setShowParticipants] = useState(false);
-    const [socket, setSocket] = useState(null);
     const messagesEndRef = useRef(null);
+    const socket = useRef(null); // Use useRef for socket
 
     useEffect(() => {
-        const newSocket = io('http://localhost:5001');
-        setSocket(newSocket);
+        // Initialize Socket.IO
+        socket.current = io('http://localhost:5001');
 
-        // Cleanup on unmount
-        return () => newSocket.close();
-    }, []);
+        if (chatroom) {
+            socket.current.emit("join_chat", chatroom._id);
+            // Fetch existing messages
+            fetchMessages();
+        }
 
-    useEffect(() => {
-        if (!socket || !chatroom) return;
-
-        // Join the chat room
-        socket.emit('join room', chatroom._id);
-
-        // Listen for new messages
-        socket.on('new message', (message) => {
-            setMessages(prevMessages => [...prevMessages, message]);
-        });
-
-        // Listen for errors
-        socket.on('error', (error) => {
-            console.error('Socket error:', error);
-        });
-
-        // Cleanup when leaving room
         return () => {
-            socket.emit('leave room', chatroom._id);
-            socket.off('new message');
-            socket.off('error');
+            if (socket.current) {
+                socket.current.disconnect();
+            }
         };
-    }, [socket, chatroom]);
-
-    useEffect(() => {
-        fetchMessages();
-        const interval = setInterval(fetchMessages, 5000); // Poll for new messages
-        return () => clearInterval(interval);
-    }, []);
+    }, [chatroom]);
 
     const fetchMessages = async () => {
         try {
-            setMessages(chatroom.messages);
-            // console.log('CHATROOM:    ', chatroom.messages)
+            const response = await fetch(`http://localhost:5001/api/chatrooms/${chatroom._id}/messages`, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+            if (response.ok) {
+                const data = await response.json();
+                setMessages(data);
+            }
         } catch (error) {
             console.error('Error fetching messages:', error);
         }
     };
 
-    const handleSend = async (e) => {
+    useEffect(() => {
+        if (!socket.current) return;
+    
+        socket.current.on("message_received", (message) => {
+            console.log('Received message:', message);
+            if (message.chatroomId === chatroom._id) {
+                setMessages(prevMessages => [...prevMessages, message]);
+                scrollToBottom();
+            }
+        });
+
+        socket.current.on("message_error", (error) => {
+            console.error('Message error:', error);
+        });
+    
+        return () => {
+            if (socket.current) {
+                socket.current.off("message_received");
+                socket.current.off("message_error");
+            }
+        };
+    }, [chatroom]);
+
+    const handleSend = (e) => {
         e.preventDefault();
-        if (!newMessage.trim() || !socket) return;
-
-        try {
-            // Emit the message through socket
-            socket.emit('send message', {
-                roomId: chatroom._id,
-                content: newMessage,
-                sender: currentUser._id
-            });
-
-            setNewMessage('');
-            
-        } catch (error) {
-            console.error('Error sending message:', error);
-        }
-
-        try{
-            const response = await fetch(`http://localhost:5001/api/users/add-message-to-chatroom`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    chatroomId: chatroom._id,
-                    content: newMessage,
-                    sender: currentUser._id
-                })
-                
-            })
-
-            
-        } catch (error) {
-            console.error('Error sending message:', error);
-        }
-        
+        if (!newMessage.trim() || !socket.current) return;
+    
+        socket.current.emit("new_message", {
+            chatroomId: chatroom._id,
+            content: newMessage,
+            sender: currentUser._id,
+        });
+    
+        setNewMessage('');
     };
+    
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });

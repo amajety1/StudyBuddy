@@ -1,11 +1,8 @@
 import dotenv from 'dotenv';
-dotenv.config();
-
 import express from 'express';
 import mongoose from 'mongoose';
 import User from './models/User.js';
 import Notification from './models/Notification.js';
-
 import ChatRoom from './models/ChatRoom.js';
 import Message from './models/Message.js';
 import cors from 'cors';
@@ -22,6 +19,8 @@ import Group from './models/Group.js';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 
+dotenv.config();
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
@@ -31,8 +30,13 @@ const SECRET_KEY = process.env.JWT_SECRET;
 const app = express();
 const PORT = 5001;
 
+
+
 // Create HTTP server
 const server = createServer(app);
+
+// Create socket server
+
 
 // Middleware
 app.use(express.json());
@@ -85,39 +89,91 @@ function generateVerificationCode() {
 // MongoDB Connection with error handling
 mongoose.connect('mongodb://127.0.0.1:27017/StudyBuddy')
 
-// Initialize Socket.IO
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:5173",
-    methods: ["GET", "POST"]
-  }
+    origin: "http://localhost:5173", // Allow your Vite frontend
+    methods: ["GET", "POST"],       // Allowed HTTP methods
+    credentials: true,              // Allow credentials (optional)
+  },
 });
 
-// Socket.IO connection handling
-io.on('connection', (socket) => {
+io.on("connection", (socket) => {
+//  console.log("A user connected");
 
-  // Handle joining a chat room
-  socket.on('join_chat', (chatId) => {
+  // Join a chatroom
+  socket.on("join_chat", (chatId) => {
     socket.join(chatId);
-    console.log(`User joined chat: ${chatId}`);
+    // console.log(`User joined chat: ${chatId}`);
   });
 
-  // Handle new chat creation
-  socket.on('new_chat', (data) => {
-    const { chatId, participants } = data;
-    // Notify all participants about the new chat
-    participants.forEach(participantId => {
-      io.to(participantId.toString()).emit('chat_created', {
-        chatId,
-        participants
+  // Emit new message event
+  socket.on("new_message", async (message) => {
+    try {
+      const { chatroomId, content, sender } = message;
+      
+      // Create and save the message
+      const newMessage = new Message({
+        content,
+        sender,
+        chatRoom: chatroomId,
+        timestamp: new Date()
       });
-    });
+      await newMessage.save();
+
+      // Update chatroom
+      const chatroom = await ChatRoom.findById(chatroomId);
+      if (!chatroom) {
+        throw new Error('Chatroom not found');
+      }
+      chatroom.messages.push(newMessage._id);
+      await chatroom.save();
+
+      // Get sender information
+      const senderInfo = await User.findById(sender).select('firstName lastName profilePicture');
+      
+      // Prepare message with sender info
+      const messageWithInfo = {
+        _id: newMessage._id,
+        chatroomId,
+        content,
+        sender: senderInfo,
+        timestamp: newMessage.timestamp
+      };
+
+      // Emit message to the chatroom
+      io.to(chatroomId).emit("message_received", messageWithInfo);
+      
+      // Emit last message update to all participants
+      const updatedChatroom = await ChatRoom.findById(chatroomId)
+        .populate('participants')
+        .populate({
+          path: 'messages',
+          populate: {
+            path: 'sender',
+            select: 'firstName lastName profilePicture'
+          }
+        });
+
+      // Emit to all participants to update their chat list
+      updatedChatroom.participants.forEach(participant => {
+        socket.to(participant._id.toString()).emit("update_last_message", {
+          chatroomId,
+          lastMessage: messageWithInfo
+        });
+      });
+
+    } catch (error) {
+      console.error('Error handling new message:', error);
+      socket.emit('message_error', { error: 'Failed to process message' });
+    }
   });
 
-  socket.on('disconnect', () => {
-    console.log('A user disconnected');
+  socket.on("disconnect", () => {
+    console.log("A user disconnected");
   });
 });
+
+
 
 const verificationCodes = new Map();
 const upload = multer({
@@ -337,9 +393,7 @@ app.get("/api/users/get-notifications", authenticate, async (req, res) => {
     // Check if there are any unseen notifications
     const hasUnseenNotifications = user.notifications.some(notification => !notification.seen);
 
-    // Log notifications for debugging
-    console.log("NOTIFICATIONS:", user.notifications);
-
+  
     // Send response with notifications and unseen status
     res.json({ notifications: user.notifications, hasUnseen: hasUnseenNotifications });
   } catch (error) {
@@ -513,71 +567,54 @@ app.get('/api/users/buddies', authenticate, async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch buddies' });
   }
 });
-
 // Fetch all chat of a user
 app.get('/api/users/get-chats', authenticate, async (req, res) => {
   try {
     const userId = req.user._id;
-
-    // Find the user and populate chatrooms
-    const user = await User.findById(userId)
-  .populate({
-    path: 'chatrooms',
-    populate: [
-      {
-        path: 'messages', // Populate messages in chatrooms
-        select: 'content sender timestamp', // Select specific fields in messages
-        populate: { path: 'sender', select: 'firstName lastName email profilePicture' } // Populate sender details in messages
-      },
-      {
-        path: 'participants', // Populate participants in chatrooms
-        select: 'firstName lastName profilePicture' // Select specific fields in participants
+    const chatrooms = await ChatRoom.find({
+      participants: userId
+    })
+    .populate('participants', 'firstName lastName profilePicture')
+    .populate({
+      path: 'messages',
+      options: { sort: { 'timestamp': -1 } }, // Sort messages by timestamp in descending order
+      populate: {
+        path: 'sender',
+        select: 'firstName lastName profilePicture'
       }
-    ]
-  })
-  .select('-password'); // Exclude password from user data
+    });
 
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-
-    // Send populated chatrooms
-    res.json(user.chatrooms);
+    res.json(chatrooms);
   } catch (error) {
     console.error('Error fetching chatrooms:', error);
     res.status(500).json({ error: 'Failed to fetch chatrooms' });
   }
 });
 
-app.post('/api/users/add-message-to-chatroom', authenticate, async (req, res) => {
+// Get messages for a chatroom
+app.get('/api/chatrooms/:chatroomId/messages', authenticate, async (req, res) => {
   try {
-    const { chatroomId, content, sender } = req.body;
+    const { chatroomId } = req.params;
+    
+    const chatroom = await ChatRoom.findById(chatroomId)
+      .populate({
+        path: 'messages',
+        populate: {
+          path: 'sender',
+          select: 'firstName lastName profilePicture'
+        }
+      });
 
-    const chatroom = await ChatRoom.findById(chatroomId);
     if (!chatroom) {
       return res.status(404).json({ error: 'Chatroom not found' });
     }
 
-    const message = new Message({ content, sender, chatRoom: chatroomId }); // Include chatRoom
-    await message.save();
-
-    chatroom.messages.push(message._id); // Add the message ID to the chatroom's messages array
-    await chatroom.save();
-
-    const updatedChatroom = await ChatRoom.findById(chatroomId).populate('messages');
-    // console.log('Updated chatroom:', updatedChatroom);
-    
-    res.json(updatedChatroom.messages);
+    res.json(chatroom.messages);
   } catch (error) {
-    console.error('Error adding message:', error);
-    res.status(500).json({ error: 'Failed to add message' });
+    console.error('Error fetching messages:', error);
+    res.status(500).json({ error: 'Failed to fetch messages' });
   }
 });
-
-
-
-
-
 // Create group chatroom as part of group creation
 app.post('/api/users/create-group', authenticate, upload.single('photo'), async (req, res) => {
   try {
@@ -878,6 +915,9 @@ app.post('/api/users/accept-buddy-request', authenticate, async (req, res) => {
         $addToSet: { buddies: fromUser }
       })
     ]);
+
+
+
 
     res.json({ message: 'Buddy request accepted' });
   } catch (error) {

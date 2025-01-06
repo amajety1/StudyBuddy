@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { io } from 'socket.io-client';
 import ChatExpandedWindow from './ChatExpandedWindow';
 import Chatbox from './Chatbox';
 
@@ -11,18 +10,7 @@ function Messages() {
     const [isChatWindowOpen, setIsChatWindowOpen] = useState(false);
     const [isChatWindowMinimized, setIsChatWindowMinimized] = useState(false);
     const [error, setError] = useState(null);
-    const [socket, setSocket] = useState(null);
     const token = localStorage.getItem('token');
-
-
-    useEffect(() => {
-        // Initialize socket connection
-        const newSocket = io('http://localhost:5001');
-        setSocket(newSocket);
-
-        // Cleanup on unmount
-        return () => newSocket.close();
-    }, []);
 
     const fetchChatrooms = async () => {
         try {
@@ -47,30 +35,7 @@ function Messages() {
         }
     };
 
-    useEffect(() => {
-        if (!socket) return;
-
-        // Listen for new messages
-        socket.on('new message', (message) => {
-            console.log('WORKING')
-        });
-
-        // Listen for unread count updates
-        socket.on('unread count update', ({ roomId, count }) => {
-            setChatrooms(prevChatrooms => 
-                prevChatrooms.map(chatroom => 
-                    chatroom._id === roomId 
-                        ? { ...chatroom, unreadCount: count }
-                        : chatroom
-                )
-            );
-        });
-
-        return () => {
-            socket.off('new message');
-            socket.off('unread count update');
-        };
-    }, [socket]);
+ 
 
     useEffect(() => {
         const fetchUserAndChats = async () => {
