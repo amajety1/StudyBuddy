@@ -113,9 +113,7 @@ function ChatExpandedWindow({
             });
 
             setNewMessage('');
-            console.log("AHHHHHH chatroom id:", chatroom._id);
-            console.log("AHHHHHH user id:", currentUser._id);
-            console.log("AHHHHHH message:", newMessage);
+            
         } catch (error) {
             console.error('Error sending message:', error);
         }
@@ -135,7 +133,7 @@ function ChatExpandedWindow({
                 
             })
 
-            console.log(response)
+            
         } catch (error) {
             console.error('Error sending message:', error);
         }

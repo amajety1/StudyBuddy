@@ -95,7 +95,6 @@ const io = new Server(server, {
 
 // Socket.IO connection handling
 io.on('connection', (socket) => {
- console.log('A user connected');
 
   // Handle joining a chat room
   socket.on('join_chat', (chatId) => {
@@ -566,7 +565,7 @@ app.post('/api/users/add-message-to-chatroom', authenticate, async (req, res) =>
     await chatroom.save();
 
     const updatedChatroom = await ChatRoom.findById(chatroomId).populate('messages');
-    console.log('Updated chatroom:', updatedChatroom);
+    // console.log('Updated chatroom:', updatedChatroom);
     
     res.json(updatedChatroom.messages);
   } catch (error) {
