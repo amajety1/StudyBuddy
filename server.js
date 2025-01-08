@@ -63,7 +63,7 @@ const authenticate = async (req, res, next) => {
     }
 
     const decoded = jwt.verify(token, SECRET_KEY);
-   // console.log('Decoded token:', decoded);
+    // console.log('Decoded token:', decoded);
 
     // Use id instead of userId since that's what we stored in the token
     const user = await User.findById(decoded.id);
@@ -98,7 +98,7 @@ const io = new Server(server, {
 });
 
 io.on("connection", (socket) => {
-//  console.log("A user connected");
+  //  console.log("A user connected");
 
   // Join a chatroom
   socket.on("join_chat", (chatId) => {
@@ -110,7 +110,7 @@ io.on("connection", (socket) => {
   socket.on("new_message", async (message) => {
     try {
       const { chatroomId, content, sender } = message;
-      
+
       // Create and save the message
       const newMessage = new Message({
         content,
@@ -130,7 +130,7 @@ io.on("connection", (socket) => {
 
       // Get sender information
       const senderInfo = await User.findById(sender).select('firstName lastName profilePicture');
-      
+
       // Prepare message with sender info
       const messageWithInfo = {
         _id: newMessage._id,
@@ -142,7 +142,7 @@ io.on("connection", (socket) => {
 
       // Emit message to the chatroom
       io.to(chatroomId).emit("message_received", messageWithInfo);
-      
+
       // Emit last message update to all participants
       const updatedChatroom = await ChatRoom.findById(chatroomId)
         .populate('participants')
@@ -393,7 +393,7 @@ app.get("/api/users/get-notifications", authenticate, async (req, res) => {
     // Check if there are any unseen notifications
     const hasUnseenNotifications = user.notifications.some(notification => !notification.seen);
 
-  
+
     // Send response with notifications and unseen status
     res.json({ notifications: user.notifications, hasUnseen: hasUnseenNotifications });
   } catch (error) {
@@ -574,15 +574,15 @@ app.get('/api/users/get-chats', authenticate, async (req, res) => {
     const chatrooms = await ChatRoom.find({
       participants: userId
     })
-    .populate('participants', 'firstName lastName profilePicture')
-    .populate({
-      path: 'messages',
-      options: { sort: { 'timestamp': -1 } }, // Sort messages by timestamp in descending order
-      populate: {
-        path: 'sender',
-        select: 'firstName lastName profilePicture'
-      }
-    });
+      .populate('participants', 'firstName lastName profilePicture')
+      .populate({
+        path: 'messages',
+        options: { sort: { 'timestamp': -1 } }, // Sort messages by timestamp in descending order
+        populate: {
+          path: 'sender',
+          select: 'firstName lastName profilePicture'
+        }
+      });
 
     res.json(chatrooms);
   } catch (error) {
@@ -595,7 +595,7 @@ app.get('/api/users/get-chats', authenticate, async (req, res) => {
 app.get('/api/chatrooms/:chatroomId/messages', authenticate, async (req, res) => {
   try {
     const { chatroomId } = req.params;
-    
+
     const chatroom = await ChatRoom.findById(chatroomId)
       .populate({
         path: 'messages',
@@ -641,8 +641,10 @@ app.post('/api/users/create-group', authenticate, upload.single('photo'), async 
     const chatRoom = new ChatRoom({
       participants: allParticipants,
       isGroupChat: true,
-      chatTitle: name, // Set the group name as chat title
-      groupPhoto: profilePicture
+      groupName: name,
+      chatTitle: name,
+      groupPhoto: profilePicture,
+      messages: []
     });
     await chatRoom.save();
 
