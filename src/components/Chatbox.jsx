@@ -43,7 +43,7 @@ const Chatbox = ({ chatroom, currentUser, onClick, isExpanded, isMinimized, onMi
   // Get the display title based on chat type
   const getChatTitle = () => {
     if (chatroom.isGroupChat) {
-      return chatroom.displayTitle;
+      return chatroom.groupName;
     } else {
       const otherParticipant = chatroom.participants.find(
         p => p._id !== currentUser._id
@@ -57,7 +57,7 @@ const Chatbox = ({ chatroom, currentUser, onClick, isExpanded, isMinimized, onMi
   // Get the display photo based on chat type
   const getChatPhoto = () => {
     if (chatroom.isGroupChat) {
-      return chatroom.displayPhoto || '/images/default-group.jpeg';
+      return chatroom.groupPhoto || '/images/default-group.jpeg';
     } else {
       
       const otherParticipant = chatroom.participants.find(

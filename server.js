@@ -626,14 +626,15 @@ app.post('/api/users/create-group', authenticate, upload.single('photo'), async 
     let profilePicture = '/images/default-group.jpeg';
     if (req.file) {
       try {
-        const groupsDir = path.join(__dirname, 'public/images/groups');
-        await fs.mkdir(groupsDir, { recursive: true });
-        const tempPath = req.file.path;
-        const targetPath = path.join(groupsDir, req.file.filename);
-        await fs.rename(tempPath, targetPath);
-        profilePicture = `/images/groups/${req.file.filename}`;
+        console.log('[Server] Uploading group photo to Filen cloud...');
+        profilePicture = await uploadProfilePicture(req.file.buffer, `group_${Date.now()}`);
+        console.log('[Server] Upload successful, path:', profilePicture);
+        
+        // Add server URL prefix if path is relative
+        profilePicture = profilePicture.startsWith('http') ? profilePicture : `http://localhost:5001${profilePicture}`;
+        console.log('[Server] Full path:', profilePicture);
       } catch (fileError) {
-        console.error('Error handling file:', fileError);
+        console.error('Error uploading to Filen:', fileError);
       }
     }
 
