@@ -50,6 +50,7 @@ function ChatExpandedWindow({
     const [isLoading, setIsLoading] = useState(false);
     const [requestStatuses, setRequestStatuses] = useState({});
     const [deleteStatus, setDeleteStatus] = useState({ loading: false, error: null });
+    const [leaveStatus, setLeaveStatus] = useState({ loading: false, error: null });
     const messagesEndRef = useRef(null);
     const socket = useRef(null); // Use useRef for socket
     const navigate = useNavigate();
@@ -243,6 +244,39 @@ function ChatExpandedWindow({
         }
     };
 
+    const handleLeaveGroup = async () => {
+        if (!window.confirm('Are you sure you want to leave this group?')) {
+            return;
+        }
+
+        setLeaveStatus({ loading: true, error: null });
+        try {
+            const response = await fetch('http://localhost:5001/api/users/leave-group', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                body: JSON.stringify({
+                    groupId: chatroom.group._id
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to leave group');
+            }
+
+            // Close the chat window and refresh the chat list
+            onClose();
+            if (onChatroomUpdate) {
+                onChatroomUpdate();
+            }
+        } catch (error) {
+            console.error('Error leaving group:', error);
+            setLeaveStatus({ loading: false, error: 'Failed to leave group' });
+        }
+    };
+
     const navigateToProfile = (userId) => {
         navigate(`/profile/${userId}`);
     };
@@ -358,65 +392,77 @@ function ChatExpandedWindow({
                         ))}
                     </div>
                 )}
-                {chatroom.group && chatroom.group.owner === currentUser._id && (
-                    <div className="delete-group-section" style={{ marginTop: '20px', borderTop: '1px solid #dee2e6', paddingTop: '20px' }}>
-                        <button 
-                            onClick={handleDeleteGroup}
-                            className="btn btn-danger w-100"
-                            disabled={deleteStatus.loading}
-                        >
-                            {deleteStatus.loading ? 'Deleting...' : 'Delete Group'}
-                        </button>
-                        {deleteStatus.error && (
+                {chatroom.group && (
+                    <div className="group-management-section" style={{ marginTop: '20px', borderTop: '1px solid #dee2e6', paddingTop: '20px' }}>
+                        {chatroom.group.owner === currentUser._id ? (
+                            // Delete button for owner
+                            <button 
+                                onClick={handleDeleteGroup}
+                                className="btn btn-danger w-100"
+                                disabled={deleteStatus.loading}
+                            >
+                                {deleteStatus.loading ? 'Deleting...' : 'Delete Group'}
+                            </button>
+                        ) : (
+                            // Leave button for members
+                            <button 
+                                onClick={handleLeaveGroup}
+                                className="btn btn-warning w-100"
+                                disabled={leaveStatus.loading}
+                            >
+                                {leaveStatus.loading ? 'Leaving...' : 'Leave Group'}
+                            </button>
+                        )}
+                        {(deleteStatus.error || leaveStatus.error) && (
                             <div className="text-danger mt-2 text-center">
-                                {deleteStatus.error}
+                                {deleteStatus.error || leaveStatus.error}
                             </div>
                         )}
                     </div>
                 )}
             </div>
-        )}
-
+            )}
 
             <div style={chatMessagesStyle}>    
                 <ChatExpandedWindowMessages 
-                    messages={messages} 
+                    messages={messages}
                     currentUser={currentUser}
-                    isGroupChat={chatroom.isGroupChat}/>
-               
-                <div ref={messagesEndRef} />
+                    messagesEndRef={messagesEndRef}
+                />
             </div>
 
-            <form onSubmit={handleSend} style={chatInputStyle}>
-                <div style={{ display: 'flex', gap: '10px' }}>
-                    <input
-                        type="text"
-                        value={newMessage}
-                        onChange={(e) => setNewMessage(e.target.value)}
-                        placeholder="Type a message..."
-                        style={{
-                            flex: 1,
-                            padding: '8px',
-                            borderRadius: '20px',
-                            border: '1px solid #ddd',
-                            outline: 'none'
-                        }}
-                    />
-                    <button 
-                        type="submit"
-                        style={{
-                            padding: '8px 15px',
-                            borderRadius: '20px',
-                            border: 'none',
-                            backgroundColor: '#007bff',
-                            color: 'white',
-                            cursor: 'pointer'
-                        }}
-                    >
-                        Send
-                    </button>
-                </div>
-            </form>
+            <div style={chatInputStyle}>
+                <form onSubmit={handleSend}>
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                        <input
+                            type="text"
+                            value={newMessage}
+                            onChange={(e) => setNewMessage(e.target.value)}
+                            placeholder="Type a message..."
+                            style={{
+                                flex: 1,
+                                padding: '8px',
+                                borderRadius: '20px',
+                                border: '1px solid #ddd',
+                                outline: 'none'
+                            }}
+                        />
+                        <button 
+                            type="submit"
+                            style={{
+                                padding: '8px 15px',
+                                borderRadius: '20px',
+                                border: 'none',
+                                backgroundColor: '#007bff',
+                                color: 'white',
+                                cursor: 'pointer'
+                            }}
+                        >
+                            Send
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
     );
 }

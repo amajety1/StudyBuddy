@@ -773,6 +773,46 @@ app.post('/api/users/request-join-group', async (req, res) => {
   }
 });
 
+app.post('/api/users/leave-group', authenticate, async (req, res) => {
+  try {
+    const groupId = req.body.groupId;
+    const userId = req.user._id;
+
+    // Fetch the group from the database
+    const group = await Group.findById(groupId);
+    if (!group) {
+      return res.status(404).json({ error: 'Group not found' });
+    }
+
+    // Remove the user from the group's members
+    group.members = group.members.filter(member => member.toString() !== userId.toString());
+    await group.save();
+
+    const chatRoom = await ChatRoom.findById(group.chatRoomId);
+    if (!chatRoom) {
+      return res.status(404).json({ error: 'Chatroom not found' });
+    }
+    
+    chatRoom.participants = chatRoom.participants.filter(member => member.toString() !== userId.toString());
+    await chatRoom.save();
+
+    // Remove the group from the user's groups
+    await User.updateOne(
+      { _id: userId },
+      { $pull: { groups: { group: groupId } } }
+    );  
+
+    await User.updateOne(
+      { _id: userId },
+      { $pull: { chatrooms: group.chatRoomId } }
+    );
+
+    res.status(200).json({ message: 'Left the group successfully' });
+  } catch (error) {
+    console.error('Error leaving group:', error);
+    res.status(500).json({ error: 'Failed to leave group' });
+  }
+});
 
 app.delete("/api/groups/:id", async (req, res) => {
   const groupId = req.params.id;
