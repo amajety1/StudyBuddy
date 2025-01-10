@@ -49,6 +49,7 @@ function ChatExpandedWindow({
     const [showParticipants, setShowParticipants] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [requestStatuses, setRequestStatuses] = useState({});
+    const [deleteStatus, setDeleteStatus] = useState({ loading: false, error: null });
     const messagesEndRef = useRef(null);
     const socket = useRef(null); // Use useRef for socket
     const navigate = useNavigate();
@@ -213,6 +214,35 @@ function ChatExpandedWindow({
         }
     };
 
+    const handleDeleteGroup = async () => {
+        if (!window.confirm('Are you sure you want to delete this group? This action cannot be undone.')) {
+            return;
+        }
+
+        setDeleteStatus({ loading: true, error: null });
+        try {
+            const response = await fetch(`http://localhost:5001/api/groups/${chatroom.group._id}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to delete group');
+            }
+
+            // Close the chat window and refresh the chat list
+            onClose();
+            if (onChatroomUpdate) {
+                onChatroomUpdate();
+            }
+        } catch (error) {
+            console.error('Error deleting group:', error);
+            setDeleteStatus({ loading: false, error: 'Failed to delete group' });
+        }
+    };
+
     const navigateToProfile = (userId) => {
         navigate(`/profile/${userId}`);
     };
@@ -270,7 +300,14 @@ function ChatExpandedWindow({
                             alt={participant.firstName} 
                             className="participant-avatar"
                         />
-                        <span>{participant.firstName} {participant.lastName}</span>
+                        <span>
+                            {participant.firstName} {participant.lastName}
+                            {chatroom.group && chatroom.group.owner === participant._id && (
+                                <span style={{ color: '#6c757d', marginLeft: '5px', fontSize: '0.9em' }}>
+                                    (owner)
+                                </span>
+                            )}
+                        </span>
                     </div>
                 ))}
 
@@ -319,6 +356,22 @@ function ChatExpandedWindow({
                                 </div>
                             </div>
                         ))}
+                    </div>
+                )}
+                {chatroom.group && chatroom.group.owner === currentUser._id && (
+                    <div className="delete-group-section" style={{ marginTop: '20px', borderTop: '1px solid #dee2e6', paddingTop: '20px' }}>
+                        <button 
+                            onClick={handleDeleteGroup}
+                            className="btn btn-danger w-100"
+                            disabled={deleteStatus.loading}
+                        >
+                            {deleteStatus.loading ? 'Deleting...' : 'Delete Group'}
+                        </button>
+                        {deleteStatus.error && (
+                            <div className="text-danger mt-2 text-center">
+                                {deleteStatus.error}
+                            </div>
+                        )}
                     </div>
                 )}
             </div>
