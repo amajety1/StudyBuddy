@@ -791,7 +791,6 @@ app.delete("/api/groups/:id", async (req, res) => {
   }
 });
 
-
 // Get group details
 app.get('/api/groups/:groupId', authenticate, async (req, res) => {
   try {
@@ -811,39 +810,63 @@ app.get('/api/groups/:groupId', authenticate, async (req, res) => {
   }
 });
 // Request to join group
-app.post('/api/groups/:groupId/join', authenticate, async (req, res) => {
-  try {
-    const group = await Group.findById(req.params.groupId);
 
+app.post('/api/groups/approve-join-group', async (req, res) => {
+  try {
+    const groupId = req.body.groupId;
+    const userId = req.body.userId;
+
+    // Fetch the group from the database
+    const group = await Group.findById(groupId);
     if (!group) {
       return res.status(404).json({ error: 'Group not found' });
     }
 
-    // Check if user is already a member or has a pending request
-    if (group.members.includes(req.user._id)) {
-      return res.status(400).json({ error: 'Already a member' });
+    // Fetch the user to get their name
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
     }
 
-    const existingRequest = group.pendingRequests.find(
-      request => request.user.toString() === req.user._id.toString()
-    );
-    if (existingRequest) {
-      return res.status(400).json({ error: 'Request already pending' });
-    }
-
-    // Add join request
-    group.pendingRequests.push({
-      user: req.user._id,
-      status: 'pending'
-    });
+    // Add the user to the group's members
+    group.members.push(userId);
     await group.save();
 
-    res.status(200).json({ message: 'Join request sent' });
+    // Add the group to the user's groups list
+    user.groups.push({ group: groupId, isOwner: false });
+    await user.save();
+
+    // Remove the user from the group's pending requests
+    group.pendingRequests = group.pendingRequests.filter(request => request.user.toString() !== userId);
+    await group.save();
+
+    // Remove the group from the user's outgoing group requests
+    user.outgoingGroupRequests = user.outgoingGroupRequests.filter(request => request.group.toString() !== groupId);
+    await user.save();
+
+    user.chatrooms.push(group.chatRoomId);
+    await user.save();
+
+    // Fetch the associated chatroom
+    const chatRoom = await ChatRoom.findById(group.chatRoomId);
+    if (!chatRoom) {
+      return res.status(404).json({ error: 'Chatroom not found for this group' });
+    }
+
+    // Add the user to the chatroom's participants
+    if (!chatRoom.participants.includes(userId)) {
+      chatRoom.participants.push(userId);
+      await chatRoom.save();
+    }
+
+    res.json({ message: 'User approved to join the group and added to the chatroom' });
   } catch (error) {
-    console.error('Error sending join request:', error);
+    console.error('Error approving join request:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });
+
+
 app.post("/api/users/upload-profile-picture", upload.single('profilePicture'), async (req, res) => {
   console.log('[Server] Profile picture upload request received');
   try {
