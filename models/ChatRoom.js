@@ -9,6 +9,11 @@ const ChatRoomSchema = new Schema({
         type: Boolean,
         default: false
     },
+    groupId: {
+        type: Schema.Types.ObjectId,
+        ref: 'Group',
+        required: function() { return !this.isGroupChat; }
+    },
     groupName: {
         type: String,
         required: function() { return this.isGroupChat; }

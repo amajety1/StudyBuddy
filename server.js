@@ -638,17 +638,6 @@ app.post('/api/users/create-group', authenticate, upload.single('photo'), async 
       }
     }
 
-    // Create a new chatroom for the group
-    const chatRoom = new ChatRoom({
-      participants: allParticipants,
-      isGroupChat: true,
-      groupName: name,
-      chatTitle: name,
-      groupPhoto: profilePicture,
-      messages: []
-    });
-    await chatRoom.save();
-
     // Create the group
     const group = new Group({
       name,
@@ -657,20 +646,49 @@ app.post('/api/users/create-group', authenticate, upload.single('photo'), async 
       owner: req.user._id,
       members: allParticipants,
       profilePicture,
-      chatRoom: chatRoom._id
+      
     });
     await group.save();
 
-    // Update all participants' groups and chatrooms arrays
-    await User.updateMany(
-      { _id: { $in: allParticipants } },
+    // Create a new chatroom for the group
+    const chatRoom = new ChatRoom({
+      participants: allParticipants,
+      isGroupChat: true,
+      groupName: name,
+      chatTitle: name,
+      groupPhoto: profilePicture,
+      messages: [],
+      groupId: group._id
+    });
+    await chatRoom.save();
+
+    group.chatRoomId = chatRoom._id;
+    await group.save();
+
+
+
+    // Update the owner's groups and chatrooms with isOwner set to true
+    await User.updateOne(
+      { _id: req.user._id },
       {
         $addToSet: {
-          groups: group._id,
-          chatrooms: chatRoom._id
-        }
+          groups: { group: group._id, isOwner: true },
+          chatrooms: chatRoom._id,
+        },
       }
     );
+
+    // Update the other participants' groups and chatrooms
+    await User.updateMany(
+      { _id: { $in: allParticipants.filter(id => id.toString() !== req.user._id.toString()) } },
+      {
+        $addToSet: {
+          groups: { group: group._id, isOwner: false },
+          chatrooms: chatRoom._id,
+        },
+      }
+    );
+
 
     res.status(201).json({
       message: 'Group created successfully',
@@ -682,6 +700,53 @@ app.post('/api/users/create-group', authenticate, upload.single('photo'), async 
     res.status(500).json({ error: error.message || 'Server error' });
   }
 });
+
+app.delete("/api/groups/:id", async (req, res) => {
+  const groupId = req.params.id;
+
+  try {
+    // Find the group to delete
+    const group = await Group.findById(groupId);
+    if (!group) {
+      return res.status(404).json({ message: "Group not found" });
+    }
+
+    // Find the corresponding chatroom
+    const chatRoom = await ChatRoom.findOne({ groupId });
+    if (!chatRoom) {
+      return res.status(404).json({ message: "Chatroom not found for the group" });
+    }
+
+    // Update all users to remove the group and chatroom references
+    await User.updateMany(
+      { 
+        $or: [
+          { "groups.group": groupId },
+          { chatrooms: chatRoom._id }
+        ]
+      },
+      {
+        $pull: {
+          groups: { group: groupId }, // Remove group reference
+          chatrooms: chatRoom._id    // Remove chatroom reference
+        }
+      }
+    );
+
+    // Delete the chatroom
+    await ChatRoom.deleteOne({ _id: chatRoom._id });
+
+    // Delete the group
+    await Group.deleteOne({ _id: groupId });
+
+    res.status(200).json({ message: "Group and associated chatroom successfully deleted" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+
 // Get group details
 app.get('/api/groups/:groupId', authenticate, async (req, res) => {
   try {

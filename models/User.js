@@ -46,8 +46,15 @@ const userSchema = new Schema({
   buddies: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
   outgoingBuddyRequests: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
   incomingBuddyRequests: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+  incomingGroupRequests: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+  outgoingGroupRequests: [{ type: mongoose.Schema.Types.ObjectId, ref: "Group" }],
 
-  groups: [{ type: mongoose.Schema.Types.ObjectId, ref: "Group" }],
+groups: [
+    {
+      group: { type: mongoose.Schema.Types.ObjectId, ref: "Group" },
+      isOwner: { type: Boolean, default: false },
+    }
+  ],
   chatrooms: [{ type: mongoose.Schema.Types.ObjectId, ref: "ChatRoom" }], // Array of chatroom references
 
   // Profile Info

@@ -41,7 +41,7 @@ const groupSchema = new mongoose.Schema({
             default: Date.now
         }
     }],
-    chatRoom: {
+    chatRoomId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'ChatRoom'
     },
