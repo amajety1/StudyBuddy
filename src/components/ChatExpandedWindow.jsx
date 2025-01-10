@@ -145,7 +145,7 @@ function ChatExpandedWindow({
                             onClick={() => setShowParticipants(!showParticipants)}
                             style={{ marginLeft: '10px' }}
                         >
-                            {showParticipants ? 'Hide' : 'Show'} Participants
+                            <p className='noto-sans' style={{ fontSize: '1em', color: '#6c757d' }}>{showParticipants ? 'Hide' : 'Show'} Info</p>
                         </button>
                     )}
                 </div>
@@ -166,20 +166,38 @@ function ChatExpandedWindow({
             </div>
 
             {showParticipants && chatroom.isGroupChat && (
-                <div className="participants-list">
-                    <h4>Group Members</h4>
-                    {chatroom.participants.map(participant => (
-                        <div key={participant._id} className="participant-item">
-                            <img 
-                                src={participant.profilePicture || '/images/default-profile.jpeg'} 
-                                alt={participant.firstName} 
-                                className="participant-avatar"
-                            />
-                            <span>{participant.firstName} {participant.lastName}</span>
-                        </div>
-                    ))}
-                </div>
-            )}
+            <div className="participants-list">
+                <h4>Group Members</h4>
+                {chatroom.participants.map(participant => (
+                    <div key={participant._id} className="participant-item">
+                        <img 
+                            src={participant.profilePicture || '/images/default-profile.jpeg'} 
+                            alt={participant.firstName} 
+                            className="participant-avatar"
+                        />
+                        <span>{participant.firstName} {participant.lastName}</span>
+                    </div>
+                ))}
+
+              
+                {chatroom.group.pendingRequests && chatroom.group.pendingRequests.length > 0 && (
+                    <div className="pending-requests">
+                        <h4>Pending Requests</h4>
+                        {chatroom.group.pendingRequests.map(request => (
+                            <div key={request.user._id} className="participant-item">
+                                <img 
+                                    src={request.user.profilePicture || '/images/default-profile.jpeg'} 
+                                    alt={request.user.firstName} 
+                                    className="participant-avatar"
+                                />
+                                <span>{request.user.firstName} {request.user.lastName}</span>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
+        )}
+
 
             <div style={chatMessagesStyle}>    
                 <ChatExpandedWindowMessages 

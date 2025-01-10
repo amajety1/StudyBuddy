@@ -26,7 +26,7 @@ function Messages() {
             }
             
             const chatsData = await chatsResponse.json();
-            //console.log('Chatrooms received AAAAAHHHHHHH:', chatsData);
+            console.log('Chatrooms received AAAAAHHHHHHH:', chatsData);
             setChatrooms(chatsData);
 
         } catch (error) {

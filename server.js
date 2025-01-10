@@ -169,7 +169,7 @@ io.on("connection", (socket) => {
   });
 
   socket.on("disconnect", () => {
-    console.log("A user disconnected");
+   // console.log("A user disconnected");
   });
 });
 
@@ -572,25 +572,53 @@ app.get('/api/users/buddies', authenticate, async (req, res) => {
 app.get('/api/users/get-chats', authenticate, async (req, res) => {
   try {
     const userId = req.user._id;
+
+    // Fetch chatrooms where the user is a participant
     const chatrooms = await ChatRoom.find({
       participants: userId
     })
-      .populate('participants', 'firstName lastName profilePicture')
+      .populate('participants', 'firstName lastName profilePicture') // Populate participants' basic info
       .populate({
         path: 'messages',
-        options: { sort: { 'timestamp': -1 } }, // Sort messages by timestamp in descending order
+        options: { sort: { timestamp: -1 } }, // Sort messages by timestamp in descending order
         populate: {
           path: 'sender',
           select: 'firstName lastName profilePicture'
         }
       });
 
-    res.json(chatrooms);
+    // For group chats, fetch the group and populate pending requests
+    const enhancedChatrooms = await Promise.all(
+      chatrooms.map(async (chatroom) => {
+        if (chatroom.isGroupChat && chatroom.groupId) {
+          const group = await Group.findById(chatroom.groupId)
+            .populate({
+              path: 'pendingRequests.user',
+              select: 'firstName lastName profilePicture'
+            });
+
+          if (group) {
+            return {
+              ...chatroom.toObject(),
+              group: {
+                ...group.toObject(),
+                pendingRequests: group.pendingRequests
+              }
+            };
+          }
+        }
+
+        return chatroom.toObject(); // Return the chatroom as-is if not a group chat
+      })
+    );
+
+    res.json(enhancedChatrooms);
   } catch (error) {
     console.error('Error fetching chatrooms:', error);
     res.status(500).json({ error: 'Failed to fetch chatrooms' });
   }
 });
+
 
 // Get messages for a chatroom
 app.get('/api/chatrooms/:chatroomId/messages', authenticate, async (req, res) => {
