@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import ChatExpandedWindowMessages from './ChatExpandedWindowMessages';
 import { io } from 'socket.io-client';
+import { useNavigate } from 'react-router-dom';
 
 const chatWindowStyle = {
     position: 'fixed',
@@ -41,12 +42,16 @@ function ChatExpandedWindow({
     onClose,
     isChatWindowMinimized,
     handleChatMinimizeClick,
+    onChatroomUpdate,
 }) {
     const [messages, setMessages] = useState([]);
     const [newMessage, setNewMessage] = useState('');
     const [showParticipants, setShowParticipants] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+    const [requestStatuses, setRequestStatuses] = useState({});
     const messagesEndRef = useRef(null);
     const socket = useRef(null); // Use useRef for socket
+    const navigate = useNavigate();
 
     useEffect(() => {
         // Initialize Socket.IO
@@ -122,6 +127,96 @@ function ChatExpandedWindow({
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     };
 
+    const handleApproveRequest = async (userId) => {
+        try {
+            setRequestStatuses(prev => ({
+                ...prev,
+                [userId]: { status: 'approving', message: 'Approving...' }
+            }));
+
+            const response = await fetch('http://localhost:5001/api/groups/approve-join-group', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                body: JSON.stringify({
+                    groupId: chatroom.group._id,
+                    userId: userId
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to approve request');
+            }
+
+            setRequestStatuses(prev => ({
+                ...prev,
+                [userId]: { status: 'approved', message: 'Approved!' }
+            }));
+
+            // Refresh chatrooms to update the UI after a short delay
+            setTimeout(() => {
+                if (onChatroomUpdate) {
+                    onChatroomUpdate();
+                }
+            }, 1000);
+        } catch (error) {
+            console.error('Error approving request:', error);
+            setRequestStatuses(prev => ({
+                ...prev,
+                [userId]: { status: 'error', message: 'Error!' }
+            }));
+        }
+    };
+
+    const handleRejectRequest = async (userId) => {
+        try {
+            setRequestStatuses(prev => ({
+                ...prev,
+                [userId]: { status: 'rejecting', message: 'Denying...' }
+            }));
+
+            const response = await fetch('http://localhost:5001/api/groups/reject-join-group', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                body: JSON.stringify({
+                    groupId: chatroom.group._id,
+                    userId: userId
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to reject request');
+            }
+
+            setRequestStatuses(prev => ({
+                ...prev,
+                [userId]: { status: 'rejected', message: 'Denied!' }
+            }));
+
+            // Refresh chatrooms to update the UI after a short delay
+            setTimeout(() => {
+                if (onChatroomUpdate) {
+                    onChatroomUpdate();
+                }
+            }, 1000);
+        } catch (error) {
+            console.error('Error rejecting request:', error);
+            setRequestStatuses(prev => ({
+                ...prev,
+                [userId]: { status: 'error', message: 'Error!' }
+            }));
+        }
+    };
+
+    const navigateToProfile = (userId) => {
+        navigate(`/profile/${userId}`);
+    };
+
     if (!chatroom || !currentUser) {
         return null;
     }
@@ -180,17 +275,48 @@ function ChatExpandedWindow({
                 ))}
 
               
-                {chatroom.group.pendingRequests && chatroom.group.pendingRequests.length > 0 && (
+                {chatroom.group.pendingRequests && 
+                 chatroom.group.pendingRequests.length > 0 && 
+                 chatroom.group.owner === currentUser._id && (
                     <div className="pending-requests">
                         <h4>Pending Requests</h4>
                         {chatroom.group.pendingRequests.map(request => (
-                            <div key={request.user._id} className="participant-item">
-                                <img 
-                                    src={request.user.profilePicture || '/images/default-profile.jpeg'} 
-                                    alt={request.user.firstName} 
-                                    className="participant-avatar"
-                                />
-                                <span>{request.user.firstName} {request.user.lastName}</span>
+                            <div key={request.user._id} className="participant-item" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }} onClick={() => navigateToProfile(request.user._id)}>
+                                    <img 
+                                        src={request.user.profilePicture || '/images/default-profile.jpeg'} 
+                                        alt={request.user.firstName} 
+                                        className="participant-avatar"
+                                    />
+                                    <span>{request.user.firstName} {request.user.lastName}</span>
+                                </div>
+                                <div style={{ display: 'flex', gap: '10px' }}>
+                                    {!requestStatuses[request.user._id] ? (
+                                        <>
+                                            <button 
+                                                onClick={() => handleApproveRequest(request.user._id)}
+                                                className="btn btn-success btn-sm"
+                                            >
+                                                Approve
+                                            </button>
+                                            <button 
+                                                onClick={() => handleRejectRequest(request.user._id)}
+                                                className="btn btn-danger btn-sm"
+                                            >
+                                                Deny
+                                            </button>
+                                        </>
+                                    ) : (
+                                        <span className={`badge ${
+                                            requestStatuses[request.user._id].status === 'approved' ? 'bg-success' :
+                                            requestStatuses[request.user._id].status === 'rejected' ? 'bg-danger' :
+                                            requestStatuses[request.user._id].status === 'error' ? 'bg-warning' :
+                                            'bg-secondary'
+                                        }`}>
+                                            {requestStatuses[request.user._id].message}
+                                        </span>
+                                    )}
+                                </div>
                             </div>
                         ))}
                     </div>
