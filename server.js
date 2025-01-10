@@ -620,6 +620,7 @@ app.get('/api/users/get-chats', authenticate, async (req, res) => {
 });
 
 
+
 // Get messages for a chatroom
 app.get('/api/chatrooms/:chatroomId/messages', authenticate, async (req, res) => {
   try {
@@ -960,6 +961,49 @@ app.post('/api/groups/reject-join-group', async (req, res) => {
     res.json({ message: 'Join request rejected successfully' });
   } catch (error) {
     console.error('Error rejecting join request:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+app.post('/api/groups/remove-member', authenticate, async (req, res) => {
+  try {
+    const groupId = req.body.groupId;
+    const userId = req.body.userId;
+
+    // Fetch the group from the database
+    const group = await Group.findById(groupId);
+    if (!group) {
+      return res.status(404).json({ error: 'Group not found' });
+    } 
+    // make sure user is owner of group
+    if (group.owner.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ error: 'You are not the owner of this group' });
+    }
+
+    // Remove the user from the group's members
+    group.members = group.members.filter(member => member.toString() !== userId);
+    await group.save();
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    user.groups = user.groups.filter(group => group.group.toString() !== groupId);
+    await user.save();
+
+    const chatRoom = await ChatRoom.findById(group.chatRoomId);
+    if (!chatRoom) {
+      return res.status(404).json({ error: 'Chatroom not found for this group' });
+    }
+
+    // Remove the user from the chatroom's participants
+    chatRoom.participants = chatRoom.participants.filter(member => member.toString() !== userId);
+    await chatRoom.save();
+
+    res.json({ message: 'Member removed successfully' });
+  } catch (error) {
+    console.error('Error removing member:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });

@@ -51,6 +51,7 @@ function ChatExpandedWindow({
     const [requestStatuses, setRequestStatuses] = useState({});
     const [deleteStatus, setDeleteStatus] = useState({ loading: false, error: null });
     const [leaveStatus, setLeaveStatus] = useState({ loading: false, error: null });
+    const [removeMemberStatuses, setRemoveMemberStatuses] = useState({});
     const messagesEndRef = useRef(null);
     const socket = useRef(null); // Use useRef for socket
     const navigate = useNavigate();
@@ -215,6 +216,47 @@ function ChatExpandedWindow({
         }
     };
 
+    const handleRemoveMember = async (userId) => {
+        if (!window.confirm('Are you sure you want to remove this member from the group?')) {
+            return;
+        }
+
+        setRemoveMemberStatuses(prev => ({
+            ...prev,
+            [userId]: { loading: true, error: null }
+        }));
+
+        try {
+            const response = await fetch('http://localhost:5001/api/groups/remove-member', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                body: JSON.stringify({
+                    groupId: chatroom.group._id,
+                    userId: userId
+                })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to remove member');
+            }
+
+            // Refresh chatrooms to update the UI
+            if (onChatroomUpdate) {
+                onChatroomUpdate();
+            }
+        } catch (error) {
+            console.error('Error removing member:', error);
+            setRemoveMemberStatuses(prev => ({
+                ...prev,
+                [userId]: { loading: false, error: error.message || 'Failed to remove member' }
+            }));
+        }
+    };
+
     const handleDeleteGroup = async () => {
         if (!window.confirm('Are you sure you want to delete this group? This action cannot be undone.')) {
             return;
@@ -328,20 +370,46 @@ function ChatExpandedWindow({
             <div className="participants-list">
                 <h4>Group Members</h4>
                 {chatroom.participants.map(participant => (
-                    <div key={participant._id} className="participant-item">
-                        <img 
-                            src={participant.profilePicture || '/images/default-profile.jpeg'} 
-                            alt={participant.firstName} 
-                            className="participant-avatar"
-                        />
-                        <span>
-                            {participant.firstName} {participant.lastName}
-                            {chatroom.group && chatroom.group.owner === participant._id && (
-                                <span style={{ color: '#6c757d', marginLeft: '5px', fontSize: '0.9em' }}>
-                                    (owner)
-                                </span>
-                            )}
-                        </span>
+                    <div key={participant._id} className="participant-item" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <div style={{ display: 'flex', alignItems: 'center' }}>
+                            <img 
+                                src={participant.profilePicture || '/images/default-profile.jpeg'} 
+                                alt={participant.firstName} 
+                                className="participant-avatar"
+                            />
+                            <span>
+                                {participant.firstName} {participant.lastName}
+                                {chatroom.group && chatroom.group.owner === participant._id && (
+                                    <span style={{ color: '#6c757d', marginLeft: '5px', fontSize: '0.9em' }}>
+                                        (owner)
+                                    </span>
+                                )}
+                            </span>
+                        </div>
+                        {chatroom.group && 
+                         chatroom.group.owner === currentUser._id && 
+                         participant._id !== currentUser._id && (
+                            <div>
+                                {!removeMemberStatuses[participant._id]?.loading ? (
+                                    <button 
+                                        onClick={() => handleRemoveMember(participant._id)}
+                                        className="btn btn-danger btn-sm"
+                                        style={{ padding: '2px 8px', fontSize: '0.8em' }}
+                                    >
+                                        Remove
+                                    </button>
+                                ) : (
+                                    <span className="badge bg-secondary" style={{ fontSize: '0.8em' }}>
+                                        Removed
+                                    </span>
+                                )}
+                                {removeMemberStatuses[participant._id]?.error && (
+                                    <div className="text-danger" style={{ fontSize: '0.8em', marginTop: '2px' }}>
+                                        {removeMemberStatuses[participant._id].error}
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </div>
                 ))}
 
