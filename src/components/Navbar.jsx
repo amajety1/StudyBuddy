@@ -198,7 +198,7 @@ function Navbar() {
                       className={`notification-drop-item ${notification.seen ? "seen" : "unseen"}`}
                     >
                       <p className="noto-sans">{notification.content}</p>
-                      <img src={notification.user.profilePicture} onClick={() => {navigateToProfile(notification.user)}}></img>
+                      <img src={notification.from_user.profilePicture} onClick={() => {navigateToProfile(notification.from_user)}}></img>
                       <p className="noto-sans">{getTimeAgo(notification.date)}</p>
                     </div>
                   ))}

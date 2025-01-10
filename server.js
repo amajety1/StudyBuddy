@@ -63,7 +63,7 @@ const authenticate = async (req, res, next) => {
     }
 
     const decoded = jwt.verify(token, SECRET_KEY);
-    // console.log('Decoded token:', decoded);
+    //console.log('Decoded token:', decoded);
 
     // Use id instead of userId since that's what we stored in the token
     const user = await User.findById(decoded.id);
@@ -386,7 +386,7 @@ app.get("/api/users/get-notifications", authenticate, async (req, res) => {
       .select("-password")
       .populate({
         path: "notifications",
-        populate: { path: "user", select: "firstName lastName email profilePicture" },
+        populate: { path: "from_user", select: "firstName lastName email profilePicture" },
         options: { limit: 10, sort: { date: -1 } }, // Limit to 10, sorted by date descending
       });
 
@@ -413,8 +413,9 @@ app.post("/api/users/notify-match-of-request", authenticate, async (req, res) =>
 
     const newNotification = new Notification({
       content: `${user.firstName} ${user.lastName} has sent you a buddy request`,
-      user: user._id,
+      from_user: user._id,
       type: "buddy_request",
+      to_user: matchId,
     });
 
     const savedNotification = await newNotification.save();
@@ -700,6 +701,50 @@ app.post('/api/users/create-group', authenticate, upload.single('photo'), async 
     res.status(500).json({ error: error.message || 'Server error' });
   }
 });
+
+app.post('/api/users/request-join-group', async (req, res) => {
+  try {
+    const groupId = req.body.groupId;
+    const userId = req.body.userId;
+
+    // Fetch the group from the database
+    const group = await Group.findById(groupId);
+    if (!group) {
+      return res.status(404).json({ error: 'Group not found' });
+    }
+
+    // Fetch the user to get their name
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Add the user to the group's pending requests
+    group.pendingRequests.push({ user: userId });
+    await group.save();
+
+    // Create a notification for the group owner
+    const notification = new Notification({
+      from_user: userId,
+      to_user: group.owner,
+      type: 'group_join_request',
+      content: `${user.firstName} ${user.lastName} has requested to join your group.`,
+    });
+
+    await notification.save();
+
+    await User.findByIdAndUpdate(
+      group.owner, // Owner's ID
+      { $push: { notifications: notification._id } } // Add the notification ID to their notifications array
+    );
+
+    res.status(200).json({ message: 'Request sent successfully' });
+  } catch (error) {
+    console.error('Error requesting to join group:', error);
+    res.status(500).json({ error: 'Failed to request to join group' });
+  }
+});
+
 
 app.delete("/api/groups/:id", async (req, res) => {
   const groupId = req.params.id;
