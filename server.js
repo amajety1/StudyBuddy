@@ -866,6 +866,37 @@ app.post('/api/groups/approve-join-group', async (req, res) => {
   }
 });
 
+app.post('/api/groups/reject-join-group', async (req, res) => {
+  try {
+    const groupId = req.body.groupId;
+    const userId = req.body.userId;
+
+    // Fetch the group from the database
+    const group = await Group.findById(groupId);
+    if (!group) {
+      return res.status(404).json({ error: 'Group not found' });
+    }
+
+    // Remove the user from the group's pending requests
+    group.pendingRequests = group.pendingRequests.filter(request => request.user.toString() !== userId);
+    await group.save();
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    user.outgoingGroupRequests = user.outgoingGroupRequests.filter(request => request.group.toString() !== groupId);
+    await user.save();
+
+    res.json({ message: 'Join request rejected successfully' });
+  } catch (error) {
+    console.error('Error rejecting join request:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+
 
 app.post("/api/users/upload-profile-picture", upload.single('profilePicture'), async (req, res) => {
   console.log('[Server] Profile picture upload request received');
