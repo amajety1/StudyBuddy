@@ -13,11 +13,11 @@ import { Server } from "socket.io"; // Import Socket.IO
 import multer from 'multer';
 import { uploadProfilePicture, getProfilePicture } from './utils/filenCloudServer.js';
 import path from 'path';
-import { Resend } from 'resend';
-import fs from 'fs/promises';
-import Group from './models/Group.js';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
+import { Resend } from 'resend';
+import Group from './models/Group.js';
 
 dotenv.config();
 
@@ -1008,7 +1008,27 @@ app.post('/api/groups/remove-member', authenticate, async (req, res) => {
   }
 });
 
+app.get('/api/get-all-groups', authenticate, async (req, res) => {
+  try {
+    const groups = await Group.find({});
+    console.log('\n\n\n\n\n\nGROUPS:::::\n\n\n\n\n',groups);
+    res.json(groups);
+  } catch (error) {
+    console.error('Error getting all groups:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
 
+app.get('/api/get-all-users', authenticate, async (req, res) => {
+  try {
+    const users = await User.find({});
+    console.log(users);
+    res.json(users);
+  } catch (error) {
+    console.error('Error getting all users:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
 
 app.post("/api/users/upload-profile-picture", upload.single('profilePicture'), async (req, res) => {
   console.log('[Server] Profile picture upload request received');
@@ -1100,6 +1120,55 @@ app.get('/api/profile-picture/:userId', async (req, res) => {
     res.status(500).send('Failed to get profile picture');
   }
 });
+// Serve profile pictures
+app.get('/profile-pictures/:filename', async (req, res) => {
+  try {
+    const filename = req.params.filename;
+    const cacheDir = path.join(__dirname, 'public', 'profile-pictures');
+    const cachedFilePath = path.join(cacheDir, filename);
+
+    // Create cache directory if it doesn't exist
+    if (!fs.existsSync(cacheDir)) {
+      fs.mkdirSync(cacheDir, { recursive: true });
+    }
+
+    // Check if file exists in cache
+    if (fs.existsSync(cachedFilePath)) {
+      console.log('[Server] Serving cached profile picture:', filename);
+      res.setHeader('Content-Type', 'image/jpeg');
+      res.setHeader('Cache-Control', 'public, max-age=31557600'); // Cache for 1 year
+      return fs.createReadStream(cachedFilePath).pipe(res);
+    }
+
+    // If not in cache, fetch from Filen
+    console.log('[Server] Fetching profile picture from Filen:', filename);
+    const filePath = `/profile-pictures/${filename}`;
+    const imageBuffer = await getProfilePicture(filePath);
+
+    // Save to cache
+    fs.writeFileSync(cachedFilePath, imageBuffer);
+
+    // Set headers and serve
+    res.setHeader('Content-Type', 'image/jpeg');
+    res.setHeader('Cache-Control', 'public, max-age=31557600'); // Cache for 1 year
+    res.send(imageBuffer);
+  } catch (error) {
+    console.error('[Server] Error serving profile picture:', error);
+    // Serve default image based on the filename pattern
+    const isGroupImage = req.params.filename.startsWith('group_');
+    const defaultImagePath = path.join(__dirname, 'public', 'images', isGroupImage ? 'group.jpg' : 'empty-profile-pic.png');
+    
+    if (fs.existsSync(defaultImagePath)) {
+      res.setHeader('Content-Type', isGroupImage ? 'image/jpeg' : 'image/png');
+      return fs.createReadStream(defaultImagePath).pipe(res);
+    }
+    res.status(404).send('Profile picture not found');
+  }
+});
+
+// Serve static files from the public directory
+app.use('/images', express.static(path.join(__dirname, 'public/images')));
+app.use('/profile-pictures', express.static(path.join(__dirname, 'public/profile-pictures')));
 // Update user profile
 app.put('/api/users/update-profile', authenticate, async (req, res) => {
   console.log('[Server] Update profile request received');
@@ -1126,26 +1195,6 @@ app.put('/api/users/update-profile', authenticate, async (req, res) => {
     res.status(500).json({ error: 'Failed to update profile', details: error.message });
   }
 });
-// Serve profile pictures
-app.get('/profile-pictures/:filename', async (req, res) => {
-  try {
-    const filePath = `/profile-pictures/${req.params.filename}`;
-    console.log('[Server] Fetching profile picture:', filePath);
-
-    const imageBuffer = await getProfilePicture(filePath);
-
-    // Set appropriate headers
-    res.setHeader('Content-Type', 'image/jpeg');
-    res.setHeader('Cache-Control', 'public, max-age=31557600'); // Cache for 1 year
-
-    res.send(imageBuffer);
-  } catch (error) {
-    console.error('[Server] Error serving profile picture:', error);
-    res.status(404).send('Profile picture not found');
-  }
-});
-// Serve static files from the public directory
-app.use('/images', express.static(path.join(__dirname, 'public/images')));
 // Get specific user's profile
 app.get('/api/users/:userId', authenticate, async (req, res) => {
   try {

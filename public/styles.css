@@ -1616,3 +1616,13 @@ overflow-y: scroll;
     cursor: not-allowed;
     opacity: 0.8;
 }} */
+
+/* Search Page Images */
+.search-profile-pic {
+  width: 30px !important;
+  height: 30px !important;
+  max-width: 30px !important;
+  max-height: 30px !important;
+  border-radius: 50%;
+  object-fit: cover;
+}
