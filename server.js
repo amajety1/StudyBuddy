@@ -731,10 +731,10 @@ app.post('/api/users/create-group', authenticate, upload.single('photo'), async 
   }
 });
 
-app.post('/api/users/request-join-group', async (req, res) => {
+app.post('/api/users/request-join-group', authenticate, async (req, res) => {
   try {
-    const groupId = req.body.groupId;
-    const userId = req.body.userId;
+    const { groupId } = req.body;
+    const userId = req.user._id; // Get user ID from auth token
 
     // Fetch the group from the database
     const group = await Group.findById(groupId);
@@ -746,6 +746,16 @@ app.post('/api/users/request-join-group', async (req, res) => {
     const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Check if user is already a member
+    if (group.members.includes(userId)) {
+      return res.status(400).json({ error: 'Already a member of this group' });
+    }
+
+    // Check if user already has a pending request
+    if (group.pendingRequests && group.pendingRequests.some(req => req.user.toString() === userId.toString())) {
+      return res.status(400).json({ error: 'Already requested to join this group' });
     }
 
     // Add the user to the group's pending requests
@@ -763,8 +773,8 @@ app.post('/api/users/request-join-group', async (req, res) => {
     await notification.save();
 
     await User.findByIdAndUpdate(
-      group.owner, // Owner's ID
-      { $push: { notifications: notification._id } } // Add the notification ID to their notifications array
+      group.owner,
+      { $push: { notifications: notification._id } }
     );
 
     res.status(200).json({ message: 'Request sent successfully' });
@@ -1011,7 +1021,7 @@ app.post('/api/groups/remove-member', authenticate, async (req, res) => {
 app.get('/api/get-all-groups', authenticate, async (req, res) => {
   try {
     const groups = await Group.find({});
-    console.log('\n\n\n\n\n\nGROUPS:::::\n\n\n\n\n',groups);
+    
     res.json(groups);
   } catch (error) {
     console.error('Error getting all groups:', error);

@@ -58,6 +58,52 @@ function SearchPageComponent() {
     fetchData();
   }, []); // Empty dependency array means this runs once on mount
 
+  const handleGroupRequest = async (groupId) => {
+    setPendingRequests(prev => [...prev, `group-${groupId}`]);
+    try {
+      const response = await fetch('http://localhost:5001/api/users/request-join-group', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ groupId }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to send group request');
+      }
+
+      alert('Join request sent!');
+    } catch (err) {
+      console.error('Error sending group request:', err);
+      setPendingRequests(prev => prev.filter(item => item !== `group-${groupId}`));
+    }
+  };
+
+  const handleBuddyRequest = async (userId) => {
+    setPendingRequests(prev => [...prev, `user-${userId}`]);
+    try {
+      const response = await fetch('http://localhost:5001/api/users/send-buddy-request', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ matchId: userId }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to send buddy request');
+      }
+
+      alert('Buddy request sent!');
+    } catch (err) {
+      console.error('Error sending buddy request:', err);
+      setPendingRequests(prev => prev.filter(item => item !== `user-${userId}`));
+    }
+  };
+
   const handleSearch = (event) => {
     const query = event.target.value.toLowerCase();
     setSearchQuery(query);
@@ -79,33 +125,6 @@ function SearchPageComponent() {
 
     // Combine and set filtered results
     setFilteredResults([...matchedGroups, ...matchedUsers].slice(0, displayLimit));
-  };
-
-  const handleRequest = async (type, id) => {
-    setPendingRequests(prev => [...prev, `${type}-${id}`]);
-    try {
-      const endpoint = type === 'group' 
-        ? '/api/groups/request-join-group'
-        : '/api/users/send-buddy-request';
-      
-      const response = await fetch(`http://localhost:5001${endpoint}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          [type === 'group' ? 'groupId' : 'matchId']: id
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to send ${type} request`);
-      }
-    } catch (err) {
-      console.error(`Error sending ${type} request:`, err);
-      setPendingRequests(prev => prev.filter(item => item !== `${type}-${id}`));
-    }
   };
 
   const handleLoadMore = () => {
@@ -147,7 +166,7 @@ function SearchPageComponent() {
                   <p className="text-gray-600 mb-4">Members: {result.members.length}</p>
                   <p className="text-gray-700 mb-4 line-clamp-2">{result.description}</p>
                   <button
-                    onClick={() => handleRequest("group", result._id)}
+                    onClick={() => handleGroupRequest(result._id)}
                     disabled={pendingRequests.includes(`group-${result._id}`)}
                     className="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 transition-colors duration-200 disabled:bg-gray-400"
                   >
@@ -184,7 +203,7 @@ function SearchPageComponent() {
                   </p>
                 )}
                 <button
-                  onClick={() => handleRequest("user", result._id)}
+                  onClick={() => handleBuddyRequest(result._id)}
                   disabled={pendingRequests.includes(`user-${result._id}`)}
                   className="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 transition-colors duration-200 disabled:bg-gray-400"
                 >
