@@ -19,7 +19,7 @@ function OwnProfileSection() {
 
 
     });
-   
+
     const [isLoading, setIsLoading] = useState(false);
 
     const handleCurrentCoursesChange = (newCourses) => {
@@ -76,7 +76,7 @@ function OwnProfileSection() {
                     // Update profile image URL
                     if (userData.profilePicture) {
                         //console.log("[Profile] Raw profile picture path:", userData.profilePicture);
-                        
+
 
                     } else {
                         //console.log("[Profile] No profile picture in user data");
@@ -105,7 +105,7 @@ function OwnProfileSection() {
         setUser((prevUser) => ({ ...prevUser, profilePicture: 'http://localhost:5001/images/empty-profile-pic.png' }));
     };
 
-   
+
 
     const handleFileChange = async (e) => {
         const file = e.target.files[0];
@@ -395,12 +395,12 @@ function OwnProfileSection() {
 
                                     // Update local state with server's response
                                     setUser(updatedUser);
-                                    
+
                                     // Reset temporary states
                                     setCurrentUserBio("");
                                     setCurrentUserAbout("");
                                     setTempGithubLink("");
-                                    
+
                                     alert('Changes saved successfully!');
                                     setIsEditWindowOpen(false);
                                 } catch (error) {

@@ -7,7 +7,8 @@ const NotificationSchema = new Schema({
     seen: {type: Boolean, default: false},
     from_user: {type: Schema.Types.ObjectId, ref: 'User'},
     to_user: {type: Schema.Types.ObjectId, ref: 'User'},
-    type: {type: String, required: true, enum: ['buddy_request', 'message', 'group_invite', 'group_join_request']},
+    type: {type: String, required: true, enum: ['buddy_request', 'message', 'group_invite', 'group_join_request', 'group_request_approved', 'group_request_rejected']},
+    groupId: {type: Schema.Types.ObjectId, ref: 'Group'},
 });
 
 const Notification = mongoose.model("Notification", NotificationSchema);

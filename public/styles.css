@@ -297,8 +297,8 @@ h4{
   color: white;
   font-size: 14px;
   cursor: pointer;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   transition: background-color 0.2s ease-in-out;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .add-project-button:hover {
@@ -337,8 +337,8 @@ h4{
   color: white;
   font-size: 14px;
   cursor: pointer;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   transition: background-color 0.2s ease-in-out;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .save-project-button:hover {
@@ -461,8 +461,50 @@ h4{
   transform: scale(1.05);
 }
 
+.notification-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 8px;
+}
 
+.accept-button, .reject-button {
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
 
+.accept-button {
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+}
+
+.accept-button:hover {
+  background-color: #45a049;
+}
+
+.reject-button {
+  background-color: #f44336;
+  color: white;
+  border: none;
+}
+
+.reject-button:hover {
+  background-color: #da190b;
+}
+
+.notification-item {
+  padding: 12px;
+  border-bottom: 1px solid #eee;
+  position: relative;
+}
+
+.notification-item:last-child {
+  border-bottom: none;
+}
 
 /* Dropdown window */
 .notification-dropdown-window {
@@ -1625,4 +1667,26 @@ overflow-y: scroll;
   max-height: 30px !important;
   border-radius: 50%;
   object-fit: cover;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  text-align: center;
+  width: fit-content;
+}
+
+.status-badge.accepted {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+  border: 1px solid #a5d6a7;
+}
+
+.status-badge.rejected {
+  background-color: #ffebee;
+  color: #c62828;
+  border: 1px solid #ef9a9a;
 }

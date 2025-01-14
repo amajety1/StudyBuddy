@@ -1,8 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
-
-
 function Navbar() {
   const [isOptionsOpen, setIsOptionsOpen] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
@@ -12,13 +10,11 @@ function Navbar() {
   const navigate = useNavigate();
 
   const navigateToProfile = (user) => {
-    //console.log('USER I AM LOGGING IN NAVBAR:  ', user);
     navigate(`/buddy/${user._id}`);
-};
+  };
 
   const seenNotifications = async () => {
     setHasUnseen(false);
-    //console.log('Has Unseen: ', hasUnseen);
     try {
       const response = await fetch('http://localhost:5001/api/users/seen-notifications', {
         headers: {
@@ -29,7 +25,7 @@ function Navbar() {
         throw new Error('Failed to mark notifications as seen');
       }
     } catch (error) {
-      //console.error('Error marking notifications as seen:', error);
+      console.error('Error marking notifications as seen:', error);
     }
   };
 
@@ -37,7 +33,7 @@ function Navbar() {
     const now = new Date();
     const notificationDate = new Date(date);
     const differenceInSeconds = Math.floor((now - notificationDate) / 1000);
-  
+
     if (differenceInSeconds < 60) {
       return `${differenceInSeconds} seconds ago`;
     } else if (differenceInSeconds < 3600) {
@@ -80,7 +76,7 @@ function Navbar() {
   const handleNotificationClick = (e) => {
     e.stopPropagation(); // Prevent closing on inside clicks
     setIsNotificationOpen(!isNotificationOpen);
-  
+
     if (!isNotificationOpen) {
       // Add a slight delay before marking notifications as seen
       setTimeout(async () => {
@@ -95,19 +91,32 @@ function Navbar() {
           );
           setHasUnseen(false); // Remove the unseen indicator
         } catch (error) {
-          //console.error("Error marking notifications as seen:", error);
+          console.error("Error marking notifications as seen:", error);
         }
       }, 1000); // 1-second delay
     }
   };
-  
-  
-  
+
+  const deleteNotification = async (notificationId) => {
+    try {
+      const response = await fetch(`http://localhost:5001/api/notifications/${notificationId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete notification');
+      }
+    } catch (error) {
+      console.error('Error deleting notification:', error);
+    }
+  };
 
   useEffect(() => {
     const fetchNotifications = async () => {
       if (!token) return;
-      //console.log("Token: ", token);
 
       try {
         const response = await fetch("http://localhost:5001/api/users/get-notifications", {
@@ -117,19 +126,14 @@ function Navbar() {
         });
 
         if (!response.ok) {
-          throw new Error("Failed to fetch notifications");
+          throw new Error('Failed to fetch notifications');
         }
 
-        const { notifications: receivedNotifications, hasUnseen: unseen } = await response.json();
-
-        // Set the notifications and unseen status
-        setNotifications(receivedNotifications);
-        setHasUnseen(unseen);
-
-        //console.log("Fetched Notifications: ", receivedNotifications);
-        //console.log("Has Unseen Notifications: ", unseen);
+        const notifications = await response.json();
+        setNotifications(notifications);
+        setHasUnseen(notifications.some(notif => !notif.seen));
       } catch (error) {
-        //console.error("Error fetching notifications:", error);
+        console.error("Error fetching notifications:", error);
       }
     };
 
@@ -191,17 +195,120 @@ function Navbar() {
               onClick={(e) => e.stopPropagation()} // Prevent clicks inside from closing
             >
               <div className="notification-drop-flexbox">
-                  {notifications.map((notification, index) => (
-                   
-                    <div
-                      key={index}
-                      className={`notification-drop-item ${notification.seen ? "seen" : "unseen"}`}
-                    >
-                      <p className="noto-sans">{notification.content}</p>
-                      <img src={notification.from_user.profilePicture} onClick={() => {navigateToProfile(notification.from_user)}}></img>
-                      <p className="noto-sans">{getTimeAgo(notification.date)}</p>
-                    </div>
-                  ))}
+                {notifications.map((notification) => (
+                  <div key={notification._id} className="notification-item">
+                    <p className="noto-sans">{notification.content}</p>
+                    <img src={notification.from_user.profilePicture} onClick={() => { navigateToProfile(notification.from_user) }}></img>
+                    <p className="noto-sans">{getTimeAgo(notification.date)}</p>
+
+                    {(notification.type === 'buddy_request' || notification.type === 'group_join_request') && (
+                      <div className="notification-actions">
+                        {notification.status ? (
+                          <div className={`status-badge ${notification.status.toLowerCase()}`}>
+                            {notification.status}
+                          </div>
+                        ) : (
+                          <>
+                            <button
+                              onClick={async () => {
+                                try {
+                                  const endpoint = notification.type === 'buddy_request'
+                                    ? '/api/users/accept-buddy-request'
+                                    : '/api/groups/approve-join-group';
+
+                                  console.log('Notification data:', notification);
+                                  console.log('Request body:', {
+                                    groupId: notification.groupId,
+                                    userId: notification.from_user._id
+                                  });
+
+                                  const response = await fetch(`http://localhost:5001${endpoint}`, {
+                                    method: 'POST',
+                                    headers: {
+                                      'Content-Type': 'application/json',
+                                      'Authorization': `Bearer ${token}`,
+                                    },
+                                    body: JSON.stringify({
+                                      groupId: notification.groupId,
+                                      userId: notification.from_user._id
+                                    }),
+                                  });
+
+                                  if (!response.ok) {
+                                    const errorData = await response.json();
+                                    throw new Error(errorData.error || 'Failed to accept request');
+                                  }
+
+                                  // First update status to show accepted
+                                  setNotifications(prev => prev.map(n =>
+                                    n._id === notification._id
+                                      ? { ...n, status: 'Accepted' }
+                                      : n
+                                  ));
+
+                                  // Delete notification from database
+                                  await deleteNotification(notification._id);
+
+                                  // Remove notification from UI after a brief delay
+                                  setTimeout(() => {
+                                    setNotifications(prev =>
+                                      prev.filter(n => n._id !== notification._id)
+                                    );
+                                  }, 1500);
+                                } catch (error) {
+                                  console.error('Error accepting request:', error);
+                                  alert(error.message || 'Failed to accept request. Please try again.');
+                                }
+                              }}
+                              className="accept-btn"
+                            >
+                              Accept
+                            </button>
+                            <button
+                              onClick={async () => {
+                                try {
+                                  const endpoint = notification.type === 'buddy_request'
+                                    ? '/api/users/reject-buddy-request'
+                                    : '/api/groups/reject-join-group';
+
+                                  const response = await fetch(`http://localhost:5001${endpoint}`, {
+                                    method: 'POST',
+                                    headers: {
+                                      'Content-Type': 'application/json',
+                                      'Authorization': `Bearer ${token}`,
+                                    },
+                                    body: JSON.stringify({
+                                      fromUser: notification.from_user._id,
+                                      groupId: notification.groupId,
+                                      userId: notification.from_user._id
+                                    }),
+                                  });
+
+                                  if (!response.ok) {
+                                    throw new Error('Failed to reject request');
+                                  }
+
+                                  // Update notification status
+                                  setNotifications(prev => prev.map(n =>
+                                    n._id === notification._id
+                                      ? { ...n, status: 'Rejected' }
+                                      : n
+                                  ));
+                                } catch (error) {
+                                  console.error('Error rejecting request:', error);
+                                  alert('Failed to reject request. Please try again.');
+                                }
+                              }}
+                              className="reject-button"
+                            >
+                              Reject
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
 
             </div>

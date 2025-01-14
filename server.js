@@ -169,7 +169,7 @@ io.on("connection", (socket) => {
   });
 
   socket.on("disconnect", () => {
-   // console.log("A user disconnected");
+    // console.log("A user disconnected");
   });
 });
 
@@ -383,22 +383,25 @@ app.post("/api/users/signup", async (req, res) => {
 app.get("/api/users/get-notifications", authenticate, async (req, res) => {
   try {
     const user = await User.findById(req.user._id)
-      .select("-password")
       .populate({
-        path: "notifications",
-        populate: { path: "from_user", select: "firstName lastName email profilePicture" },
-        options: { limit: 10, sort: { date: -1 } }, // Limit to 10, sorted by date descending
+        path: 'notifications',
+        populate: {
+          path: 'from_user',
+          select: 'firstName lastName profilePicture'
+        }
       });
 
-    // Check if there are any unseen notifications
-    const hasUnseenNotifications = user.notifications.some(notification => !notification.seen);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
 
+    // Sort notifications by date in descending order (newest first)
+    const sortedNotifications = user.notifications.sort((a, b) => b.date - a.date);
 
-    // Send response with notifications and unseen status
-    res.json({ notifications: user.notifications, hasUnseen: hasUnseenNotifications });
+    res.json(sortedNotifications);
   } catch (error) {
-    console.error("Error fetching notifications:", error);
-    res.status(500).json({ error: "Failed to fetch notifications" });
+    console.error('Error fetching notifications:', error);
+    res.status(500).json({ error: 'Failed to fetch notifications' });
   }
 });
 // app.post("/api/users/notify-match-of-request", authenticate, async (req, res) => {
@@ -673,7 +676,7 @@ app.post('/api/users/create-group', authenticate, upload.single('photo'), async 
         console.log('[Server] Uploading group photo to Filen cloud...');
         profilePicture = await uploadProfilePicture(req.file.buffer, `group_${Date.now()}`);
         console.log('[Server] Upload successful, path:', profilePicture);
-        
+
         // Add server URL prefix if path is relative
         profilePicture = profilePicture.startsWith('http') ? profilePicture : `http://localhost:5001${profilePicture}`;
         console.log('[Server] Full path:', profilePicture);
@@ -690,7 +693,7 @@ app.post('/api/users/create-group', authenticate, upload.single('photo'), async 
       owner: req.user._id,
       members: allParticipants,
       profilePicture,
-      
+
     });
     await group.save();
 
@@ -750,6 +753,8 @@ app.post('/api/users/request-join-group', authenticate, async (req, res) => {
     const { groupId } = req.body;
     const userId = req.user._id; // Get user ID from auth token
 
+    console.log('Processing join request:', { groupId, userId });
+
     // Fetch the group from the database
     const group = await Group.findById(groupId);
     if (!group) {
@@ -782,7 +787,10 @@ app.post('/api/users/request-join-group', authenticate, async (req, res) => {
       to_user: group.owner,
       type: 'group_join_request',
       content: `${user.firstName} ${user.lastName} has requested to join your group.`,
+      groupId: groupId  // Make sure groupId is included in notification
     });
+
+    console.log('Creating notification:', notification);
 
     await notification.save();
 
@@ -817,7 +825,7 @@ app.post('/api/users/leave-group', authenticate, async (req, res) => {
     if (!chatRoom) {
       return res.status(404).json({ error: 'Chatroom not found' });
     }
-    
+
     chatRoom.participants = chatRoom.participants.filter(member => member.toString() !== userId.toString());
     await chatRoom.save();
 
@@ -825,7 +833,7 @@ app.post('/api/users/leave-group', authenticate, async (req, res) => {
     await User.updateOne(
       { _id: userId },
       { $pull: { groups: { group: groupId } } }
-    );  
+    );
 
     await User.updateOne(
       { _id: userId },
@@ -857,7 +865,7 @@ app.delete("/api/groups/:id", async (req, res) => {
 
     // Update all users to remove the group and chatroom references
     await User.updateMany(
-      { 
+      {
         $or: [
           { "groups.group": groupId },
           { chatrooms: chatRoom._id }
@@ -904,15 +912,20 @@ app.get('/api/groups/:groupId', authenticate, async (req, res) => {
 });
 // Request to join group
 
-app.post('/api/groups/approve-join-group', async (req, res) => {
+app.post('/api/groups/approve-join-group', authenticate, async (req, res) => {
   try {
-    const groupId = req.body.groupId;
-    const userId = req.body.userId;
+    const { groupId, userId } = req.body;
+    console.log('Approving group join request:', { groupId, userId });
 
     // Fetch the group from the database
     const group = await Group.findById(groupId);
     if (!group) {
       return res.status(404).json({ error: 'Group not found' });
+    }
+
+    // Verify the current user is the group owner
+    if (group.owner.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ error: 'Only group owner can approve requests' });
     }
 
     // Fetch the user to get their name
@@ -922,47 +935,75 @@ app.post('/api/groups/approve-join-group', async (req, res) => {
     }
 
     // Add the user to the group's members
-    group.members.push(userId);
+    if (!group.members.includes(userId)) {
+      group.members.push(userId);
+    }
+
+    // Remove the user from the group's pending requests
+    group.pendingRequests = group.pendingRequests.filter(request => 
+      request.user.toString() !== userId.toString()
+    );
     await group.save();
 
     // Add the group to the user's groups list
-    user.groups.push({ group: groupId, isOwner: false });
-    await user.save();
-
-    // Remove the user from the group's pending requests
-    group.pendingRequests = group.pendingRequests.filter(request => request.user.toString() !== userId);
-    await group.save();
-
-    // Remove the group from the user's outgoing group requests
-    user.outgoingGroupRequests = user.outgoingGroupRequests.filter(request => request.group.toString() !== groupId);
-    await user.save();
-
-    user.chatrooms.push(group.chatRoomId);
-    await user.save();
-
-    // Fetch the associated chatroom
-    const chatRoom = await ChatRoom.findById(group.chatRoomId);
-    if (!chatRoom) {
-      return res.status(404).json({ error: 'Chatroom not found for this group' });
+    const groupEntry = { group: groupId, isOwner: false };
+    if (!user.groups) {
+      user.groups = [groupEntry];
+    } else if (!user.groups.some(g => g.group.toString() === groupId)) {
+      user.groups.push(groupEntry);
     }
 
-    // Add the user to the chatroom's participants
-    if (!chatRoom.participants.includes(userId)) {
-      chatRoom.participants.push(userId);
-      await chatRoom.save();
+    // Remove from outgoing requests if they exist
+    if (user.outgoingGroupRequests) {
+      user.outgoingGroupRequests = user.outgoingGroupRequests.filter(
+        id => id.toString() !== groupId
+      );
     }
+
+    // Add user to the group's chatroom
+    if (group.chatRoomId) {
+      if (!user.chatrooms) {
+        user.chatrooms = [group.chatRoomId];
+      } else if (!user.chatrooms.includes(group.chatRoomId)) {
+        user.chatrooms.push(group.chatRoomId);
+      }
+
+      // Add user to chatroom participants
+      const chatRoom = await ChatRoom.findById(group.chatRoomId);
+      if (chatRoom && !chatRoom.participants.includes(userId)) {
+        chatRoom.participants.push(userId);
+        await chatRoom.save();
+      }
+    }
+
+    await user.save();
+
+    // Create a notification for the user that their request was approved
+    const notification = new Notification({
+      from_user: req.user._id,
+      to_user: userId,
+      type: 'group_request_approved',
+      content: `${user.firstName} ${user.lastName} has been approved to join your group.`,
+      groupId: groupId
+    });
+
+    await notification.save();
+    await User.findByIdAndUpdate(
+      userId,
+      { $push: { notifications: notification._id } }
+    );
 
     res.json({ message: 'User approved to join the group and added to the chatroom' });
   } catch (error) {
     console.error('Error approving join request:', error);
-    res.status(500).json({ error: 'Server error' });
+    res.status(500).json({ error: 'Server error: ' + error.message });
   }
 });
 
-app.post('/api/groups/reject-join-group', async (req, res) => {
+app.post('/api/groups/reject-join-group', authenticate, async (req, res) => {
   try {
-    const groupId = req.body.groupId;
-    const userId = req.body.userId;
+    const { groupId, userId } = req.body;
+    console.log('Rejecting group join request:', { groupId, userId });
 
     // Fetch the group from the database
     const group = await Group.findById(groupId);
@@ -970,22 +1011,45 @@ app.post('/api/groups/reject-join-group', async (req, res) => {
       return res.status(404).json({ error: 'Group not found' });
     }
 
-    // Remove the user from the group's pending requests
-    group.pendingRequests = group.pendingRequests.filter(request => request.user.toString() !== userId);
-    await group.save();
-
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
+    // Verify the current user is the group owner
+    if (group.owner.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ error: 'Only group owner can reject requests' });
     }
 
-    user.outgoingGroupRequests = user.outgoingGroupRequests.filter(request => request.group.toString() !== groupId);
-    await user.save();
+    // Remove the user from the group's pending requests
+    group.pendingRequests = group.pendingRequests.filter(request => 
+      request.user.toString() !== userId.toString()
+    );
+    await group.save();
 
-    res.json({ message: 'Join request rejected successfully' });
+    // Remove from user's outgoing requests if they exist
+    const user = await User.findById(userId);
+    if (user && user.outgoingGroupRequests) {
+      user.outgoingGroupRequests = user.outgoingGroupRequests.filter(
+        id => id.toString() !== groupId
+      );
+      await user.save();
+    }
+
+    // Create a notification for the user that their request was rejected
+    const notification = new Notification({
+      from_user: req.user._id,
+      to_user: userId,
+      type: 'group_request_rejected',
+      content: `Your request to join the group was rejected.`,
+      groupId: groupId
+    });
+
+    await notification.save();
+    await User.findByIdAndUpdate(
+      userId,
+      { $push: { notifications: notification._id } }
+    );
+
+    res.json({ message: 'Group join request rejected' });
   } catch (error) {
     console.error('Error rejecting join request:', error);
-    res.status(500).json({ error: 'Server error' });
+    res.status(500).json({ error: 'Server error: ' + error.message });
   }
 });
 
@@ -998,14 +1062,14 @@ app.post('/api/groups/remove-member', authenticate, async (req, res) => {
     const group = await Group.findById(groupId);
     if (!group) {
       return res.status(404).json({ error: 'Group not found' });
-    } 
+    }
     // make sure user is owner of group
     if (group.owner.toString() !== req.user._id.toString()) {
       return res.status(403).json({ error: 'You are not the owner of this group' });
     }
 
     // Remove the user from the group's members
-    group.members = group.members.filter(member => member.toString() !== userId);
+    group.members = group.members.filter(member => member.toString() !== userId.toString());
     await group.save();
 
     const user = await User.findById(userId);
@@ -1022,7 +1086,7 @@ app.post('/api/groups/remove-member', authenticate, async (req, res) => {
     }
 
     // Remove the user from the chatroom's participants
-    chatRoom.participants = chatRoom.participants.filter(member => member.toString() !== userId);
+    chatRoom.participants = chatRoom.participants.filter(member => member.toString() !== userId.toString());
     await chatRoom.save();
 
     res.json({ message: 'Member removed successfully' });
@@ -1035,7 +1099,7 @@ app.post('/api/groups/remove-member', authenticate, async (req, res) => {
 app.get('/api/get-all-groups', authenticate, async (req, res) => {
   try {
     const groups = await Group.find({});
-    
+
     res.json(groups);
   } catch (error) {
     console.error('Error getting all groups:', error);
@@ -1181,7 +1245,7 @@ app.get('/profile-pictures/:filename', async (req, res) => {
     // Serve default image based on the filename pattern
     const isGroupImage = req.params.filename.startsWith('group_');
     const defaultImagePath = path.join(__dirname, 'public', 'images', isGroupImage ? 'group.jpg' : 'empty-profile-pic.png');
-    
+
     if (fs.existsSync(defaultImagePath)) {
       res.setHeader('Content-Type', isGroupImage ? 'image/jpeg' : 'image/png');
       return fs.createReadStream(defaultImagePath).pipe(res);
@@ -1339,6 +1403,39 @@ app.get('/api/users/profile/:matchId', authenticate, async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch user profile' });
   }
 });
+
+// Delete notification endpoint
+app.delete('/api/notifications/:notificationId', authenticate, async (req, res) => {
+  try {
+    const notificationId = req.params.notificationId;
+    const userId = req.user._id;
+
+    // Find the notification
+    const notification = await Notification.findById(notificationId);
+    if (!notification) {
+      return res.status(404).json({ error: 'Notification not found' });
+    }
+
+    // Verify the notification belongs to the user
+    if (notification.to_user.toString() !== userId.toString()) {
+      return res.status(403).json({ error: 'Unauthorized' });
+    }
+
+    // Remove notification reference from user
+    await User.findByIdAndUpdate(userId, {
+      $pull: { notifications: notificationId }
+    });
+
+    // Delete the notification
+    await Notification.findByIdAndDelete(notificationId);
+
+    res.json({ message: 'Notification deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting notification:', error);
+    res.status(500).json({ error: 'Failed to delete notification' });
+  }
+});
+
 server.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });
