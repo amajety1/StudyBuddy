@@ -90,7 +90,7 @@ function CreateGroupComponent() {
       });
 
       const result = await response.json();
-      
+
       if (!response.ok) {
         throw new Error(result.error || 'Failed to create group');
       }
@@ -109,7 +109,7 @@ function CreateGroupComponent() {
   return (
     <div className="create-group-container max-w-2xl mx-auto p-6">
       <h2 className="text-2xl font-bold mb-6">Create New Study Group</h2>
-      
+
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="space-y-4">
           <div>

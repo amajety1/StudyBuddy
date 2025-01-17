@@ -1,5 +1,9 @@
-/* Header Section */ /* Header Section */ /* Header Section */ /* Header Section *//* Header Section */
-.header-image{
+/* Header Section */
+/* Header Section */
+/* Header Section */
+/* Header Section */
+/* Header Section */
+.header-image {
   width: 100%;
   min-width: 1000px;
   height: 200px;
@@ -19,34 +23,36 @@
   background-color: #ab5b5b;
 }
 
-.noto-sans{
+.noto-sans {
   font-family: "Noto Sans", serif;
   font-optical-sizing: auto;
   font-weight: 100;
   font-style: normal;
   font-variation-settings:
-      "wdth" 100;
-      
-}
-
-.general-hover:hover{
-  background-color: #dfdcdc; /* or any other darker color of your choice */
+    "wdth" 100;
 
 }
+
+.general-hover:hover {
+  background-color: #dfdcdc;
+  /* or any other darker color of your choice */
+
+}
+
 .general-transition {
   transition: background-color 0.2s ease-in-out;
 }
 
 
 
-body{
+body {
   margin: 0;
   padding: 0;
   background-color: #ffffff;
 }
 
 
-form{
+form {
   width: 100%;
   display: flex;
   flex-direction: column;
@@ -54,13 +60,13 @@ form{
   align-items: center;
 }
 
-.email-form ,
-.password-form  {
+.email-form,
+.password-form {
   width: 80%;
-  
+
 }
 
-.forgot-password{
+.forgot-password {
   margin-bottom: 5%;
 }
 
@@ -74,11 +80,11 @@ form{
   padding-bottom: 1.5%;
   margin-bottom: 5%;
   padding-left: 2%;
-  
+
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.login-button{
+.login-button {
   font-size: 90%;
   width: 80%;
   border-radius: 10px;
@@ -89,14 +95,17 @@ form{
   margin-bottom: 4%;
   padding-left: 2%;
 }
+
 .login-button:hover {
-  background-color: #dfdcdc; /* or any other darker color of your choice */
+  background-color: #dfdcdc;
+  /* or any other darker color of your choice */
 }
+
 .login-button {
   transition: background-color 0.2s ease-in-out;
 }
 
-.google-button{
+.google-button {
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -111,17 +120,22 @@ form{
   margin-bottom: 4%;
   padding-left: 2%;
 }
+
 .google-button:hover {
-  background-color: #dfdcdc; /* or any other darker color of your choice */
+  background-color: #dfdcdc;
+  /* or any other darker color of your choice */
 }
+
 .google-button {
   transition: background-color 0.2s ease-in-out;
 }
 
 .input-box:focus {
   outline: none;
-  border: 1px solid #ccc; /* or any other color of your choice */
-  box-shadow: 0 0 5px rgba(0, 0, 0, 0.2); /* or any other shadow effect */
+  border: 1px solid #ccc;
+  /* or any other color of your choice */
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+  /* or any other shadow effect */
 }
 
 
@@ -134,7 +148,8 @@ form{
 
 .phone-input-container {
   display: flex;
-  gap: 10px; /* Space between dropdown and input */
+  gap: 10px;
+  /* Space between dropdown and input */
   align-items: center;
 }
 
@@ -142,19 +157,20 @@ form{
   font-size: 14px;
   border: 1px solid #ccc;
   border-radius: 5px;
-  height: 36px; /* Matches the input field height */
+  height: 36px;
+  /* Matches the input field height */
 }
 
 .phone-number-input {
-  flex: 1; /* Takes up remaining space */
+  flex: 1;
+  /* Takes up remaining space */
   font-size: 14px;
   border: 1px solid #ccc;
   border-radius: 5px;
   height: 36px;
 }
 
-.phone-form input
- {
+.phone-form input {
   width: 100%;
   border-radius: 10px;
   height: 25px;
@@ -163,17 +179,17 @@ form{
   padding-bottom: 1.5%;
 
   padding-left: 2%;
-  
+
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .phone-form {
   width: 80%;
   margin-bottom: 20px;
-  
+
 }
 
-h4{
+h4 {
   margin: 0;
 }
 
@@ -186,10 +202,12 @@ h4{
 
 .course-input-container {
   display: flex;
-  gap: 10px; /* Space between dropdown and input */
+  gap: 10px;
+  /* Space between dropdown and input */
   align-items: center;
   position: relative;
 }
+
 .dropdown-options {
   position: absolute;
   width: 100%;
@@ -209,7 +227,7 @@ h4{
   cursor: pointer;
 }
 
-.profile-form{
+.profile-form {
   width: 500px;
   display: flex;
   flex-direction: column;
@@ -217,14 +235,16 @@ h4{
   align-items: center;
 }
 
-.github-input-box{
+.github-input-box {
   outline: none;
-  border: 1px solid #ccc; /* or any other color of your choice */
-  box-shadow: 0 0 5px rgba(0, 0, 0, 0.2); /* or any other shadow effect */
+  border: 1px solid #ccc;
+  /* or any other color of your choice */
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+  /* or any other shadow effect */
 
 }
 
-.courses-input-box{
+.courses-input-box {
   width: 300px;
 }
 
@@ -232,7 +252,8 @@ h4{
   font-size: 14px;
   border: 1px solid #ccc;
   border-radius: 5px;
-  height: 36px; /* Matches the input field height */
+  height: 36px;
+  /* Matches the input field height */
 }
 
 .course-add-button {
@@ -244,8 +265,10 @@ h4{
 }
 
 .course-add-button:hover {
-  background-color: #dfdcdc; /* or any other darker color of your choice */
+  background-color: #dfdcdc;
+  /* or any other darker color of your choice */
 }
+
 .course-add-button {
   transition: background-color 0.2s ease-in-out;
 }
@@ -261,26 +284,33 @@ h4{
   margin: 0px;
   padding: 7px;
   margin-top: 5px;
-  
+
 }
 
 .selected-item button {
-  
+
   background: none;
   border: none;
   color: red;
   cursor: pointer;
   font-size: 16px;
 }
-.selected-courses{
+
+.selected-courses {
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
 }
 
-/*      Projects in profile section */ /*      Projects in profile section */ /*      Projects in profile section */
-/*      Projects in profile section */ /*      Projects in profile section */ /*      Projects in profile section */
-/*      Projects in profile section */ /*      Projects in profile section */ /*      Projects in profile section */
+/*      Projects in profile section */
+/*      Projects in profile section */
+/*      Projects in profile section */
+/*      Projects in profile section */
+/*      Projects in profile section */
+/*      Projects in profile section */
+/*      Projects in profile section */
+/*      Projects in profile section */
+/*      Projects in profile section */
 
 /* Project Area */
 .project-area {
@@ -293,7 +323,8 @@ h4{
   border-radius: 10px;
   height: 35px;
   border: none;
-  background-color: #9dd99f; /* Green button */
+  background-color: #9dd99f;
+  /* Green button */
   color: white;
   font-size: 14px;
   cursor: pointer;
@@ -302,7 +333,8 @@ h4{
 }
 
 .add-project-button:hover {
-  background-color: #45a049; /* Darker green on hover */
+  background-color: #45a049;
+  /* Darker green on hover */
 }
 
 .project-form {
@@ -324,7 +356,8 @@ h4{
 }
 
 .project-form textarea {
-  resize: none; /* Prevents resizing of the textarea */
+  resize: none;
+  /* Prevents resizing of the textarea */
   height: 100px;
 }
 
@@ -333,7 +366,8 @@ h4{
   border-radius: 10px;
   height: 35px;
   border: none;
-  background-color: #4caf50; /* Green button */
+  background-color: #4caf50;
+  /* Green button */
   color: white;
   font-size: 14px;
   cursor: pointer;
@@ -342,7 +376,8 @@ h4{
 }
 
 .save-project-button:hover {
-  background-color: #45a049; /* Darker green on hover */
+  background-color: #45a049;
+  /* Darker green on hover */
 }
 
 /* Project List */
@@ -369,14 +404,16 @@ h4{
 .edit-project-button {
   background: none;
   border: none;
-  color: #007bff; /* Blue for edit button */
+  color: #007bff;
+  /* Blue for edit button */
   cursor: pointer;
   font-size: 14px;
   text-decoration: underline;
 }
 
 .edit-project-button:hover {
-  color: #0056b3; /* Darker blue on hover */
+  color: #0056b3;
+  /* Darker blue on hover */
 }
 
 
@@ -388,7 +425,7 @@ h4{
 /* --------------------------------------------------------------------------------------------------------   */
 /* Home Toolbar Home Toolbar Home Toolbar Home Toolbar Home Toolbar Home Toolbar Home Toolbar Home Toolbar   */
 
-.home-toolbar-total{
+.home-toolbar-total {
   display: flex;
   justify-content: space-between;
   background-color: #f0f0f0;
@@ -396,7 +433,7 @@ h4{
   min-width: 1000px;
 }
 
-.home-toolbar-left-search{
+.home-toolbar-left-search {
   display: flex;
   align-items: center;
   padding: 5px 100px;
@@ -419,7 +456,7 @@ h4{
   width: 44px;
   height: 44px;
   padding: 5px;
-  
+
   background-color: white;
 
 }
@@ -432,7 +469,7 @@ h4{
 }
 
 
-.home-toolbar-right-items{
+.home-toolbar-right-items {
   display: flex;
   justify-content: flex-end;
   align-items: center;
@@ -446,12 +483,14 @@ h4{
   gap: 40px;
 
 }
+
 /* Base styling for notification items */
 
-.notification-drop-flexbox .unseen{
+.notification-drop-flexbox .unseen {
   color: #2b0f0f;
 }
-.notification-drop-flexbox .seen{
+
+.notification-drop-flexbox .seen {
   color: #ffa5a5;
 }
 
@@ -467,7 +506,8 @@ h4{
   margin-top: 8px;
 }
 
-.accept-button, .reject-button {
+.accept-button,
+.reject-button {
   padding: 6px 12px;
   border-radius: 4px;
   font-size: 14px;
@@ -525,7 +565,7 @@ h4{
   gap: 10px;
 }
 
-.notification-dot{
+.notification-dot {
   width: 10px;
   height: 10px;
   border-radius: 50%;
@@ -538,19 +578,20 @@ h4{
 .notification-drop-item img {
   width: 20px;
   height: 20px;
-  margin-left: 10px; /* For spacing if you add icons */
+  margin-left: 10px;
+  /* For spacing if you add icons */
 }
 
-.home-toolbar-item{
+.home-toolbar-item {
   position: relative;
 }
 
-.home-toolbar-item img{
+.home-toolbar-item img {
   width: 30px;
   height: 30px;
 }
 
-.flex-for-navbar{
+.flex-for-navbar {
   display: flex;
   flex-direction: column;
   gap: 5px;
@@ -558,16 +599,16 @@ h4{
   justify-content: center;
 }
 
-.flex-for-navbar p{
+.flex-for-navbar p {
   margin-bottom: 0px;
 }
 
-.navbar-text-and-arrow{
+.navbar-text-and-arrow {
   display: flex;
   margin-bottom: 0px;
 }
 
-.navbar-text-and-arrow img{
+.navbar-text-and-arrow img {
   margin-top: 3px;
   width: 17px;
   height: 17px;
@@ -575,12 +616,12 @@ h4{
 
 
 
-.profile-link{
+.profile-link {
   padding-top: 20px;
   position: relative;
 }
 
-.profile-dropdown-window{
+.profile-dropdown-window {
   position: absolute;
   top: 100px;
   right: 10px;
@@ -623,7 +664,7 @@ h4{
 
 /* Matches and Messages */
 
-.matches-and-messages{
+.matches-and-messages {
   display: flex;
   min-width: 1000px;
   padding: 50px 100px;
@@ -634,27 +675,28 @@ h4{
 
 /* Matches */
 
-.matches-title-and-buddies{
-  display: flex;  
+.matches-title-and-buddies {
+  display: flex;
   flex-direction: column;
   align-items: start;
   background-color: #f0f0f0;
   /* flex-basis: 90%; */
   gap: 20px;
- 
+
 }
 
-.matched-buddies{
+.matched-buddies {
   display: flex;
   flex-direction: column;
   gap: 50px;
 }
 
-.matched-buddy{
+.matched-buddy {
   display: flex;
   gap: 20px;
 }
-.matched-buddy img{
+
+.matched-buddy img {
   width: 100px;
   height: 100px;
   border-radius: 50%;
@@ -668,53 +710,63 @@ h4{
   justify-content: center;
   padding: 10px 16px;
   border-radius: 8px;
-  background-color: #1e293b; /* Sleek dark slate blue */
+  background-color: #1e293b;
+  /* Sleek dark slate blue */
   color: white;
   font-family: 'Noto Sans', sans-serif;
   font-size: 14px;
   font-weight: 500;
-  gap: 8px; /* Space between icon and text */
+  gap: 8px;
+  /* Space between icon and text */
   cursor: pointer;
   transition: background-color 0.2s ease-in-out, transform 0.2s ease-in-out;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
 .buddy-up-button:hover {
-  background-color: #111827; /* Slightly darker on hover */
-  transform: translateY(-2px); /* Subtle hover lift */
+  background-color: #111827;
+  /* Slightly darker on hover */
+  transform: translateY(-2px);
+  /* Subtle hover lift */
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
 }
 
 .plus-icon {
   width: 18px;
   height: 18px;
-  fill: #10b981; /* Vibrant green for the plus icon */
+  fill: #10b981;
+  /* Vibrant green for the plus icon */
   transition: transform 0.2s ease-in-out;
 }
 
 .buddy-up-button:hover .plus-icon {
-  transform: rotate(90deg); /* Rotate on hover for interactivity */
+  transform: rotate(90deg);
+  /* Rotate on hover for interactivity */
 }
 
 .buddy-up-button p {
   margin: 0;
-  color: #e5e7eb; /* Light gray for contrast */
+  color: #e5e7eb;
+  /* Light gray for contrast */
   transition: color 0.2s ease-in-out;
 }
 
 .buddy-up-button:hover p {
-  color: #10b981; /* Matches the plus icon */
+  color: #10b981;
+  /* Matches the plus icon */
 }
 
 .sent-icon {
   width: 18px;
   height: 18px;
-  fill: #60a5fa; /* Vibrant blue for "Sent" */
+  fill: #60a5fa;
+  /* Vibrant blue for "Sent" */
   transition: transform 0.2s ease-in-out;
 }
 
 .buddy-up-button:hover .sent-icon {
-  transform: scale(1.1); /* Slight scale on hover */
+  transform: scale(1.1);
+  /* Slight scale on hover */
 }
 
 /* Messages */
@@ -732,7 +784,7 @@ h4{
   padding: 10px;
   width: 300px;
   max-width: 500px;
-  
+
   min-height: 50px;
 }
 
@@ -814,24 +866,24 @@ h4{
   border: 2px solid white;
 }
 
-.message-box-title{
+.message-box-title {
   display: flex;
   margin-bottom: 10px;
   justify-content: space-between;
 
 }
 
-.message-box-title img{
+.message-box-title img {
   width: 30px;
   height: 30px;
 }
 
-.message-box-title p{
+.message-box-title p {
   font-size: 24px;
 }
 
-.chatbox{
-  
+.chatbox {
+
   display: flex;
   gap: 10px;
   height: 100px;
@@ -845,31 +897,32 @@ h4{
   transition: background-color 0.3s ease;
 }
 
-.chatbox:hover{
+.chatbox:hover {
   background-color: #e0e0e0;
 }
 
-.chatbox img{
-  width:50px;
+.chatbox img {
+  width: 50px;
   height: 50px;
   margin-top: 7.5px;
   border-radius: 50%;
   object-fit: cover;
 }
 
-.chatbox-title-and-message{
-  
+.chatbox-title-and-message {
+
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: start;
 }
-.chatbox-title-and-message h3{
+
+.chatbox-title-and-message h3 {
   margin-top: 7.5px;
   font-size: 16px;
 }
 
-.chat-expanded-window{
+.chat-expanded-window {
   position: fixed;
   width: 475px;
   height: 500px;
@@ -885,69 +938,74 @@ h4{
   gap: 30px;
 }
 
-.chat-expanded-window-title{
+.chat-expanded-window-title {
   display: flex;
   align-items: center;
 }
-.chat-expanded-window-title img{
+
+.chat-expanded-window-title img {
   width: 70px;
   height: 70px;
   border-radius: 50%;
   object-fit: cover;
 }
-.chat-expanded-window-title h3{
+
+.chat-expanded-window-title h3 {
   margin-left: 10px;
   font-size: 16px;
   margin-top: 7.5px;
 
 }
 
-.chat-expanded-window-title-left-profile-and-name{
+.chat-expanded-window-title-left-profile-and-name {
   display: flex;
   align-items: top;
   width: 100%;
 }
 
-.chat-expanded-window-title-right-down-arrow{
+.chat-expanded-window-title-right-down-arrow {
   display: flex;
   align-items: start;
   justify-content: end;
   height: 100%;
 }
-.chat-expanded-window-title-right-down-arrow img{
+
+.chat-expanded-window-title-right-down-arrow img {
   width: 40px;
   height: 40px;
 }
 
-.chat-expanded-window-messages{
+.chat-expanded-window-messages {
   display: flex;
   flex-direction: column;
   gap: 10px;
   margin-top: 20px;
 }
 
-.expanded-chat-receiving-sequence{
+.expanded-chat-receiving-sequence {
   display: flex;
   gap: 10px;
 }
-.chat-expanded-window-messages img{
+
+.chat-expanded-window-messages img {
   width: 50px;
   height: 50px;
   border-radius: 50%;
   object-fit: cover;
 }
 
-.receiving-sequence-messages{
+.receiving-sequence-messages {
   display: flex;
   flex-direction: column;
   gap: 10px;
   margin-top: 20px;
 }
-.receiving-sequence-messages p{
+
+.receiving-sequence-messages p {
   margin: 0px;
 }
 
-.expanded-chat-sending-sequence{
+.expanded-chat-sending-sequence {
   display: flex;
   gap: 10px;
   justify-content: end;
@@ -960,43 +1018,45 @@ h4{
 /*       --------------------------------------------------------------------------------------------------------   */
 /* BuddyProfile BuddyProfile BuddyProfile BuddyProfile BuddyProfile BuddyProfile BuddyProfile BuddyProfile BuddyProfile  */
 
-.buddy-profile{
+.buddy-profile {
   display: flex;
   padding: 20px 180px;
   background-color: #f0f0f0;
   gap: 20px;
   position: relative;
-  
+
 }
 
-.buddy-profile-name-github-courses-left-half{
+.buddy-profile-name-github-courses-left-half {
   width: 80%;
   position: relative;
   min-width: 700px;
   display: flex;
   flex-direction: column;
   gap: 40px;
-  
+
 }
-.buddy-profile-buddy-suggestions-right-half{
+
+.buddy-profile-buddy-suggestions-right-half {
   width: 20%;
 }
 
-.buddy-profile-links{
+.buddy-profile-links {
   width: 100%;
   display: flex;
   justify-content: end;
   padding-right: 20px;
   gap: 10px;
 }
-.buddy-profile-links  img{
+
+.buddy-profile-links img {
   width: 30px;
   height: 30px;
   cursor: pointer;
   margin-top: 20px;
 }
 
-.profile-backdrop img{
+.profile-backdrop img {
   width: 100%;
   max-height: 200px;
   object-fit: cover;
@@ -1012,7 +1072,7 @@ h4{
   top: 100px;
   left: 30px;
   cursor: pointer;
-  
+
 }
 
 /* Darken profile image on hover */
@@ -1035,33 +1095,33 @@ h4{
 
 
 
-.buddy-profile-name-brief-about-major-degree{
+.buddy-profile-name-brief-about-major-degree {
   margin-top: 10px;
   display: flex;
   justify-content: space-between;
   padding: 0px 30px;
 }
 
-.buddy-profile-name-backdrop-connect{
+.buddy-profile-name-backdrop-connect {
   display: flex;
   flex-direction: column;
-  gap: 10px; 
+  gap: 10px;
 }
 
-.buddy-profile-about-github{
-  
+.buddy-profile-about-github {
+
   padding: 0px 30px;
 }
 
-.buddy-profile-line{
-    width: 100%;
-    height: 1px;
-    background-color: #ccc;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-  
+.buddy-profile-line {
+  width: 100%;
+  height: 1px;
+  background-color: #ccc;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+
 }
 
-.buddy-profile-courses{
+.buddy-profile-courses {
   margin-top: 20px;
   padding: 0px 30px;
   display: flex;
@@ -1069,92 +1129,99 @@ h4{
   gap: 10px;
 }
 
-.buddy-profile-current-courses{
+.buddy-profile-current-courses {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
 }
 
-.buddy-profile-current-course-card{
+.buddy-profile-current-course-card {
   padding: 5px 10px;
   border: #ab5b5b solid 1px;
 }
 
-.buddy-profile-previous-courses{
+.buddy-profile-previous-courses {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
 }
 
-.buddy-profile-previous-course-card{
+.buddy-profile-previous-course-card {
   padding: 5px 10px;
   border: #82c87f solid 1px;
 }
 
-.buddy-profile-session-card{
+.buddy-profile-session-card {
   border-width: 1px;
   border-style: solid;
   border-color: #82c87f;
   padding: 5px 10px;
 }
 
-.study-session-cards{
+.study-session-cards {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
 }
 
-.buddy-profile-book-study-session{
+.buddy-profile-book-study-session {
   display: flex;
   flex-direction: column;
   gap: 10px;
   margin-top: 20px;
   padding: 5px 30px;
 }
-.edit-icon-name-about-profile{
+
+.edit-icon-name-about-profile {
   display: flex;
   align-items: end;
 }
-.edit-icon-name-about-profile img{
+
+.edit-icon-name-about-profile img {
   height: 25px;
   width: 25px;
 }
 
-.buddy-profile-projects{
+.buddy-profile-projects {
   padding: 10px 30px;
 }
 
-.buddy-profile-project-card-title-and-link{
+.buddy-profile-project-card-title-and-link {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 10px 20px;
 }
 
-.buddy-profile-projects-cards{
+.buddy-profile-projects-cards {
   margin-top: 30px;
   display: flex;
   flex-wrap: wrap;
   gap: 16px;
 }
 
-.buddy-profile-project-card{
-  flex: 1 1 40%; /* Each item takes up 50% of the container */
-  box-sizing: border-box; /* Include padding/border in the width */
-  max-width: calc(50% - 16px); /* Ensures items don’t grow beyond 50% */;
+.buddy-profile-project-card {
+  flex: 1 1 40%;
+  /* Each item takes up 50% of the container */
+  box-sizing: border-box;
+  /* Include padding/border in the width */
+  max-width: calc(50% - 16px);
+  /* Ensures items don’t grow beyond 50% */
+  ;
   min-width: 200px;
   border-width: 1px;
   border-style: solid;
   border-color: #82c87f;
 }
-.buddy-profile-project-card-description{
+
+.buddy-profile-project-card-description {
   padding: 10px 20px;
- 
+
 }
 
 /*       --------------------------------------------------------------------------------------------------------   */
 /* EDIT PROFILE WINDOW EDIT PROFILE WINDOW EDIT PROFILE WINDOW EDIT PROFILE WINDOW EDIT PROFILE WINDOW EDIT PROFILE WINDOW EDIT PROFILE WINDOW EDIT PROFILE WINDOW  */
-.edit-profile-window-content{
+.edit-profile-window-content {
   position: fixed;
   top: 60px;
   width: 1100px;
@@ -1165,7 +1232,7 @@ h4{
   z-index: 1000;
   background-color: #f0f0f0;
   overflow: auto;
-  
+
 }
 
 .edit-profile-window-overlay {
@@ -1176,7 +1243,7 @@ h4{
   height: 100%;
   background-color: transparent;
   z-index: 500;
-  
+
 }
 
 .title-and-close {
@@ -1185,16 +1252,19 @@ h4{
   align-items: start;
 }
 
-.title-and-close > h3 {
+.title-and-close>h3 {
   margin-top: 30px;
   margin-left: 475px;
 }
 
-.title-and-close > img {
+.title-and-close>img {
   margin-right: 0px;
 }
 
-.edit-bio ,.edit-about, .edit-courses ,.edit-projects{
+.edit-bio,
+.edit-about,
+.edit-courses,
+.edit-projects {
   margin-top: 30px;
   padding: 10px 100px;
   display: flex;
@@ -1202,30 +1272,32 @@ h4{
   gap: 20px;
 }
 
-.edit-current-courses{
+.edit-current-courses {
   display: flex;
   gap: 20px;
 
 }
 
-.course-div-edit{
+.course-div-edit {
   padding: 10px;
   display: flex;
   border: 1px solid #ccc;
   gap: 10px;
 }
-.course-div-edit > img{
+
+.course-div-edit>img {
   height: 20px;
   width: 20px;
   margin-top: 3px;
 }
 
-.edit-projects-card{
+.edit-projects-card {
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
-.edit-projects-card-top-row{
+
+.edit-projects-card-top-row {
   text-align: right;
 }
 
@@ -1268,7 +1340,7 @@ h4{
 /* Schedule Schedule Schedule ScheduleSchedule ScheduleSchedule ScheduleSchedule ScheduleSchedule ScheduleSchedule Schedule */
 /* Schedule Schedule Schedule ScheduleSchedule ScheduleSchedule ScheduleSchedule ScheduleSchedule ScheduleSchedule Schedule */
 /* Schedule Schedule Schedule ScheduleSchedule ScheduleSchedule ScheduleSchedule ScheduleSchedule ScheduleSchedule Schedule */
-.edit-times-available{
+.edit-times-available {
   padding: 10px 100px;
   display: flex;
   flex-wrap: wrap;
@@ -1317,27 +1389,27 @@ h4{
 
 /* ChatPage ChatPage ChatPage ChatPage ChatPage ChatPage ChatPage ChatPage ChatPage ChatPage ChatPage ChatPage ChatPage ChatPage  */
 /* ChatPage ChatPage ChatPage ChatPage ChatPage ChatPage ChatPage ChatPage ChatPage ChatPage ChatPage ChatPage ChatPage ChatPage  */
-/* ChatPage ChatPage ChatPage ChatPage ChatPage ChatPage ChatPage ChatPage ChatPage ChatPage ChatPage ChatPage ChatPage ChatPage  */  
+/* ChatPage ChatPage ChatPage ChatPage ChatPage ChatPage ChatPage ChatPage ChatPage ChatPage ChatPage ChatPage ChatPage ChatPage  */
 /* ChatPage ChatPage ChatPage ChatPage ChatPage ChatPage ChatPage ChatPage ChatPage ChatPage ChatPage ChatPage ChatPage ChatPage  */
 
-.chats-and-messages{
+.chats-and-messages {
   display: flex;
 }
 
-.chats-lhs{
+.chats-lhs {
   display: flex;
   flex-direction: column;
   gap: 10px;
   padding: 20px 100px;
 }
 
-.chats-lhs-chats{
+.chats-lhs-chats {
   display: flex;
   flex-direction: column;
   gap: 1px;
 }
 
-.chats-lhs-chat{
+.chats-lhs-chat {
   display: flex;
   gap: 10px;
   align-items: center;
@@ -1349,20 +1421,21 @@ h4{
 
 }
 
-.chats-lhs-chat:hover{
+.chats-lhs-chat:hover {
   background-color: #f0f0f0;
 }
 
-.chats-lhs-chat > img{
+.chats-lhs-chat>img {
   height: 35px;
   width: 35px;
   border-radius: 50%;
 }
-.chats-lhs-chat > p{
+
+.chats-lhs-chat>p {
   margin: 0px;
 }
 
-.messages-rhs{
+.messages-rhs {
   padding: 10px 100px;
   border: 1px solid #ccc;
   width: 100%;
@@ -1375,7 +1448,7 @@ h4{
 }
 
 
-.messages-rhs-header{
+.messages-rhs-header {
   display: flex;
   gap: 10px;
   align-items: center;
@@ -1451,37 +1524,37 @@ h4{
   border: 2px solid white;
 }
 
-.messages-rhs-header > img{
+.messages-rhs-header>img {
   height: 35px;
   width: 35px;
   border-radius: 50%;
 }
 
-.messages-rhs-messages{
+.messages-rhs-messages {
   display: flex;
   flex-direction: column;
   gap: 10px;
   margin-top: 20px;
 }
 
-.message-img-and-text{
+.message-img-and-text {
   display: flex;
   gap: 10px;
 }
 
-.message-img-and-text h5{
+.message-img-and-text h5 {
   border: 1px solid #ccc;
   border-radius: 25%;
   padding: 5px;
 }
 
-.message-img-and-text > img{
+.message-img-and-text>img {
   height: 25px;
   width: 25px;
   border-radius: 50%;
 }
 
-.messages-rhs-message > .message-time{
+.messages-rhs-message>.message-time {
   width: 100%;
   text-align: center;
 
@@ -1494,7 +1567,7 @@ h4{
 /* Create Group Create Group Create Group Create Group Create Group Create Group Create Group Create Group Create Group  */
 /* Create Group Create Group Create Group Create Group Create Group Create Group Create Group Create Group Create Group  */
 
-.create-group-top{
+.create-group-top {
   padding: 20px 50px;
   width: 100%;
   min-width: 750px;
@@ -1504,15 +1577,15 @@ h4{
   height: 600px;
 }
 
-.create-group-left img{
+.create-group-left img {
   width: 150px;
   height: 150px;
   border-radius: 50%;
-  
+
 }
 
-.create-group-left{
-  flex:1;
+.create-group-left {
+  flex: 1;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -1520,8 +1593,8 @@ h4{
   gap: 30px;
 }
 
-.create-group-right{
-  flex:1;
+.create-group-right {
+  flex: 1;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -1529,12 +1602,12 @@ h4{
   gap: 20px;
 }
 
-.create-group-info-form{
+.create-group-info-form {
   display: flex;
   gap: 20px;
 }
 
-.create-group-bottom{
+.create-group-bottom {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -1544,7 +1617,7 @@ h4{
   height: 100px;
 }
 
-.create-group-bottom button{
+.create-group-bottom button {
   width: 200px;
   height: 50px;
   border-radius: 10px;
@@ -1556,11 +1629,11 @@ h4{
   transition: background-color 0.3s ease;
 }
 
-.create-group-bottom button:hover{
+.create-group-bottom button:hover {
   background-color: #8a3a3a;
 }
 
-.group-img-submit{
+.group-img-submit {
   height: 80px;
   width: 80px;
   border-radius: 50%;
@@ -1577,32 +1650,34 @@ h4{
 
 
 @media screen and (min-width: 769px) {
-  
-.login-image-half {
-  margin-left: 18%;
-  width: 500px;
-  height: 650px; /* Ensures full height of container */
-  background-color: rgb(255, 205, 139);
-  border-radius: 10px 10px 10px 10px; /* Slight curve for aesthetics */
-}
 
-/* Right half for login form */
-.login-text-half {
-  margin-right: 18%;
-overflow-y: scroll;
+  .login-image-half {
+    margin-left: 18%;
+    width: 500px;
+    height: 650px;
+    /* Ensures full height of container */
+    background-color: rgb(255, 205, 139);
+    border-radius: 10px 10px 10px 10px;
+    /* Slight curve for aesthetics */
+  }
 
-  height: 650px; 
-  width: 500px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  
-  background-color: rgb(67, 209, 138);
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  border-radius: 10px 10px 10px 10px;
-  
-}
+  /* Right half for login form */
+  .login-text-half {
+    margin-right: 18%;
+    overflow-y: scroll;
+
+    height: 650px;
+    width: 500px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+
+    background-color: rgb(67, 209, 138);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border-radius: 10px 10px 10px 10px;
+
+  }
 }
 
 /* Media Query for Smaller Screens (Width <= 768px) */

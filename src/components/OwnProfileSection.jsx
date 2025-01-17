@@ -478,6 +478,8 @@ function OwnProfileSection() {
                         <div className="buddy-profile-brief-name">
                             <h3 className="noto-sans">{user.firstName} {user.lastName}</h3>
                             <p className="noto-sans">{user.bio}</p>
+                            <a href="#">{user.buddies && (<p>{user.buddies.length} Buddies</p>)}</a>
+
                         </div>
                         <div className="buddy-profile-brief-edu">
                             <h3 className="noto-sans">{user.major}</h3>
