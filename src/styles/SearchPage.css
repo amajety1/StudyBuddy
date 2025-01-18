@@ -73,3 +73,70 @@
     background-color: #218838;
   }
   
+  .search-result-actions {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+  }
+
+  .connected-status {
+    background-color: #48BB78;
+    color: white;
+    padding: 6px 12px;
+    border-radius: 16px;
+    font-size: 0.875rem;
+  }
+
+  .pending-status {
+    background-color: #ECC94B;
+    color: #744210;
+    padding: 6px 12px;
+    border-radius: 16px;
+    font-size: 0.875rem;
+  }
+
+  .view-profile-button {
+    background-color: #4A5568;
+    color: white;
+    padding: 6px 12px;
+    border-radius: 16px;
+    border: none;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+
+  .view-profile-button:hover {
+    background-color: #2D3748;
+  }
+
+  .send-request-button {
+    background-color: #4299E1;
+    color: white;
+    padding: 6px 12px;
+    border-radius: 16px;
+    border: none;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+
+  .send-request-button:hover {
+    background-color: #2B6CB0;
+  }
+
+  .cursor-pointer {
+    cursor: pointer;
+  }
+
+  .search-result-content {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 1rem;
+  }
+
+  .search-result-info {
+    flex-grow: 1;
+    margin-left: 1rem;
+  }

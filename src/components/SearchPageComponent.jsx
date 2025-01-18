@@ -2,8 +2,10 @@ import React, { useState, useEffect } from "react";
 import '../styles/SearchPage.css';
 import Header from './Header'
 import Navbar from './Navbar'
+import { useNavigate } from 'react-router-dom';
 
 function SearchPageComponent() {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredResults, setFilteredResults] = useState([]);
   const [displayLimit, setDisplayLimit] = useState(10);
@@ -11,7 +13,17 @@ function SearchPageComponent() {
   const [users, setUsers] = useState([]);
   const [error, setError] = useState(null);
   const [pendingRequests, setPendingRequests] = useState([]);
+  const [currentUser, setCurrentUser] = useState(null);
   const token = localStorage.getItem('token');
+
+  const navigateToProfile = (matchId) => {
+    console.log('Navigating to profile with ID:', matchId);
+    navigate(`/buddy/${matchId}`);
+  };
+
+  const navigateToOwnProfile = () => {
+    navigate('/profile');
+  };
 
   // Helper function to get image URL
   const getImageUrl = (profilePicture, type) => {
@@ -24,6 +36,63 @@ function SearchPageComponent() {
     }
     // If it's a relative path, prepend the server URL
     return `http://localhost:5001${profilePicture}`;
+  };
+
+  // Helper function to determine user relationship status
+  const getUserRelationshipStatus = (userId) => {
+    if (!currentUser) return 'loading';
+    
+    if (currentUser._id === userId) {
+      return 'self';
+    }
+
+    if (currentUser.buddies.some(buddy => buddy._id === userId)) {
+      return 'connected';
+    }
+
+    if (currentUser.outgoingBuddyRequests.some(request => request._id === userId)) {
+      return 'outgoing-request';
+    }
+
+    if (currentUser.incomingBuddyRequests.some(request => request._id === userId)) {
+      return 'incoming-request';
+    }
+
+    return 'none';
+  };
+
+  // Helper function to render appropriate button based on relationship status
+  const renderUserActionButton = (userId) => {
+    const status = getUserRelationshipStatus(userId);
+    
+    switch (status) {
+      case 'self':
+        return (
+          <button 
+            className="view-profile-button"
+            onClick={navigateToOwnProfile}
+          >
+            View Your Profile
+          </button>
+        );
+      case 'connected':
+        return <span className="connected-status">Connected</span>;
+      case 'outgoing-request':
+        return <span className="pending-status">Request Sent</span>;
+      case 'incoming-request':
+        return <span className="pending-status">Respond to Request</span>;
+      case 'none':
+        return (
+          <button 
+            className="send-request-button"
+            onClick={() => handleBuddyRequest(userId)}
+          >
+            Send Buddy Request
+          </button>
+        );
+      default:
+        return null;
+    }
   };
 
   // Fetch groups and users only once when component mounts
@@ -57,6 +126,25 @@ function SearchPageComponent() {
 
     fetchData();
   }, []); // Empty dependency array means this runs once on mount
+
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      try {
+        const response = await fetch('http://localhost:5001/api/users/me', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        if (response.ok) {
+          const userData = await response.json();
+          setCurrentUser(userData);
+        }
+      } catch (error) {
+        console.error('Error fetching current user:', error);
+      }
+    };
+    fetchCurrentUser();
+  }, [token]);
 
   const handleGroupRequest = async (groupId) => {
     setPendingRequests(prev => [...prev, `group-${groupId}`]);
@@ -154,6 +242,7 @@ function SearchPageComponent() {
                     <img
                       src={getImageUrl(result.profilePicture, 'group')}
                       alt={result.name}
+                      
                       className="search-profile-pic mr-3"
                       onError={(e) => {
                         e.target.onerror = null;
@@ -181,6 +270,7 @@ function SearchPageComponent() {
                   <img
                     src={getImageUrl(result.profilePicture, 'user')}
                     alt={`${result.firstName}'s profile`}
+                    onClick={() => navigateToProfile(result._id)}
                     className="search-profile-pic mr-3"
                     onError={(e) => {
                       e.target.onerror = null;
@@ -202,13 +292,9 @@ function SearchPageComponent() {
                     Projects: {result.projects.join(", ")}
                   </p>
                 )}
-                <button
-                  onClick={() => handleBuddyRequest(result._id)}
-                  disabled={pendingRequests.includes(`user-${result._id}`)}
-                  className="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 transition-colors duration-200 disabled:bg-gray-400"
-                >
-                  {pendingRequests.includes(`user-${result._id}`) ? "Request Pending" : "Send Buddy Request"}
-                </button>
+                <div className="search-result-actions">
+                  {renderUserActionButton(result._id)}
+                </div>
               </div>
             )
           ))}
