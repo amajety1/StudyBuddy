@@ -1287,11 +1287,12 @@ app.put('/api/users/update-profile', authenticate, async (req, res) => {
     res.status(500).json({ error: 'Failed to update profile', details: error.message });
   }
 });
-// Get specific user's profile
+// Get specific user's data
 app.get('/api/users/:userId', authenticate, async (req, res) => {
   try {
     const user = await User.findById(req.params.userId)
-      .select('-password -verificationCode -email'); // Exclude sensitive information
+      .select('-password')
+      .populate('buddies', 'firstName lastName email profilePicture bio major degreeType');
 
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
@@ -1299,8 +1300,8 @@ app.get('/api/users/:userId', authenticate, async (req, res) => {
 
     res.json(user);
   } catch (error) {
-    console.error('Error fetching user profile:', error);
-    res.status(500).json({ error: 'Failed to fetch user profile' });
+    console.error('Error fetching user data:', error);
+    res.status(500).json({ error: 'Failed to fetch user data' });
   }
 });
 // Accept buddy request endpoint

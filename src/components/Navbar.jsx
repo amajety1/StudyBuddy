@@ -217,10 +217,12 @@ function Navbar() {
                                     : '/api/groups/approve-join-group';
 
                                   console.log('Notification data:', notification);
-                                  console.log('Request body:', {
-                                    groupId: notification.groupId,
-                                    userId: notification.from_user._id
-                                  });
+                                  console.log('Request body:', notification.type === 'buddy_request'
+                                    ? { fromUser: notification.from_user._id }
+                                    : {
+                                      groupId: notification.groupId,
+                                      userId: notification.from_user._id
+                                    });
 
                                   const response = await fetch(`http://localhost:5001${endpoint}`, {
                                     method: 'POST',
@@ -228,10 +230,14 @@ function Navbar() {
                                       'Content-Type': 'application/json',
                                       'Authorization': `Bearer ${token}`,
                                     },
-                                    body: JSON.stringify({
-                                      groupId: notification.groupId,
-                                      userId: notification.from_user._id
-                                    }),
+                                    body: JSON.stringify(
+                                      notification.type === 'buddy_request'
+                                        ? { fromUser: notification.from_user._id }
+                                        : {
+                                          groupId: notification.groupId,
+                                          userId: notification.from_user._id
+                                        }
+                                    ),
                                   });
 
                                   if (!response.ok) {

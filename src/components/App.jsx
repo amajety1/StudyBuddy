@@ -11,6 +11,7 @@ import CreateGroup from "../pages/CreateGroup";
 import SearchPage from "../pages/SearchPage";
 import ConfirmEmail from "../pages/ConfirmEmail";
 import OwnProfileBuddyList from "../pages/OwnProfileBuddyList";
+import BuddyProfileBuddyList from "../pages/BuddyProfileBuddyList";
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -85,6 +86,10 @@ function App() {
         <Route
           path="/own-profile/buddies"
           element={isAuthenticated ? <OwnProfileBuddyList /> : <Navigate to="/login" />}
+        />
+        <Route
+          path="/buddy-profile/:matchId/buddies"
+          element={isAuthenticated ? <BuddyProfileBuddyList /> : <Navigate to="/login" />}
         />
         <Route
           path="/chat"

@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from "react";
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import Matches from "./Matches";
 import ProjectCard from "./ProjectCard";
 import { io } from "socket.io-client";
 
+
 function BuddyProfileSection() {
     const { matchId } = useParams();
+    const navigate = useNavigate();
     const [user, setUser] = useState({
         firstName: "",
         lastName: "",
@@ -142,29 +144,6 @@ function BuddyProfileSection() {
                     console.log("[BuddyProfile] Buddy request accepted successfully");
                     setBuddyStatus('connected');
 
-                    // // Create a chat room between the buddies
-                    // const chatResponse = await fetch('http://localhost:5001/api/chatrooms', {
-                    //     method: 'POST',
-                    //     headers: {
-                    //         'Authorization': `Bearer ${token}`,
-                    //         'Content-Type': 'application/json'
-                    //     },
-                    //     body: JSON.stringify({
-                    //         participants: [matchId],
-                    //         isGroupChat: false
-                    //     })
-                    // });
-
-                    // if (chatResponse.ok) {
-                    //     const chatData = await chatResponse.json();
-                    //     // Emit socket event to notify about new chat
-                    //     socket.emit('new_chat', {
-                    //         chatId: chatData._id,
-                    //         participants: chatData.participants
-                    //     });
-                    // } else {
-                    //     console.error("[BuddyProfile] Failed to create chat room");
-                    // }
                 } else {
                     console.log("[BuddyProfile] Failed to accept buddy request:", response.status);
                     throw new Error('Failed to accept buddy request');
@@ -246,6 +225,17 @@ function BuddyProfileSection() {
                         <div className="buddy-profile-brief-name">
                             <h3 className="noto-sans">{user.firstName} {user.lastName}</h3>
                             <p className="noto-sans">{user.bio}</p>
+                            <a 
+                                href="#" 
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    navigate(`/buddy-profile/${matchId}/buddies`);
+                                }}
+                                className="buddy-count-link"
+                            >
+                                {user.buddies && (<p>{user.buddies.length} Buddies</p>)}
+                            </a>
+                            
                         </div>
                         <div className="buddy-profile-brief-edu">
                             <h3 className="noto-sans">{user.major}</h3>
