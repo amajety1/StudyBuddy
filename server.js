@@ -1261,7 +1261,13 @@ app.get('/profile-pictures/:filename', async (req, res) => {
 });
 
 // Serve static files from the public directory
-app.use('/images', express.static(path.join(__dirname, 'public/images')));
+app.use('/images', (req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET');
+  res.header('Access-Control-Allow-Headers', 'Content-Type');
+  next();
+}, express.static(path.join(__dirname, 'public/images')));
+
 app.use('/profile-pictures', express.static(path.join(__dirname, 'public/profile-pictures')));
 // Update user profile
 app.put('/api/users/update-profile', authenticate, async (req, res) => {

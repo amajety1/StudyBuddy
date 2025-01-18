@@ -1,15 +1,30 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import ExpandedChatWindow from '../components/ExpandedChatWindow';
+import '../styles/GroupPage.css';
 
 function GroupPage() {
   const { groupId } = useParams();
   const navigate = useNavigate();
   const [group, setGroup] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
-  const [showChat, setShowChat] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showChat, setShowChat] = useState(false);
+
+  // Helper function to get default image URL
+  const getDefaultImage = (type) => {
+    return type === 'group' ? '/images/default-group.svg' : '/images/default-profile.jpg';
+  };
+
+  // Helper function to get image URL
+  const getImageUrl = (profilePicture, type) => {
+    if (!profilePicture) {
+      return getDefaultImage(type);
+    }
+    return profilePicture.startsWith('http') 
+      ? profilePicture 
+      : `${profilePicture}`;
+  };
 
   useEffect(() => {
     const fetchGroupAndUser = async () => {
@@ -109,94 +124,93 @@ function GroupPage() {
     request => request.user === currentUser?._id && request.status === 'pending'
   );
 
+  const renderMembershipStatus = () => {
+    if (isOwner) {
+      return <span className="group-status status-owner">Owner</span>;
+    }
+    if (isMember) {
+      return (
+        <button
+          onClick={() => setShowChat(true)}
+          className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+        >
+          Open Chat
+        </button>
+      );
+    }
+    if (hasPendingRequest) {
+      return <span className="group-status status-pending">Request Pending</span>;
+    }
+    return (
+      <button className="join-button" onClick={handleJoinRequest}>
+        Request to Join
+      </button>
+    );
+  };
+
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="bg-white shadow overflow-hidden sm:rounded-lg">
-        {/* Group Header */}
-        <div className="px-4 py-5 sm:px-6 flex justify-between items-center">
-          <div className="flex items-center space-x-4">
+    <div className="group-page-container">
+      <div className="group-header">
+        <div className="group-header-content">
+          <div className="group-info">
             <img
-              src={group.profilePicture}
+              src={getImageUrl(group.profilePicture, 'group')}
               alt={group.name}
-              className="h-16 w-16 rounded-full object-cover"
+              className="group-image"
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.src = getDefaultImage('group');
+              }}
             />
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">{group.name}</h1>
-              <p className="mt-1 text-sm text-gray-500">{group.course}</p>
+            <div className="group-text">
+              <h1 className="group-name">{group.name}</h1>
+              <p className="group-course">{group.course}</p>
+              {renderMembershipStatus()}
             </div>
           </div>
-          {isMember && (
-            <button
-              onClick={() => setShowChat(true)}
-              className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
-            >
-              Open Chat
-            </button>
-          )}
-          {!isMember && !hasPendingRequest && (
-            <button
-              onClick={handleJoinRequest}
-              className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
-            >
-              Request to Join
-            </button>
-          )}
-          {hasPendingRequest && (
-            <span className="px-4 py-2 bg-yellow-100 text-yellow-800 rounded-md">
-              Request Pending
-            </span>
-          )}
-        </div>
-
-        {/* Group Details */}
-        <div className="border-t border-gray-200 px-4 py-5 sm:px-6">
-          <dl className="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2">
-            <div className="sm:col-span-2">
-              <dt className="text-sm font-medium text-gray-500">Description</dt>
-              <dd className="mt-1 text-sm text-gray-900">{group.description}</dd>
-            </div>
-
-            <div className="sm:col-span-1">
-              <dt className="text-sm font-medium text-gray-500">Owner</dt>
-              <dd className="mt-1 text-sm text-gray-900">
-                {`${group.owner.firstName} ${group.owner.lastName}`}
-              </dd>
-            </div>
-
-            <div className="sm:col-span-1">
-              <dt className="text-sm font-medium text-gray-500">Created</dt>
-              <dd className="mt-1 text-sm text-gray-900">
-                {new Date(group.createdAt).toLocaleDateString()}
-              </dd>
-            </div>
-
-            <div className="sm:col-span-2">
-              <dt className="text-sm font-medium text-gray-500">Members ({group.members.length})</dt>
-              <dd className="mt-2 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {group.members.map(member => (
-                  <div
-                    key={member._id}
-                    className="flex items-center space-x-3 bg-gray-50 p-3 rounded-md"
-                  >
-                    <img
-                      src={member.profilePicture}
-                      alt={member.firstName}
-                      className="h-10 w-10 rounded-full"
-                    />
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-gray-900">
-                        {`${member.firstName} ${member.lastName}`}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </dd>
-            </div>
-          </dl>
         </div>
       </div>
 
-      {/* Chat Window */}
+      <div className="group-content">
+        <div className="group-description">
+          <h2 className="section-title">About</h2>
+          <p>{group.description}</p>
+        </div>
+
+        <div className="group-details">
+          <div className="detail-item">
+            <h3>Owner</h3>
+            <p>{`${group.owner.firstName} ${group.owner.lastName}`}</p>
+          </div>
+          <div className="detail-item">
+            <h3>Created</h3>
+            <p>{new Date(group.createdAt).toLocaleDateString()}</p>
+          </div>
+        </div>
+
+        <div className="members-section">
+          <h2 className="section-title">Members ({group.members.length})</h2>
+          <div className="members-grid">
+            {group.members.map(member => (
+              <div key={member._id} className="member-card">
+                <img
+                  src={getImageUrl(member.profilePicture, 'user')}
+                  alt={member.firstName}
+                  className="member-image"
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = getDefaultImage('user');
+                  }}
+                />
+                <div className="member-info">
+                  <p className="member-name">{`${member.firstName} ${member.lastName}`}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
       {showChat && (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full">
           <div className="relative top-20 mx-auto p-5 w-full max-w-4xl">

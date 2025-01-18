@@ -21,21 +21,28 @@ function SearchPageComponent() {
     navigate(`/buddy/${matchId}`);
   };
 
+  const navigateToGroup = (groupId) => {
+    console.log('Navigating to group with ID:', groupId);
+    navigate(`/group/${groupId}`);
+  };
+
   const navigateToOwnProfile = () => {
     navigate('/profile');
+  };
+
+  // Helper function to get default image URL
+  const getDefaultImage = (type) => {
+    return type === 'group' ? '/images/default-group.svg' : '/images/default-profile.jpg';
   };
 
   // Helper function to get image URL
   const getImageUrl = (profilePicture, type) => {
     if (!profilePicture) {
-      return type === 'group' ? '/images/group.jpg' : '/images/empty-profile-pic.png';
+      return getDefaultImage(type);
     }
-    // If it's a full URL, use it directly
-    if (profilePicture.startsWith('http')) {
-      return profilePicture;
-    }
-    // If it's a relative path, prepend the server URL
-    return `http://localhost:5001${profilePicture}`;
+    return profilePicture.startsWith('http') 
+      ? profilePicture 
+      : `${profilePicture}`;
   };
 
   // Helper function to determine user relationship status
@@ -219,6 +226,10 @@ function SearchPageComponent() {
     setDisplayLimit(prev => prev + 10);
   };
 
+  const handleUserClick = (user) => {
+    navigateToProfile(user._id);
+  };
+
   return (
     <div className="search-page p-6 bg-gray-50">
       <div className="max-w-7xl mx-auto">
@@ -240,13 +251,13 @@ function SearchPageComponent() {
                 <div className="p-4">
                   <div className="flex items-center mb-4">
                     <img
-                      src={getImageUrl(result.profilePicture, 'group')}
-                      alt={result.name}
-                      
-                      className="search-profile-pic mr-3"
+                      src={getImageUrl(result.profilePicture, result.type)}
+                      alt={result.type === 'user' ? `${result.firstName} ${result.lastName}` : result.name}
+                      onClick={() => result.type === 'user' ? handleUserClick(result) : navigateToGroup(result._id)}
+                      className="search-profile-pic mr-3 cursor-pointer"
                       onError={(e) => {
                         e.target.onerror = null;
-                        e.target.src = '/images/group.jpg';
+                        e.target.src = getDefaultImage(result.type);
                       }}
                     />
                     <h3 className="text-xl font-bold">{result.name}</h3>
@@ -268,13 +279,13 @@ function SearchPageComponent() {
               <div key={result._id} className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 p-4">
                 <div className="flex items-center mb-4">
                   <img
-                    src={getImageUrl(result.profilePicture, 'user')}
-                    alt={`${result.firstName}'s profile`}
-                    onClick={() => navigateToProfile(result._id)}
+                    src={getImageUrl(result.profilePicture, result.type)}
+                    alt={result.type === 'user' ? `${result.firstName} ${result.lastName}` : result.name}
+                    onClick={() => result.type === 'user' ? handleUserClick(result) : navigateToGroup(result._id)}
                     className="search-profile-pic mr-3"
                     onError={(e) => {
                       e.target.onerror = null;
-                      e.target.src = '/images/empty-profile-pic.png';
+                      e.target.src = getDefaultImage(result.type);
                     }}
                   />
                   <div>

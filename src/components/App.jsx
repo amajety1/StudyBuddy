@@ -14,6 +14,7 @@ import OwnProfileBuddyList from "../pages/OwnProfileBuddyList";
 import BuddyProfileBuddyList from "../pages/BuddyProfileBuddyList";
 import IncomingBuddyRequests from "../pages/IncomingBuddyRequests";
 import OutgoingBuddyRequests from "../pages/OutgoingBuddyRequests";
+import GroupPage from "../pages/GroupPage";
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -96,6 +97,10 @@ function App() {
         <Route
           path="/own-profile/outgoing-requests"
           element={isAuthenticated ? <OutgoingBuddyRequests /> : <Navigate to="/login" />}
+        />
+        <Route
+          path="/group/:groupId"
+          element={isAuthenticated ? <GroupPage /> : <Navigate to="/login" />}
         />
         <Route
           path="/buddy-profile/:matchId/buddies"
