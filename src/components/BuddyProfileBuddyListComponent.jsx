@@ -3,8 +3,38 @@ import { useNavigate, useParams } from 'react-router-dom';
 
 function BuddyProfileBuddyListComponent() {
     const [buddy, setBuddy] = useState(null);
+    const [user, setUser] = useState(null);
     const navigate = useNavigate();
     const { matchId } = useParams();
+
+    useEffect(() => {
+        const fetchUserData = async () => {
+            try {
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    console.log("[BuddyProfile] No token found");
+                    return;
+                }
+
+                console.log("Making request to:", 'http://localhost:5001/api/users/me');
+                const response = await fetch('http://localhost:5001/api/users/me', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                if (response.ok) {
+                    const userData = await response.json();
+                    setUser(userData);
+                } else {
+                    const errorData = await response.text();
+                    console.error("[BuddyProfile] Failed to fetch user data:", response.status, errorData);
+                }
+            } catch (error) {
+                console.error('[BuddyProfile] Error fetching user data:', error);
+            }
+        };
+        fetchUserData();
+    }, []);
 
     useEffect(() => {
         const fetchBuddyData = async () => {
@@ -54,7 +84,7 @@ function BuddyProfileBuddyListComponent() {
 
     return (
         <div className="buddy-list-container">
-            <h3>{buddy.firstName}'s Study Buddies</h3>
+            <h3>{user._id === matchId ? 'Your' : buddy.firstName}'s Study Buddies</h3>
             {buddy.buddies && buddy.buddies.length > 0 ? (
                 <ul>
                     {buddy.buddies.map((buddyItem) => (

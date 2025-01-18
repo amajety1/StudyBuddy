@@ -64,7 +64,7 @@ function App() {
       <Routes>
         {/* Public Routes */}
         <Route path="/signup" element={<Signup />} />
-        <Route path="/login" element={<Login setIsAuthenticated={setIsAuthenticated} />} />
+        <Route path="/login" element={isAuthenticated ? <Navigate to="/home" /> : <Login setIsAuthenticated={setIsAuthenticated} />} />
         <Route path="/profile-info" element={<ProfileInfo setIsAuthenticated={setIsAuthenticated} />} />
         <Route path="/confirm-email" element={<ConfirmEmail />} />
         <Route path="/" element={<Navigate to="/home" />} />
