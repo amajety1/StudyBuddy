@@ -1,0 +1,170 @@
+.group-page-container {
+  max-width: 1200px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+}
+
+.group-header {
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.group-header-content {
+  padding: 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.group-info {
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
+}
+
+.group-image {
+  width: 120px;
+  height: 120px;
+  border-radius: 12px;
+  object-fit: cover;
+  border: 3px solid #e2e8f0;
+}
+
+.group-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.group-name {
+  font-size: 1.875rem;
+  font-weight: 700;
+  color: #1a202c;
+  margin: 0;
+}
+
+.group-course {
+  font-size: 1.125rem;
+  color: #4a5568;
+  margin: 0;
+}
+
+.group-status {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  border-radius: 9999px;
+  font-weight: 500;
+  font-size: 0.875rem;
+  margin-top: 0.5rem;
+}
+
+.status-owner {
+  background-color: #9F7AEA;
+  color: white;
+}
+
+.status-member {
+  background-color: #48BB78;
+  color: white;
+}
+
+.status-pending {
+  background-color: #ECC94B;
+  color: #744210;
+}
+
+.join-button {
+  background-color: #4299E1;
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  border: none;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.join-button:hover {
+  background-color: #2B6CB0;
+}
+
+.group-content {
+  margin-top: 2rem;
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+}
+
+.group-description {
+  color: #4a5568;
+  line-height: 1.6;
+  margin-bottom: 2rem;
+}
+
+.group-details {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.detail-item h3 {
+  font-size: 0.875rem;
+  color: #718096;
+  margin-bottom: 0.5rem;
+}
+
+.detail-item p {
+  font-size: 1rem;
+  color: #2D3748;
+  font-weight: 500;
+}
+
+.members-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.member-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background-color: #F7FAFC;
+  border-radius: 8px;
+  transition: transform 0.2s;
+}
+
+.member-card:hover {
+  transform: translateY(-2px);
+}
+
+.member-image {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.member-info {
+  flex: 1;
+}
+
+.member-name {
+  font-weight: 500;
+  color: #2D3748;
+  margin: 0;
+}
+
+.section-title {
+  font-size: 1.25rem;
+  color: #2D3748;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}

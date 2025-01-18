@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="200" height="200" viewBox="0 0 200 200" version="1.1" xmlns="http://www.w3.org/2000/svg">
+    <rect width="200" height="200" fill="#E2E8F0"/>
+    <g transform="translate(40, 60)">
+        <!-- People Group Icon -->
+        <circle cx="30" cy="25" r="20" fill="#94A3B8"/>
+        <circle cx="80" cy="25" r="20" fill="#94A3B8"/>
+        <circle cx="60" cy="65" r="20" fill="#94A3B8"/>
+        <!-- Text -->
+        <text x="60" y="110" font-family="Arial" font-size="16" fill="#475569" text-anchor="middle">Study Group</text>
+    </g>
+</svg>
