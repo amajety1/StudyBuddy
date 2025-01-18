@@ -1359,7 +1359,6 @@ app.post('/api/users/accept-buddy-request', authenticate, async (req, res) => {
     res.status(500).json({ error: 'Failed to accept buddy request' });
   }
 });
-
 app.post('/api/users/reject-buddy-request', authenticate, async (req, res) => {
   try {
     const { fromUser } = req.body;
@@ -1390,6 +1389,29 @@ app.post('/api/users/reject-buddy-request', authenticate, async (req, res) => {
       })
     ]);
     res.json({ message: 'Buddy request rejected' });
+  } catch (error) {
+    console.error('Error rejecting buddy request:', error);
+    res.status(500).json({ error: 'Failed to reject buddy request' });
+  }
+  
+})
+
+
+app.post('/api/users/cancel-buddy-request', authenticate, async (req, res) => {
+  try {
+    const { toUser } = req.body;
+    const fromUser = req.user._id;
+
+    // Update both users' buddy lists and remove requests
+    await Promise.all([
+      User.findByIdAndUpdate(fromUser, {
+        $pull: { outgoingBuddyRequests: toUser }
+      }),
+      User.findByIdAndUpdate(toUser, {
+        $pull: { incomingBuddyRequests: fromUser }
+      })
+    ]);
+    res.json({ message: 'Buddy request cancelled' });
   } catch (error) {
     console.error('Error rejecting buddy request:', error);
     res.status(500).json({ error: 'Failed to reject buddy request' });

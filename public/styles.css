@@ -1884,3 +1884,24 @@ h4 {
 .incoming-buddy-name-and-button button:hover {
   opacity: 0.9;
 }
+
+.buddy-name-and-button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.cancel-button {
+  padding: 4px 12px;
+  border-radius: 16px;
+  border: none;
+  color: white;
+  background-color: #E53E3E;
+  cursor: pointer;
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+}
+
+.cancel-button:hover {
+  background-color: #C53030;
+}
