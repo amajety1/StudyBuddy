@@ -4,8 +4,10 @@ import EditCourses from "./EditCourses";
 import ProjectCard from "./ProjectCard";
 import DaySchedule from "./DaySchedule";
 import EditProjects from './EditProjects';
+import { useNavigate } from 'react-router-dom';
 
 function OwnProfileSection() {
+    const navigate = useNavigate();
     const [user, setUser] = useState({
         firstName: "default",
         lastName: "default",
@@ -478,7 +480,16 @@ function OwnProfileSection() {
                         <div className="buddy-profile-brief-name">
                             <h3 className="noto-sans">{user.firstName} {user.lastName}</h3>
                             <p className="noto-sans">{user.bio}</p>
-                            <a href="#">{user.buddies && (<p>{user.buddies.length} Buddies</p>)}</a>
+                            <a 
+                                href="#" 
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    navigate('/own-profile/buddies');
+                                }}
+                                className="buddy-count-link"
+                            >
+                                {user.buddies && (<p>{user.buddies.length} Buddies</p>)}
+                            </a>
 
                         </div>
                         <div className="buddy-profile-brief-edu">

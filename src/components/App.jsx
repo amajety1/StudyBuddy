@@ -10,6 +10,7 @@ import ChatPage from "../pages/ChatPage";
 import CreateGroup from "../pages/CreateGroup";
 import SearchPage from "../pages/SearchPage";
 import ConfirmEmail from "../pages/ConfirmEmail";
+import OwnProfileBuddyList from "../pages/OwnProfileBuddyList";
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -80,6 +81,10 @@ function App() {
         <Route
           path="/profile"
           element={isAuthenticated ? <OwnProfile /> : <Navigate to="/login" />}
+        />
+        <Route
+          path="/own-profile/buddies"
+          element={isAuthenticated ? <OwnProfileBuddyList /> : <Navigate to="/login" />}
         />
         <Route
           path="/chat"
