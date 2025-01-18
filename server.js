@@ -186,8 +186,10 @@ app.get("/api/users/me", authenticate, async (req, res) => {
   try {
     const user = await User.findById(req.user._id)
       .select('-password')
-      .populate('buddies', 'firstName lastName email profilePicture bio major degreeType'); // Populate buddies with selected fields
-    
+      .populate('buddies', 'firstName lastName email profilePicture bio major degreeType') // Populate buddies
+      .populate('incomingBuddyRequests', 'firstName lastName email profilePicture bio major degreeType') // Populate incoming buddy requests
+      .populate('outgoingBuddyRequests', 'firstName lastName email profilePicture bio major degreeType'); // Populate outgoing buddy requests
+
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
@@ -1357,6 +1359,43 @@ app.post('/api/users/accept-buddy-request', authenticate, async (req, res) => {
     res.status(500).json({ error: 'Failed to accept buddy request' });
   }
 });
+
+app.post('/api/users/reject-buddy-request', authenticate, async (req, res) => {
+  try {
+    const { fromUser } = req.body;
+    const toUser = req.user._id;
+
+    // Find both users
+    const [requestingUser, rejectingUser] = await Promise.all([
+      User.findById(fromUser),
+      User.findById(toUser)
+    ]);
+
+    if (!requestingUser || !rejectingUser) {
+      return res.status(404).json({ error: 'One or both users not found' });
+    }
+
+    // Verify request exists
+    if (!rejectingUser.incomingBuddyRequests.includes(fromUser)) {
+      return res.status(400).json({ error: 'No buddy request found' });
+    }
+
+    // Update both users' buddy lists and remove requests
+    await Promise.all([
+      User.findByIdAndUpdate(fromUser, {
+        $pull: { outgoingBuddyRequests: toUser }
+      }),
+      User.findByIdAndUpdate(toUser, {
+        $pull: { incomingBuddyRequests: fromUser }
+      })
+    ]);
+    res.json({ message: 'Buddy request rejected' });
+  } catch (error) {
+    console.error('Error rejecting buddy request:', error);
+    res.status(500).json({ error: 'Failed to reject buddy request' });
+  }
+  
+})
 // Get user profile endpoint
 app.get('/api/users/profile/:matchId', authenticate, async (req, res) => {
   const { matchId } = req.params;

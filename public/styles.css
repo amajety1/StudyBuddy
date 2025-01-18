@@ -1831,3 +1831,56 @@ h4 {
   border-radius: 8px;
   margin-top: 1rem;
 }
+
+.buddy-links {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.buddy-count-link {
+  text-decoration: none;
+  color: #4a5568;
+  transition: color 0.2s ease;
+}
+
+.buddy-count-link:hover {
+  color: #2b6cb0;
+}
+
+.buddy-count-link p {
+  margin: 0;
+  padding: 0.25rem 0;
+  font-size: 0.9rem;
+}
+
+.buddy-status {
+  background-color: #48BB78;
+  color: white;
+  padding: 4px 12px;
+  border-radius: 16px;
+  font-size: 0.875rem;
+  margin-left: 10px;
+}
+
+.incoming-buddy-name-and-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.incoming-buddy-name-and-button button {
+  padding: 4px 12px;
+  border-radius: 16px;
+  border: none;
+  color: white;
+  background-color: #4299E1;
+  cursor: pointer;
+  font-size: 0.875rem;
+  transition: opacity 0.2s;
+}
+
+.incoming-buddy-name-and-button button:hover {
+  opacity: 0.9;
+}

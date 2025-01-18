@@ -18,6 +18,10 @@ function OwnProfileSection() {
         projects: [],
         bio: "default",
         previousCourses: [],
+        buddies: [],
+        incomingBuddyRequests: [],
+        outgoingBuddyRequests: [],
+        availableSessions: []
 
 
     });
@@ -480,17 +484,38 @@ function OwnProfileSection() {
                         <div className="buddy-profile-brief-name">
                             <h3 className="noto-sans">{user.firstName} {user.lastName}</h3>
                             <p className="noto-sans">{user.bio}</p>
-                            <a 
-                                href="#" 
-                                onClick={(e) => {
-                                    e.preventDefault();
-                                    navigate('/own-profile/buddies');
-                                }}
-                                className="buddy-count-link"
-                            >
-                                {user.buddies && (<p>{user.buddies.length} Buddies</p>)}
-                            </a>
-
+                            <div className="buddy-links">
+                                <a 
+                                    href="#" 
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        navigate('/own-profile/buddies');
+                                    }}
+                                    className="buddy-count-link"
+                                >
+                                    {user.buddies && (<p>{user.buddies.length} Buddies</p>)}
+                                </a>
+                                <a 
+                                    href="#" 
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        navigate('/own-profile/incoming-requests');
+                                    }}
+                                    className="buddy-count-link"
+                                >
+                                    {user.incomingBuddyRequests && (<p>{user.incomingBuddyRequests.length} Incoming Requests</p>)}
+                                </a>
+                                <a 
+                                    href="#" 
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        navigate('/own-profile/outgoing-requests');
+                                    }}
+                                    className="buddy-count-link"
+                                >
+                                    {user.outgoingBuddyRequests && (<p>{user.outgoingBuddyRequests.length} Outgoing Requests</p>)}
+                                </a>
+                            </div>
                         </div>
                         <div className="buddy-profile-brief-edu">
                             <h3 className="noto-sans">{user.major}</h3>
