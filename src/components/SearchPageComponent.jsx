@@ -10,6 +10,7 @@ function SearchPageComponent() {
   const [filteredResults, setFilteredResults] = useState([]);
   const [displayLimit, setDisplayLimit] = useState(10);
   const [groups, setGroups] = useState([]);
+  const [groupResults, setGroupResults] = useState([]);
   const [users, setUsers] = useState([]);
   const [error, setError] = useState(null);
   const [pendingRequests, setPendingRequests] = useState([]);
@@ -17,12 +18,10 @@ function SearchPageComponent() {
   const token = localStorage.getItem('token');
 
   const navigateToProfile = (matchId) => {
-    console.log('Navigating to profile with ID:', matchId);
     navigate(`/buddy/${matchId}`);
   };
 
   const navigateToGroup = (groupId) => {
-    console.log('Navigating to group with ID:', groupId);
     navigate(`/group/${groupId}`);
   };
 
@@ -40,15 +39,15 @@ function SearchPageComponent() {
     if (!profilePicture) {
       return getDefaultImage(type);
     }
-    return profilePicture.startsWith('http') 
-      ? profilePicture 
+    return profilePicture.startsWith('http')
+      ? profilePicture
       : `${profilePicture}`;
   };
 
   // Helper function to determine user relationship status
   const getUserRelationshipStatus = (userId) => {
     if (!currentUser) return 'loading';
-    
+
     if (currentUser._id === userId) {
       return 'self';
     }
@@ -71,11 +70,11 @@ function SearchPageComponent() {
   // Helper function to render appropriate button based on relationship status
   const renderUserActionButton = (userId) => {
     const status = getUserRelationshipStatus(userId);
-    
+
     switch (status) {
       case 'self':
         return (
-          <button 
+          <button
             className="view-profile-button"
             onClick={navigateToOwnProfile}
           >
@@ -90,7 +89,7 @@ function SearchPageComponent() {
         return <span className="pending-status">Respond to Request</span>;
       case 'none':
         return (
-          <button 
+          <button
             className="send-request-button"
             onClick={() => handleBuddyRequest(userId)}
           >
@@ -102,10 +101,143 @@ function SearchPageComponent() {
     }
   };
 
+  // Helper function to determine group relationship status
+  const getGroupStatus = (group) => {
+    if (!currentUser) return null;
+
+    // Check if user is a member using group.members
+    const isMember = group.members?.some(member => {
+      console.log('NOW WE ARE DOING THE COMPARISON:', {
+        memberID: member._id,
+        currentUserID: currentUser._id,
+        areTheyEqual: member._id === currentUser._id
+      });
+      return member._id === currentUser._id;
+    });
+
+    if (isMember) {
+      return 'member';
+    }
+
+    if (group.pendingRequests?.some(request =>
+      request.user._id === currentUser._id && request.status === 'pending'
+    )) {
+      return 'pending';
+    }
+
+    return 'none';
+  };
+
+  const handleJoinGroup = async (groupId) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`http://localhost:5001/api/groups/${groupId}/join`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to send join request');
+      }
+
+      // Update the group in the search results to show pending status
+      setGroups(prevGroups =>
+        prevGroups.map(group => {
+          if (group._id === groupId) {
+            return {
+              ...group,
+              pendingRequests: [...(group.pendingRequests || []), { user: currentUser._id, status: 'pending' }]
+            };
+          }
+          return group;
+        })
+      );
+    } catch (error) {
+      console.error('Error sending group join request:', error);
+    }
+  };
+
+  const handleGroupRequest = async (groupId) => {
+    setPendingRequests(prev => [...prev, `group-${groupId}`]);
+    try {
+      const response = await fetch('http://localhost:5001/api/users/request-join-group', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ groupId }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to send group request');
+      }
+
+      alert('Join request sent!');
+    } catch (err) {
+      console.error('Error sending group request:', err);
+      setPendingRequests(prev => prev.filter(item => item !== `group-${groupId}`));
+    }
+  };
+
+  const renderGroupStatus = (group) => {
+    const status = getGroupStatus(group);
+
+    switch (status) {
+      case 'member':
+        return (
+          <button 
+            className="px-4 py-2 bg-green-100 text-green-800 rounded-md font-medium" 
+            disabled
+          >
+            Member
+          </button>
+        );
+      case 'pending':
+        return (
+          <button 
+            className="px-4 py-2 bg-yellow-100 text-yellow-800 rounded-md font-medium" 
+            disabled
+          >
+            Pending
+          </button>
+        );
+      default:
+        return (
+          <button
+            onClick={() => handleGroupRequest(group._id)}
+            disabled={pendingRequests.includes(`group-${group._id}`)}
+            className="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 transition-colors duration-200 disabled:bg-gray-400"
+          >
+            {pendingRequests.includes(`group-${group._id}`) ? "Request Pending" : "Join Group"}
+          </button>
+        );
+    }
+  };
+
   // Fetch groups and users only once when component mounts
   useEffect(() => {
     const fetchData = async () => {
       try {
+        const token = localStorage.getItem('token');
+
+        // Fetch current user
+        const userResponse = await fetch('http://localhost:5001/api/users/me', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (!userResponse.ok) {
+          throw new Error('Failed to fetch current user');
+        }
+
+        const userData = await userResponse.json();
+
+        setCurrentUser(userData);
+
         // Fetch groups
         const groupsResponse = await fetch("http://localhost:5001/api/get-all-groups", {
           method: "GET",
@@ -113,18 +245,34 @@ function SearchPageComponent() {
             Authorization: `Bearer ${token}`,
           }
         });
+
+        if (!groupsResponse.ok) {
+          const errorData = await groupsResponse.json().catch(() => ({}));
+          console.error('Groups fetch error:', errorData);
+          throw new Error(`Failed to fetch groups: ${errorData.message || groupsResponse.statusText}`);
+        }
+
         const groupsData = await groupsResponse.json();
-        setGroups(groupsData);
+        // Add type property to each group
+        const groupsWithType = groupsData.map(group => ({
+          ...group,
+          type: 'group'
+        }));
+        setGroupResults(groupsWithType);
 
         // Fetch users
         const usersResponse = await fetch("http://localhost:5001/api/get-all-users", {
-          method: "GET",
           headers: {
-            Authorization: `Bearer ${token}`,
+            'Authorization': `Bearer ${token}`
           }
         });
         const usersData = await usersResponse.json();
-        setUsers(usersData);
+        // Add type property to each user
+        const usersWithType = usersData.map(user => ({
+          ...user,
+          type: 'user'
+        }));
+        setUsers(usersWithType);
       } catch (err) {
         console.error('Error fetching data:', err);
         setError('Unable to load data');
@@ -152,29 +300,6 @@ function SearchPageComponent() {
     };
     fetchCurrentUser();
   }, [token]);
-
-  const handleGroupRequest = async (groupId) => {
-    setPendingRequests(prev => [...prev, `group-${groupId}`]);
-    try {
-      const response = await fetch('http://localhost:5001/api/users/request-join-group', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ groupId }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to send group request');
-      }
-
-      alert('Join request sent!');
-    } catch (err) {
-      console.error('Error sending group request:', err);
-      setPendingRequests(prev => prev.filter(item => item !== `group-${groupId}`));
-    }
-  };
 
   const handleBuddyRequest = async (userId) => {
     setPendingRequests(prev => [...prev, `user-${userId}`]);
@@ -204,7 +329,7 @@ function SearchPageComponent() {
     setSearchQuery(query);
 
     // Filter groups
-    const matchedGroups = groups.filter(group =>
+    const matchedGroups = groupResults.filter(group =>
       group.name.toLowerCase().includes(query) ||
       group.course.toLowerCase().includes(query) ||
       (group.description && group.description.toLowerCase().includes(query))
@@ -260,18 +385,16 @@ function SearchPageComponent() {
                         e.target.src = getDefaultImage(result.type);
                       }}
                     />
-                    <h3 className="text-xl font-bold">{result.name}</h3>
+                    <div className="flex flex-col">
+                      <h3 className="text-xl font-bold">{result.name}</h3>
+                      <p className="text-gray-600">{result.course}</p>
+                    </div>
+                    <div className="ml-auto">
+                      {result.type === 'group' && renderGroupStatus(result)}
+                    </div>
                   </div>
-                  <p className="text-gray-600 mb-2">Course: {result.course}</p>
-                  <p className="text-gray-600 mb-4">Members: {result.members.length}</p>
+                  <p className="text-gray-600 mb-2">Members: {result.members.length}</p>
                   <p className="text-gray-700 mb-4 line-clamp-2">{result.description}</p>
-                  <button
-                    onClick={() => handleGroupRequest(result._id)}
-                    disabled={pendingRequests.includes(`group-${result._id}`)}
-                    className="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 transition-colors duration-200 disabled:bg-gray-400"
-                  >
-                    {pendingRequests.includes(`group-${result._id}`) ? "Request Pending" : "Join Group"}
-                  </button>
                 </div>
               </div>
             ) : (

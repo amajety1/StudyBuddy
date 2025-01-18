@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import '../styles/Navbar.css';
 
 function Navbar() {
   const [isOptionsOpen, setIsOptionsOpen] = useState(false);
@@ -141,15 +142,20 @@ function Navbar() {
   }, [token]);
 
   useEffect(() => {
-    const handleClickOutside = () => {
-      if (isNotificationOpen) setIsNotificationOpen(false);
-      if (isOptionsOpen) setIsOptionsOpen(false);
+    const handleClickOutside = (event) => {
+      // Only close if clicking outside the dropdowns
+      if (isNotificationOpen && !event.target.closest('.notification-dropdown')) {
+        setIsNotificationOpen(false);
+      }
+      if (isOptionsOpen && !event.target.closest('.profile-link')) {
+        setIsOptionsOpen(false);
+      }
     };
 
     // Add listener for clicks outside
     document.addEventListener("click", handleClickOutside);
     return () => {
-      document.removeEventListener("click", handleClickOutside); // Cleanup listener
+      document.removeEventListener("click", handleClickOutside);
     };
   }, [isNotificationOpen, isOptionsOpen]);
 
@@ -323,22 +329,22 @@ function Navbar() {
 
         <div className="home-toolbar-item profile-link">
           <img src="/images/profile-pic.png" alt="Profile" />
-          <div className="navbar-text-and-arrow" onClick={handleArrowClick}>
-            <a >
-              <p className="noto-sans">Me</p>
-            </a>
+          <div 
+            className="navbar-text-and-arrow" 
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsOptionsOpen(!isOptionsOpen);
+            }}
+          >
+            <p className="noto-sans">Me</p>
             <img src="/images/down-arrow.png" alt="Arrow" id="arrow" />
           </div>
           {isOptionsOpen && (
-            <div
-              className="profile-dropdown-window"
-              onClick={(e) => e.stopPropagation()} // Prevent inside clicks from closing
-            >
+            <div className="profile-dropdown-window">
               <div className="profile-drop-flexbox">
                 <div className="profile-drop-item" onClick={handleProfileClick}>My Profile</div>
                 <div className="profile-drop-item">Settings</div>
                 <div onClick={handleSignOut} className="profile-drop-item">Sign Out</div>
-
               </div>
             </div>
           )}

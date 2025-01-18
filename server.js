@@ -187,8 +187,9 @@ app.get("/api/users/me", authenticate, async (req, res) => {
     const user = await User.findById(req.user._id)
       .select('-password')
       .populate('buddies', 'firstName lastName email profilePicture bio major degreeType') // Populate buddies
-      .populate('incomingBuddyRequests', 'firstName lastName email profilePicture bio major degreeType') // Populate incoming buddy requests
-      .populate('outgoingBuddyRequests', 'firstName lastName email profilePicture bio major degreeType'); // Populate outgoing buddy requests
+      .populate('incomingBuddyRequests', 'firstName lastName email profilePicture bio major degreeType') // Populate outgoing buddy requests
+      .populate('outgoingBuddyRequests', 'firstName lastName email profilePicture bio major degreeType') // Populate incoming buddy requests
+      .populate('groups.group'); // Populate group references
 
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
@@ -1102,14 +1103,26 @@ app.post('/api/groups/remove-member', authenticate, async (req, res) => {
   }
 });
 
-app.get('/api/get-all-groups', authenticate, async (req, res) => {
+app.get("/api/get-all-groups", authenticate, async (req, res) => {
   try {
-    const groups = await Group.find({});
+    const groups = await Group.find()
+      .populate('members', '_id firstName lastName profilePicture')
+      .populate('owner', '_id firstName lastName profilePicture')
+      .populate('pendingRequests.user', '_id firstName lastName profilePicture');
+
+    console.log('Fetched groups with populated members:', 
+      groups.map(g => ({
+        id: g._id,
+        name: g.name,
+        memberCount: g.members.length,
+        memberExample: g.members[0]
+      }))
+    );
 
     res.json(groups);
   } catch (error) {
-    console.error('Error getting all groups:', error);
-    res.status(500).json({ error: 'Server error' });
+    console.error('Error fetching groups:', error);
+    res.status(500).json({ error: 'Failed to fetch groups' });
   }
 });
 
@@ -1402,7 +1415,7 @@ app.post('/api/users/reject-buddy-request', authenticate, async (req, res) => {
   
 })
 
-
+// Cancel buddy request endpoint
 app.post('/api/users/cancel-buddy-request', authenticate, async (req, res) => {
   try {
     const { toUser } = req.body;
@@ -1419,11 +1432,12 @@ app.post('/api/users/cancel-buddy-request', authenticate, async (req, res) => {
     ]);
     res.json({ message: 'Buddy request cancelled' });
   } catch (error) {
-    console.error('Error rejecting buddy request:', error);
-    res.status(500).json({ error: 'Failed to reject buddy request' });
+    console.error('Error cancelling buddy request:', error);
+    res.status(500).json({ error: 'Failed to cancel buddy request' });
   }
   
 })
+
 // Get user profile endpoint
 app.get('/api/users/profile/:matchId', authenticate, async (req, res) => {
   const { matchId } = req.params;
@@ -1507,6 +1521,7 @@ app.delete('/api/notifications/:notificationId', authenticate, async (req, res) 
     res.status(500).json({ error: 'Failed to delete notification' });
   }
 });
+
 
 server.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
