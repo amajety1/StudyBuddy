@@ -1,20 +1,10 @@
 import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { CAlert } from '@coreui/react';
-
-
-const courses = [
-  "CSC 2720 - Data Structures",
-  "CSC 3350 - Software Development",
-  "CSC 1302 - Principles of Computer Science II",
-  "CSC 1301 - Principles of Computer Science I",
-  "CSC 4520 - Design and Analysis of Algorithms",
-  "CSC 3210 - Computer Organization and Programming",
-  "CSC 3320 - System Level Programming",
-  "CSC 4320 - Operating Systems",
-];
+import { useEffect } from "react";
 
 function ProfileInfo({ setIsAuthenticated }) {
+  const [courses, setCourses] = useState([]);
   const [github, setGithub] = useState("");
   const [selectedCourses, setSelectedCourses] = useState([]);
   const [search, setSearch] = useState("");
@@ -30,23 +20,45 @@ function ProfileInfo({ setIsAuthenticated }) {
   });
   const [errorMessage, setErrorMessage] = useState("");
 
+  useEffect(() => {
+    const fetchAllCourses = async () => {
+      try {
+        const response = await fetch('http://localhost:5001/api/get-all-courses/', {
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setCourses(data);
+          console.log("[Profile] Received all courses:", data);
+        } else {
+          const errorText = await response.text();
+          console.log("[Profile] Error details:", errorText);
+        }
+      } catch (error) {
+        console.error('[Profile] Error fetching user data:', error);
+      }
+    };
+
+    fetchAllCourses();
+  }, []); // Empty dependency array means this runs once on mount
+
   const location = useLocation();
   const { email } = location.state; // Retrieve email from navigation state
   const navigate = useNavigate();
 
   const filteredCourses = courses.filter((course) =>
-    course.toLowerCase().includes(search.toLowerCase())
+    (course.prefix + ' ' + course.number + ' - ' + course.name).toLowerCase().includes(search.toLowerCase())
   );
 
   const addCourse = (course) => {
-    if (!selectedCourses.includes(course)) {
+    if (!selectedCourses.find(c => c._id === course._id)) {
       setSelectedCourses([...selectedCourses, course]);
       setSearch("");
     }
   };
 
   const removeCourse = (courseToRemove) => {
-    setSelectedCourses(selectedCourses.filter((course) => course !== courseToRemove));
+    setSelectedCourses(selectedCourses.filter((course) => course._id !== courseToRemove._id));
   };
 
   const handleProjectInputChange = (e) => {
@@ -115,6 +127,8 @@ function ProfileInfo({ setIsAuthenticated }) {
   const formSubmit = async (e) => {
     e.preventDefault();
     try {
+      const courseIds = selectedCourses.map(course => course._id);
+
       const response = await fetch("http://localhost:5001/api/users/initial-profile-creation", {
         method: "PUT",
         headers: {
@@ -123,12 +137,17 @@ function ProfileInfo({ setIsAuthenticated }) {
         body: JSON.stringify({
           email,
           github,
-          selectedCourses,
+          selectedCourses: courseIds,
           projects,
           // Only include profilePicture if one was uploaded
           ...(profilePicture && { profilePicture })
         }),
       });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to update profile");
+      }
 
       const data = await response.json();
 
@@ -137,7 +156,7 @@ function ProfileInfo({ setIsAuthenticated }) {
         const token = data.token;
         localStorage.setItem("token", token);
         setIsAuthenticated(true);
-        navigate("/home");
+      navigate("/home");
       } else {
         setErrorMessage(data.error || "An error occurred.");
       }
@@ -196,10 +215,10 @@ function ProfileInfo({ setIsAuthenticated }) {
                     filteredCourses.map((course) => (
                       <li
                         className="general-hover general-transition"
-                        key={course}
+                        key={course._id}
                         onClick={() => addCourse(course)}
                       >
-                        {course}
+                        {course.prefix} {course.number} - {course.name}
                       </li>
                     ))
                   ) : (
@@ -211,8 +230,8 @@ function ProfileInfo({ setIsAuthenticated }) {
 
             <div className="selected-courses">
               {selectedCourses.map((course) => (
-                <div key={course} className="selected-item">
-                  <h4>{course.split(" - ")[0]}</h4>
+                <div key={course._id} className="selected-item">
+                  <h4>{course.prefix} {course.number} - {course.name}</h4>
                   <button onClick={() => removeCourse(course)}>x</button>
                 </div>
               ))}

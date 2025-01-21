@@ -18,6 +18,7 @@ import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import { Resend } from 'resend';
 import Group from './models/Group.js';
+import Course from './models/Course.js';
 
 dotenv.config();
 
@@ -247,36 +248,42 @@ app.put('/api/users/initial-profile-creation', async (req, res) => {
   try {
     const { email, github, selectedCourses, projects, profilePicture } = req.body;
 
-    const updateData = {
-      github,
-      selectedCourses,
-      projects
-    };
+    // Fetch full course information for each selected course
+    const fullCourseInfo = await Promise.all(
+      selectedCourses.map(async (courseId) => {
+        const course = await Course.findById(courseId);
+        return {
+          _id: course._id,
+          prefix: course.prefix,
+          number: course.number,
+          name: course.name
+        };
+      })
+    );
 
-    // Only include profilePicture in update if it was provided
-    if (profilePicture) {
-      updateData.profilePicture = profilePicture;
-    }
-
-    const updatedUser = await User.findOneAndUpdate(
+    const user = await User.findOneAndUpdate(
       { email },
-      updateData,
+      {
+        github,
+        selectedCourses: fullCourseInfo,
+        projects,
+        ...(profilePicture && { profilePicture })
+      },
       { new: true }
     );
 
-    if (!updatedUser) {
-      return res.status(404).json({ error: 'User not found' });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
     }
 
-    // Generate a session token (only for initial setup)
+    // Generate a session token
     const token = jwt.sign(
-      { id: updatedUser._id, email: updatedUser.email },
+      { id: user._id, email: user.email },
       SECRET_KEY,
       { expiresIn: '1h' }
     );
 
-    res.json({ user: updatedUser, token });
-    console.log('token: ' + token);
+    res.json({ user, token });
   } catch (error) {
     console.error('Error during initial profile creation:', error);
     res.status(500).json({ error: 'Server error' });
@@ -1103,6 +1110,16 @@ app.post('/api/groups/remove-member', authenticate, async (req, res) => {
   }
 });
 
+app.get("/api/get-all-courses", async (req, res) => {
+  try {
+    const courses = await Course.find();
+    res.json(courses);
+  } catch (error) {
+    console.error('Error fetching courses:', error);
+    res.status(500).json({ error: 'Failed to fetch courses' });
+  }
+});
+
 app.get("/api/get-all-groups", authenticate, async (req, res) => {
   try {
     const groups = await Group.find()
@@ -1282,17 +1299,51 @@ app.use('/images', (req, res, next) => {
 }, express.static(path.join(__dirname, 'public/images')));
 
 app.use('/profile-pictures', express.static(path.join(__dirname, 'public/profile-pictures')));
-// Update user profile
+
 app.put('/api/users/update-profile', authenticate, async (req, res) => {
   console.log('[Server] Update profile request received');
   try {
     console.log('[Server] Request body:', req.body);
     console.log('[Server] User from token:', req.user);
 
-    // Find and update user
+    const { selectedCourses, previousCourses, ...otherUpdates } = req.body;
+
+    // Fetch full course information for selected courses
+    const fullSelectedCourses = await Promise.all(
+      (selectedCourses || []).map(async (courseId) => {
+        const course = await Course.findById(courseId);
+        return {
+          _id: course._id,
+          prefix: course.prefix,
+          number: course.number,
+          name: course.name
+        };
+      })
+    );
+
+    // Fetch full course information for previous courses
+    const fullPreviousCourses = await Promise.all(
+      (previousCourses || []).map(async (courseId) => {
+        const course = await Course.findById(courseId);
+        return {
+          _id: course._id,
+          prefix: course.prefix,
+          number: course.number,
+          name: course.name
+        };
+      })
+    );
+
+    // Find and update user with full course information
     const updatedUser = await User.findByIdAndUpdate(
       req.user._id,
-      { $set: req.body },
+      { 
+        $set: {
+          ...otherUpdates,
+          selectedCourses: fullSelectedCourses,
+          previousCourses: fullPreviousCourses
+        }
+      },
       { new: true }
     );
 
@@ -1308,6 +1359,9 @@ app.put('/api/users/update-profile', authenticate, async (req, res) => {
     res.status(500).json({ error: 'Failed to update profile', details: error.message });
   }
 });
+
+
+
 // Get specific user's data
 app.get('/api/users/:userId', authenticate, async (req, res) => {
   try {

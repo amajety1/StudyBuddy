@@ -20,7 +20,7 @@ function EditCourses({ allCourses, title, initialCourses, onCoursesChange }) {
       <div className="edit-current-courses">
         {courses.map((course, index) => (
           <div key={index} className="course-div-edit">
-            <p className="noto-sans">{course}</p>
+            <p className="noto-sans">{course.prefix} {course.number} - {course.name}</p>
             <img
               src="/images/close-arrow.png"
               alt="Remove"
@@ -40,7 +40,7 @@ function EditCourses({ allCourses, title, initialCourses, onCoursesChange }) {
           const searchTerm = e.target.value.toLowerCase();
           if (searchTerm !== "") {
             const filtered = allCourses.filter((course) =>
-              course.toLowerCase().includes(searchTerm)
+              `${course.prefix} ${course.number} ${course.name}`.toLowerCase().includes(searchTerm)
             );
             setFilteredCourses(filtered);
           } else {
@@ -49,23 +49,22 @@ function EditCourses({ allCourses, title, initialCourses, onCoursesChange }) {
         }}
       />
       {filteredCourses.length > 0 && (
-        <ul>
-          {filteredCourses.map((course) => (
-            <li key={course}>
-              <span>{course}</span>
-              <button
-                onClick={() => {
-                  if (!courses.includes(course)) {
-                    const newCourses = [...courses, course];
-                    updateCourses(newCourses);
-                  }
-                }}
-              >
-                Add
-              </button>
-            </li>
+        <div className="filtered-courses">
+          {filteredCourses.map((course, index) => (
+            <div
+              key={index}
+              className="filtered-course"
+              onClick={() => {
+                if (!courses.find(c => c._id === course._id)) {
+                  updateCourses([...courses, course]);
+                }
+                setFilteredCourses([]);
+              }}
+            >
+              <p className="noto-sans">{course.prefix} {course.number} - {course.name}</p>
+            </div>
           ))}
-        </ul>
+        </div>
       )}
     </div>
   );

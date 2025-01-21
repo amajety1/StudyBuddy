@@ -26,7 +26,27 @@ function OwnProfileSection() {
 
     });
 
+    const [allCourses, setAllCourses] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
+
+    // Fetch all courses
+    useEffect(() => {
+        const fetchCourses = async () => {
+            try {
+                const response = await fetch('http://localhost:5001/api/get-all-courses/');
+                if (response.ok) {
+                    const data = await response.json();
+                    setAllCourses(data);
+                } else {
+                    console.error('Failed to fetch courses');
+                }
+            } catch (error) {
+                console.error('Error fetching courses:', error);
+            }
+        };
+
+        fetchCourses();
+    }, []);
 
     const handleCurrentCoursesChange = (newCourses) => {
         setUser(prevUser => ({
@@ -217,15 +237,6 @@ function OwnProfileSection() {
     }
 
 
-    const allCourses = [
-        "CSC 1301",
-        "CSC 1302",
-        "CSC 4351",
-        "CSC 2301",
-        "CSC 2302",
-        "CSC 3351",
-        // ... add more courses here
-    ];
     const [isHovered, setIsHovered] = useState(false);
     const [isHoveredEdit, setIsHoveredEdit] = useState(false);
     const [isEditWindowOpen, setIsEditWindowOpen] = useState(false);
@@ -245,6 +256,36 @@ function OwnProfileSection() {
             document.body.style.overflow = ""; // Cleanup on unmount
         };
     }, [isEditWindowOpen]);
+
+    const handleSaveChanges = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch('http://localhost:5001/api/users/update-profile', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    selectedCourses: user.selectedCourses.map(course => course._id),
+                    previousCourses: user.previousCourses.map(course => course._id),
+                    projects: user.projects,
+                    github: user.github,
+                    availableSessions: user.availableSessions
+                })
+            });
+
+            if (response.ok) {
+                setIsEditWindowOpen(false);
+                // Refresh user data after saving
+                fetchUserData();
+            } else {
+                console.error('Failed to update profile');
+            }
+        } catch (error) {
+            console.error('Error updating profile:', error);
+        }
+    };
 
     return (
         <div className="buddy-profile">
@@ -364,56 +405,7 @@ function OwnProfileSection() {
                     <div className="save-all-changes">
                         <button
                             className="save-all-button"
-                            onClick={async () => {
-                                try {
-                                    const token = localStorage.getItem('token');
-                                    if (!token) {
-                                        alert('You are not logged in. Please log in and try again.');
-                                        return;
-                                    }
-
-                                    // Prepare the updated user data
-                                    const updatedUserData = {
-                                        ...user,
-                                        bio: currentUserBio || user.bio,
-                                        about: currentUserAbout || user.about,
-                                        github: tempGithubLink || user.github
-                                    };
-
-                                    //console.log('Sending updated user data:', updatedUserData);
-
-                                    const response = await fetch('http://localhost:5001/api/users/update-profile', {
-                                        method: 'PUT',
-                                        headers: {
-                                            'Content-Type': 'application/json',
-                                            'Authorization': `Bearer ${token}`,
-                                        },
-                                        body: JSON.stringify(updatedUserData),
-                                    });
-
-                                    if (!response.ok) {
-                                        const errorData = await response.json();
-                                        throw new Error(errorData.error || 'Failed to update profile');
-                                    }
-
-                                    const updatedUser = await response.json();
-                                    //console.log('Server response:', updatedUser);
-
-                                    // Update local state with server's response
-                                    setUser(updatedUser);
-
-                                    // Reset temporary states
-                                    setCurrentUserBio("");
-                                    setCurrentUserAbout("");
-                                    setTempGithubLink("");
-
-                                    alert('Changes saved successfully!');
-                                    setIsEditWindowOpen(false);
-                                } catch (error) {
-                                    //console.error('Error saving changes:', error);
-                                    alert('Failed to save changes: ' + error.message);
-                                }
-                            }}
+                            onClick={handleSaveChanges}
                         >
                             Save All Changes
                         </button>
@@ -535,7 +527,7 @@ function OwnProfileSection() {
                         <h5 className="noto-sans">Current Courses</h5>
                         <div className="buddy-profile-current-courses">
                             {user.selectedCourses.map((course, index) => (
-                                <div key={index} className="buddy-profile-current-course-card">{course}</div>
+                                <div key={index} className="buddy-profile-current-course-card">{course.prefix} {course.number} - {course.name}</div>
                             ))}
                         </div>
                     </div>
@@ -544,7 +536,7 @@ function OwnProfileSection() {
                         <div className="buddy-profile-previous-courses">
 
                             {user.previousCourses?.map((course, index) => (
-                                <div key={index} className="buddy-profile-previous-course-card">{course}</div>
+                                <div key={index} className="buddy-profile-previous-course-card">{course.prefix} {course.number} - {course.name}</div>
                             ))}
 
                         </div>
