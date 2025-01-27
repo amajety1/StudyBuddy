@@ -31,13 +31,10 @@ const SECRET_KEY = process.env.JWT_SECRET;
 const app = express();
 const PORT = 5001;
 
-
-
 // Create HTTP server
 const server = createServer(app);
 
 // Create socket server
-
 
 // Middleware
 app.use(express.json());
@@ -174,7 +171,131 @@ io.on("connection", (socket) => {
   });
 });
 
+// Function to calculate similarity score between two users
+async function calculateSimilarityScore(rootUser, targetUser) {
+  let totalScore = 0;
 
+  // 1. Same Major (30 points)
+  if (rootUser.major && targetUser.major &&
+    rootUser.major.toLowerCase() === targetUser.major.toLowerCase()) {
+    totalScore += 30;
+  }
+
+  // 2. Shared Availability Hours (2 points per shared hour)
+  const rootAvailability = rootUser.availableSessions || [];
+  const targetAvailability = targetUser.availableSessions || [];
+  let sharedHours = 0;
+
+  rootAvailability.forEach(rootSession => {
+    targetAvailability.forEach(targetSession => {
+      if (rootSession.dayOfWeek === targetSession.dayOfWeek &&
+        rootSession.time === targetSession.time) {
+        sharedHours++;
+      }
+    });
+  });
+  totalScore += (sharedHours * 2);
+
+  // 3a. Shared Selected Courses (5 points each)
+  const rootSelected = rootUser.selectedCourses || [];
+  const targetSelected = targetUser.selectedCourses || [];
+  let sharedSelectedCourses = 0;
+
+  rootSelected.forEach(rootCourse => {
+    targetSelected.forEach(targetCourse => {
+      if (rootCourse.prefix === targetCourse.prefix &&
+        rootCourse.number === targetCourse.number) {
+        sharedSelectedCourses++;
+      }
+    });
+  });
+  totalScore += (sharedSelectedCourses * 5);
+
+  // 3b. Shared Selected with Previous Courses (2 points each)
+  const rootPrevious = rootUser.previousCourses || [];
+  const targetPrevious = targetUser.previousCourses || [];
+  let sharedPreviousCourses = 0;
+
+  // Check root selected against target previous
+  rootSelected.forEach(rootCourse => {
+    targetPrevious.forEach(targetCourse => {
+      if (rootCourse.prefix === targetCourse.prefix &&
+        rootCourse.number === targetCourse.number) {
+        sharedPreviousCourses++;
+      }
+    });
+  });
+
+  // Check target selected against root previous
+  targetSelected.forEach(targetCourse => {
+    rootPrevious.forEach(rootCourse => {
+      if (targetCourse.prefix === rootCourse.prefix &&
+        targetCourse.number === rootCourse.number) {
+        sharedPreviousCourses++;
+      }
+    });
+  });
+  totalScore += (sharedPreviousCourses * 2);
+
+  return totalScore;
+}
+
+// Function to update recommended matches for a user
+async function updateRecommendedMatches(userId) {
+  try {
+    const currentUser = await User.findById(userId);
+    if (!currentUser) {
+      throw new Error('User not found');
+    }
+
+    // Get all other users
+    const allUsers = await User.find({ _id: { $ne: userId } });
+    
+    // Calculate similarity scores with all other users
+    const recommendedMatches = await Promise.all(
+      allUsers.map(async (otherUser) => {
+        const score = await calculateSimilarityScore(currentUser, otherUser);
+        return {
+          score,
+          match: otherUser._id
+        };
+      })
+    );
+
+    // Sort matches by score in descending order
+    recommendedMatches.sort((a, b) => b.score - a.score);
+
+    // Update current user's recommended matches
+    currentUser.recommendedMatches = recommendedMatches;
+    await currentUser.save();
+
+    // Update recommended matches for all other users
+    await Promise.all(
+      allUsers.map(async (otherUser) => {
+        const score = recommendedMatches.find(match => match.match.equals(otherUser._id))?.score;
+        if (score !== undefined) {
+          // Find the index where to insert the new match to maintain descending order
+          const index = otherUser.recommendedMatches.findIndex(match => match.score < score);
+          const newMatch = {
+            score,
+            match: currentUser._id
+          };
+          
+          if (index === -1) {
+            otherUser.recommendedMatches.push(newMatch);
+          } else {
+            otherUser.recommendedMatches.splice(index, 0, newMatch);
+          }
+          
+          await otherUser.save();
+        }
+      })
+    );
+  } catch (error) {
+    console.error('Error updating recommended matches:', error);
+    throw error;
+  }
+}
 
 const verificationCodes = new Map();
 const upload = multer({
@@ -246,11 +367,11 @@ app.post("/api/users/login", async (req, res) => {
 });
 app.put('/api/users/initial-profile-creation', async (req, res) => {
   try {
-    const { email, github, selectedCourses, projects, profilePicture } = req.body;
+    const { email, github, selectedCourses, previousCourses, projects, classYear, major, profilePicture } = req.body;
 
-    // Fetch full course information for each selected course
-    const fullCourseInfo = await Promise.all(
-      selectedCourses.map(async (courseId) => {
+    // Fetch full course information for selected courses
+    const fullSelectedCourses = await Promise.all(
+      (selectedCourses || []).map(async (courseId) => {
         const course = await Course.findById(courseId);
         return {
           _id: course._id,
@@ -261,32 +382,58 @@ app.put('/api/users/initial-profile-creation', async (req, res) => {
       })
     );
 
-    const user = await User.findOneAndUpdate(
+    // Fetch full course information for previous courses
+    const fullPreviousCourses = await Promise.all(
+      (previousCourses || []).map(async (courseId) => {
+        const course = await Course.findById(courseId);
+        return {
+          _id: course._id,
+          prefix: course.prefix,
+          number: course.number,
+          name: course.name
+        };
+      })
+    );
+
+    // Find and update user
+    const updatedUser = await User.findOneAndUpdate(
       { email },
       {
-        github,
-        selectedCourses: fullCourseInfo,
-        projects,
-        ...(profilePicture && { profilePicture })
+        $set: {
+          github,
+          selectedCourses: fullSelectedCourses,
+          previousCourses: fullPreviousCourses,
+          projects,
+          classYear,
+          major,
+          ...(profilePicture && { profilePicture })
+        }
       },
       { new: true }
     );
 
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
+    if (!updatedUser) {
+      return res.status(404).json({ error: 'User not found' });
     }
 
-    // Generate a session token
+    // Calculate and update recommended matches
+    await updateRecommendedMatches(updatedUser._id);
+
+    // Generate JWT token
     const token = jwt.sign(
-      { id: user._id, email: user.email },
-      SECRET_KEY,
-      { expiresIn: '1h' }
+      { userId: updatedUser._id },
+      process.env.JWT_SECRET || 'your-secret-key',
+      { expiresIn: '24h' }
     );
 
-    res.json({ user, token });
+    res.json({
+      message: 'Profile updated successfully',
+      user: updatedUser,
+      token
+    });
   } catch (error) {
-    console.error('Error during initial profile creation:', error);
-    res.status(500).json({ error: 'Server error' });
+    console.error('Error updating profile:', error);
+    res.status(500).json({ error: 'Failed to update profile' });
   }
 });
 app.get('/api/users/fetch-recommended-matches', authenticate, async (req, res) => {
@@ -418,43 +565,7 @@ app.get("/api/users/get-notifications", authenticate, async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch notifications' });
   }
 });
-// app.post("/api/users/notify-match-of-request", authenticate, async (req, res) => {
-//   try {
-//     console.log("Starting notification creation...");
 
-//     const user = await User.findById(req.user._id).select("-password");
-//     console.log("User creating the notification:", user);
-
-//     const { matchId } = req.body;
-//     console.log("Target matchId:", matchId);
-
-//     const newNotification = new Notification({
-//       content: `${user.firstName} ${user.lastName} has sent you a buddy request`,
-//       from_user: user._id,
-//       type: "buddy_request",
-//       to_user: matchId,
-//     });
-
-//     const savedNotification = await newNotification.save();
-//     console.log("Notification saved:", savedNotification);
-
-//     const match = await User.findById(matchId);
-//     if (!match) {
-//       console.error("Match user not found for ID:", matchId);
-//       return res.status(404).json({ error: "Match user not found" });
-//     }
-
-//     console.log("Match user found:", match);
-//     match.notifications.push(savedNotification._id);
-//     await match.save();
-//     console.log("Match user updated with notification");
-
-//     res.json({ message: "Notification sent successfully" });
-//   } catch (error) {
-//     console.error("Error sending notifications:", error);
-//     res.status(500).json({ error: "Failed to send notifications" });
-//   }
-// });
 app.get("/api/users/seen-notifications", authenticate, async (req, res) => {
   try {
     // Find the user by ID and populate notifications
@@ -650,7 +761,136 @@ app.get('/api/users/get-chats', authenticate, async (req, res) => {
   }
 });
 
+app.get('/api/users/calculate-similarity-score', authenticate, async (req, res) => {
+  try {
+    const rootUserId = req.user._id;
+    const targetUserId = req.query.targetUserId;
 
+    // Fetch both users with their full details
+    const rootUser = await User.findById(rootUserId);
+    const targetUser = await User.findById(targetUserId);
+
+    if (!rootUser || !targetUser) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    let totalScore = 0;
+
+    // 1. Same Major (30 points)
+    if (rootUser.major && targetUser.major &&
+      rootUser.major.toLowerCase() === targetUser.major.toLowerCase()) {
+      totalScore += 30;
+    }
+
+    // 2. Shared Availability Hours (2 points per shared hour)
+    const rootAvailability = rootUser.availableSessions || [];
+    const targetAvailability = targetUser.availableSessions || [];
+    let sharedHours = 0;
+
+    rootAvailability.forEach(rootSession => {
+      targetAvailability.forEach(targetSession => {
+        if (rootSession.dayOfWeek === targetSession.dayOfWeek &&
+          rootSession.time === targetSession.time) {
+          sharedHours++;
+        }
+      });
+    });
+    totalScore += (sharedHours * 2);
+
+    // 3a. Shared Selected Courses (5 points each)
+    const rootSelected = rootUser.selectedCourses || [];
+    const targetSelected = targetUser.selectedCourses || [];
+    let sharedSelectedCourses = 0;
+
+    rootSelected.forEach(rootCourse => {
+      targetSelected.forEach(targetCourse => {
+        if (rootCourse.prefix === targetCourse.prefix &&
+          rootCourse.number === targetCourse.number) {
+          sharedSelectedCourses++;
+        }
+      });
+    });
+    totalScore += (sharedSelectedCourses * 5);
+
+    // 3b. Shared Selected with Previous Courses (2 points each)
+    const rootPrevious = rootUser.previousCourses || [];
+    const targetPrevious = targetUser.previousCourses || [];
+    let sharedPreviousCourses = 0;
+
+    // Check root selected against target previous
+    rootSelected.forEach(rootCourse => {
+      targetPrevious.forEach(targetCourse => {
+        if (rootCourse.prefix === targetCourse.prefix &&
+          rootCourse.number === targetCourse.number) {
+          sharedPreviousCourses++;
+        }
+      });
+    });
+
+    // Check target selected against root previous
+    targetSelected.forEach(targetCourse => {
+      rootPrevious.forEach(rootCourse => {
+        if (targetCourse.prefix === rootCourse.prefix &&
+          targetCourse.number === rootCourse.number) {
+          sharedPreviousCourses++;
+        }
+      });
+    });
+    totalScore += (sharedPreviousCourses * 2);
+
+    // 4. Same Class Year (10 points)
+    if (rootUser.classYear && targetUser.classYear &&
+      rootUser.classYear.toLowerCase() === targetUser.classYear.toLowerCase()) {
+      totalScore += 10;
+    }
+
+    // Scale the score to be between 0-100
+    const maxPossibleScore = 100; // We'll use this as our scaling factor
+    const scaledScore = Math.min(100, Math.round((totalScore / maxPossibleScore) * 100));
+
+    // Update both users' recommendedMatches
+    await User.findByIdAndUpdate(
+      rootUserId,
+      {
+        $pull: { recommendedMatches: { match: targetUserId } }
+      }
+    );
+    await User.findByIdAndUpdate(
+      rootUserId,
+      {
+        $push: { recommendedMatches: { score: scaledScore, match: targetUserId } }
+      }
+    );
+
+    await User.findByIdAndUpdate(
+      targetUserId,
+      {
+        $pull: { recommendedMatches: { match: rootUserId } }
+      }
+    );
+    await User.findByIdAndUpdate(
+      targetUserId,
+      {
+        $push: { recommendedMatches: { score: scaledScore, match: rootUserId } }
+      }
+    );
+
+    res.json({
+      success: true,
+      score: scaledScore,
+      details: {
+        majorMatch: rootUser.major === targetUser.major,
+        sharedHours,
+        sharedSelectedCourses,
+        sharedPreviousCourses,
+        sameClassYear: rootUser.classYear === targetUser.classYear
+      }
+    });
+  } catch (error) {
+    console.error('Error calculating similarity score:', error);
+    res.status(500).json({ error: 'Failed to calculate similarity score' });
+  }
+});
 
 // Get messages for a chatroom
 app.get('/api/chatrooms/:chatroomId/messages', authenticate, async (req, res) => {
@@ -954,7 +1194,7 @@ app.post('/api/groups/approve-join-group', authenticate, async (req, res) => {
     }
 
     // Remove the user from the group's pending requests
-    group.pendingRequests = group.pendingRequests.filter(request => 
+    group.pendingRequests = group.pendingRequests.filter(request =>
       request.user.toString() !== userId.toString()
     );
     await group.save();
@@ -1031,7 +1271,7 @@ app.post('/api/groups/reject-join-group', authenticate, async (req, res) => {
     }
 
     // Remove the user from the group's pending requests
-    group.pendingRequests = group.pendingRequests.filter(request => 
+    group.pendingRequests = group.pendingRequests.filter(request =>
       request.user.toString() !== userId.toString()
     );
     await group.save();
@@ -1127,7 +1367,7 @@ app.get("/api/get-all-groups", authenticate, async (req, res) => {
       .populate('owner', '_id firstName lastName profilePicture')
       .populate('pendingRequests.user', '_id firstName lastName profilePicture');
 
-    console.log('Fetched groups with populated members:', 
+    console.log('Fetched groups with populated members:',
       groups.map(g => ({
         id: g._id,
         name: g.name,
@@ -1337,7 +1577,7 @@ app.put('/api/users/update-profile', authenticate, async (req, res) => {
     // Find and update user with full course information
     const updatedUser = await User.findByIdAndUpdate(
       req.user._id,
-      { 
+      {
         $set: {
           ...otherUpdates,
           selectedCourses: fullSelectedCourses,
@@ -1359,8 +1599,6 @@ app.put('/api/users/update-profile', authenticate, async (req, res) => {
     res.status(500).json({ error: 'Failed to update profile', details: error.message });
   }
 });
-
-
 
 // Get specific user's data
 app.get('/api/users/:userId', authenticate, async (req, res) => {
@@ -1466,7 +1704,7 @@ app.post('/api/users/reject-buddy-request', authenticate, async (req, res) => {
     console.error('Error rejecting buddy request:', error);
     res.status(500).json({ error: 'Failed to reject buddy request' });
   }
-  
+
 })
 
 // Cancel buddy request endpoint
@@ -1489,8 +1727,7 @@ app.post('/api/users/cancel-buddy-request', authenticate, async (req, res) => {
     console.error('Error cancelling buddy request:', error);
     res.status(500).json({ error: 'Failed to cancel buddy request' });
   }
-  
-})
+});
 
 // Get user profile endpoint
 app.get('/api/users/profile/:matchId', authenticate, async (req, res) => {

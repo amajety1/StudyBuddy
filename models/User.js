@@ -54,7 +54,11 @@ const userSchema = new Schema({
 
   // Profile Info
   github: { type: String },
-  
+
+  recommendedMatches: [{ score: { type: Number }, match: { type: mongoose.Schema.Types.ObjectId, ref: "User" } }],
+
+
+
   selectedCourses: [{
     prefix: { type: String },
     number: { type: Number },
@@ -72,6 +76,7 @@ const userSchema = new Schema({
   degreeType: { type: String },
   bio: { type: String },
   about: { type: String },
+  classYear: { type:String},// Freshman/sophomore/junior/senior
   availableSessions: [availableSessionSchema], // Array of available session objects
   notifications: [{ type: mongoose.Schema.Types.ObjectId, ref: "Notification" }],
 });
