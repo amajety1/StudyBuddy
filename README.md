@@ -1,3 +1,6 @@
-To run application: 
+# For First Time
+run `npm i`
 
-npm run dev
+# To run application: 
+
+run `npm run dev`
