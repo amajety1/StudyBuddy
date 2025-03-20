@@ -1,6 +1,8 @@
 # For First Time
-run `npm i`
+run 
+`npm i`
 
 # To run application: 
 
-run `npm run dev`
+run 
+`npm run dev`
