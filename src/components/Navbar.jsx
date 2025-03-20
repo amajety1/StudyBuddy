@@ -55,8 +55,8 @@ function Navbar() {
 
   const handleSignOut = () => {
     localStorage.removeItem("token");
-    navigate("/login");
-  };
+    window.location.href = "/login"; // Force reload to login page
+};
 
   const handleProfileClick = () => {
     navigate("/profile"); // Navigate to the profile page

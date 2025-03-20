@@ -1,170 +1,111 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import "../styles/Matches.css"; // Import new CSS file
 
 function Matches() {
     const [matches, setMatches] = useState([]);
-    const [currentUserId, setCurrentUserId] = useState(null);
-    const [currentUserData, setCurrentUserData] = useState(null);
     const [sentRequests, setSentRequests] = useState(new Set());
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem("token");
     const navigate = useNavigate();
-
-    
-
-   
-
-    useEffect(() => {
-        // Fetch current user's ID
-        const fetchCurrentUser = async () => {
-            if (!token) return;
-
-            try {
-                const response = await fetch('http://localhost:5001/api/users/me', {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-
-                if (!response.ok) {
-                    throw new Error('Failed to fetch current user');
-                }
-
-                const userData = await response.json();
-                setCurrentUserId(userData._id);
-                setCurrentUserData(userData);
-                // Initialize sent requests from user data
-                if (userData.outgoingBuddyRequests) {
-                    setSentRequests(new Set(userData.outgoingBuddyRequests));
-                }
-            } catch (error) {
-                console.error('Error fetching current user:', error);
-            }
-        };
-
-        fetchCurrentUser();
-    }, [token]);
-
-    // Function to handle sending a buddy request
-    const sendBuddyRequest = async (matchId) => {
-        if (!currentUserId) {
-            alert('You must be logged in to send buddy requests');
-            return;
-        }
-
-        try {
-            const response = await fetch('http://localhost:5001/api/users/send-buddy-request', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    matchId: matchId
-                })
-            });
-
-            const data = await response.json();
-
-            if (response.ok) {
-                // Update local state to show sent status
-                setSentRequests(prev => new Set([...prev, matchId]));
-                // Update current user data
-                setCurrentUserData(prev => ({
-                    ...prev,
-                    outgoingBuddyRequests: [...(prev.outgoingBuddyRequests || []), matchId]
-                }));
-            } else {
-                throw new Error(data.error || 'Failed to send buddy request');
-            }
-        } catch (error) {
-            console.error('Error sending buddy request:', error);
-            alert(error.message || 'An error occurred. Please try again.');
-        }
-    };
 
     useEffect(() => {
         const fetchMatches = async () => {
-            if (!token) {
-                console.error('No token found');
-                return;
-            }
+            if (!token) return;
 
             try {
-                const response = await fetch('http://localhost:5001/api/users/fetch-recommended-matches', {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    },
-
+                const response = await fetch("http://localhost:5001/api/users/fetch-recommended-matches", {
+                    headers: { Authorization: `Bearer ${token}` },
                 });
 
-                
-
-                if (!response.ok) {
-                    throw new Error('Failed to fetch matches');
-                }
+                if (!response.ok) throw new Error("Failed to fetch matches");
 
                 const data = await response.json();
-                setMatches(data.map(buddy => ({
-                    id: buddy._id,
-                    fullName: `${buddy.firstName} ${buddy.lastName}`,
-                    profilePic: buddy.profilePicture
+                setMatches(data.map((user) => ({
+                    id: user._id,
+                    fullName: `${user.firstName} ${user.lastName}`,
+                    profilePic: user.profilePicture,
+                    projects: user.projects || [] // Ensure projects array exists
                 })));
             } catch (error) {
-                console.error('Error fetching matches:', error);
+                console.error("Error fetching matches:", error);
             }
         };
 
         fetchMatches();
     }, [token]);
 
-    const navigateToProfile = (matchId) => {
-        console.log('Navigating to profile with ID:', matchId);
-        navigate(`/buddy/${matchId}`);
-    };
+    const sendBuddyRequest = async (matchId) => {
+        if (sentRequests.has(matchId)) return;
 
-    const renderBuddyButton = (matchId) => {
-        const isRequestSent = sentRequests.has(matchId);
+        try {
+            const response = await fetch("http://localhost:5001/api/users/send-buddy-request", {
+                method: "POST",
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ matchId }),
+            });
 
-        if (isRequestSent) {
-            return (
-                <div className="buddy-up-button noto-sans">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="sent-icon">
-                        <path d="M22.164 2.849a1.5 1.5 0 00-1.715-.145L2.689 13.141a1.5 1.5 0 00.2 2.702l5.77 1.872 1.871 5.77a1.5 1.5 0 002.702.2l10.437-17.76a1.5 1.5 0 00-.505-2.077zm-7.186 9.057L9.53 14.349 5.744 12.98l11.406-6.954-2.172 5.88zm-1.38 6.175l-1.37-4.225 5.88-2.172-4.51 6.397z" />
-                    </svg>
-                    <p>Sent</p>
-                </div>
-            );
+            if (!response.ok) throw new Error("Failed to send buddy request");
+
+            setSentRequests((prev) => new Set([...prev, matchId]));
+        } catch (error) {
+            console.error("Error sending buddy request:", error);
         }
-
-        return (
-            <div
-                className="buddy-up-button noto-sans"
-                onClick={() => {sendBuddyRequest(matchId); }}
-            >
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="plus-icon">
-                    <path d="M12 4.5a.75.75 0 01.75.75v6h6a.75.75 0 010 1.5h-6v6a.75.75 0 01-1.5 0v-6h-6a.75.75 0 010-1.5h6v-6A.75.75 0 0112 4.5z" />
-                </svg>
-                <p>Connect</p>
-            </div>
-        );
     };
 
     return (
-        <div className='matches-title-and-buddies'>
-            <h2>Recommended Matches</h2>
-            <div className='matched-buddies'>
+        <div className="matches-container">
+            <h2 className="matches-title">Recommended Matches</h2>
+            <div className="matches-list">
                 {matches.map((match) => (
-                    <div key={match.id} className='matched-buddy'>
-                        <img 
-                            className='matched-buddy-image' 
-                            src={match.profilePic} 
-                            alt={`${match.fullName}'s profile`}
-                            onClick={() => {navigateToProfile(match.id)}}
-                            style={{ cursor: 'pointer' }}
+                    <div key={match.id} className="match-item">
+                        <img
+                            className="match-profile-pic"
+                            src={match.profilePic}
+                            alt={match.fullName}
+                            onClick={() => navigate(`/buddy/${match.id}`)}
                         />
-                        <div className='matched-buddy-info'>
-                            <h4 className="noto-sans">{match.fullName}</h4>
-                            {renderBuddyButton(match.id)}
+                        <div className="match-info">
+                            <h4 
+                                className="match-name clickable-name"
+                                onClick={() => navigate(`/buddy/${match.id}`)}
+                            >
+                                {match.fullName}
+                            </h4>
+
+                            {/* Display Projects */}
+                            {match.projects.length > 0 && (
+                                <div className="match-projects">
+                                    <h5>Projects:</h5>
+                                    <ul>
+                                        {match.projects.slice(0, 3).map((project, index) => (  // Show only 3 projects max
+                                            <li key={index} className="project-item">
+                                                {project.name} 
+                                                {project.githubLink && (
+                                                    <a 
+                                                        href={project.githubLink} 
+                                                        target="_blank" 
+                                                        rel="noopener noreferrer"
+                                                    >
+                                                        🔗
+                                                    </a>
+                                                )}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                    {match.projects.length > 3 && <p className="view-more">View more...</p>}
+                                </div>
+                            )}
+
+                            <button
+                                className={`connect-btn ${sentRequests.has(match.id) ? "sent" : ""}`}
+                                onClick={() => sendBuddyRequest(match.id)}
+                                disabled={sentRequests.has(match.id)}
+                            >
+                                {sentRequests.has(match.id) ? "Request Sent" : "Connect"}
+                            </button>
                         </div>
                     </div>
                 ))}

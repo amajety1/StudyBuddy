@@ -1,0 +1,148 @@
+/* General Page Styling */
+.create-group-page {
+    font-family: 'Inter', sans-serif;
+    background: linear-gradient(to bottom right, #f3f4f6, #e0e7ff);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    padding: 20px;
+}
+
+/* Centering Content */
+.content-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    min-height: 80vh;
+}
+
+/* Card Design with Glassmorphism */
+.card {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(10px);
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0px 8px 24px rgba(0, 0, 0, 0.15);
+    width: 50%;
+    max-width: 600px;
+    text-align: center;
+    transition: all 0.3s ease-in-out;
+}
+
+.card:hover {
+    box-shadow: 0px 12px 28px rgba(0, 0, 0, 0.2);
+    transform: translateY(-3px);
+}
+
+/* Typography */
+.card h2 {
+    color: #1f2937;
+    font-size: 26px;
+    margin-bottom: 12px;
+    font-weight: 600;
+}
+
+.card p {
+    color: #4b5563;
+    font-size: 16px;
+    margin-bottom: 20px;
+}
+
+/* Form Elements */
+.form-group {
+    text-align: left;
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #374151;
+    display: block;
+    margin-bottom: 6px;
+}
+
+/* Inputs & Select Styling */
+input,
+select,
+textarea {
+    width: 100%;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid #d1d5db;
+    font-size: 14px;
+    transition: border 0.3s ease-in-out;
+    background: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(5px);
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+    border-color: #2563eb;
+    outline: none;
+    box-shadow: 0 0 5px rgba(37, 99, 235, 0.4);
+}
+
+/* File Input */
+input[type="file"] {
+    border: none;
+    background: transparent;
+    padding: 5px;
+}
+
+/* Button Styling */
+button {
+    background: linear-gradient(135deg, #2563eb, #1e3a8a);
+    color: white;
+    padding: 12px 18px;
+    font-size: 16px;
+    font-weight: 600;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease-in-out;
+}
+
+button:hover {
+    background: linear-gradient(135deg, #1e3a8a, #1c2e6f);
+    transform: scale(1.05);
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .card {
+        width: 60%;
+    }
+}
+
+@media (max-width: 768px) {
+    .card {
+        width: 75%;
+    }
+
+    input,
+    select,
+    textarea {
+        font-size: 14px;
+        padding: 10px;
+    }
+}
+
+@media (max-width: 480px) {
+    .card {
+        width: 90%;
+        padding: 20px;
+    }
+
+    .card h2 {
+        font-size: 22px;
+    }
+
+    .card p {
+        font-size: 14px;
+    }
+}

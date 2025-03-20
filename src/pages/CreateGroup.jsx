@@ -1,20 +1,23 @@
-import Header from '../components/Header'
-import Navbar from '../components/Navbar'
-import Matches from "../components/Matches";
-import Messages from "../components/Messages";
-import BuddyProfileSection from "../components/BuddyProfileSection";
-import OwnProfileSection from '../components/OwnProfileSection';
-import CreateGroupComponent from '../components/CreateGroupComponent';
+import React from "react";
+import Header from "../components/Header";
+import Navbar from "../components/Navbar";
+import CreateGroupComponent from "../components/CreateGroupComponent";
+import "../styles/CreateGroup.css"; // Ensure this CSS file exists
 
-function CreateGroup() {
+const CreateGroup = () => {
     return (
-        <div>
-            <Header/>
-            <Navbar/>
-            <CreateGroupComponent/>
-            
+        <div className="create-group-page">
+            <Header />
+            <Navbar />
+            <main className="content-container">
+                <section className="card">
+                    <h2>📚 Create a New Study Group</h2>
+                    <p>Connect with like-minded individuals, share knowledge, and collaborate effectively.</p>
+                    <CreateGroupComponent />
+                </section>
+            </main>
         </div>
     );
-}
+};
 
 export default CreateGroup;

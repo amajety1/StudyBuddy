@@ -1,0 +1,89 @@
+/* Home Page Layout */
+.home-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    position: relative;
+    background: #f4f4f4; /* Light gray background for a clean look */
+}
+
+/* Matches & Messages Layout */
+.matches-and-messages {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 20px;
+    height: calc(100vh - 60px); /* Adjust height to fit screen */
+    overflow: hidden;
+}
+
+/* Matches Section */
+.matches-container {
+    flex: 1; /* Takes remaining space */
+    max-width: 75%;
+    padding: 20px;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    overflow-y: auto;
+    height: 100%;
+}
+
+/* Messages Sidebar (Fixed to the Right) */
+.chat-sidebar {
+    width: 320px; /* Slightly wider for a better chat experience */
+    height: 100vh;
+    background: white;
+    position: fixed;
+    right: 0;
+    top: 0;
+    z-index: 1050; /* Higher z-index to stay on top */
+    border-left: 1px solid #ddd;
+    display: flex;
+    flex-direction: column;
+    transition: width 0.3s ease-in-out;
+    padding-top: 60px; /* Keeps space for navbar */
+    box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Fix for Overlapping Issues */
+.matches-and-messages > * {
+    position: relative;
+    z-index: 1;
+}
+
+.chat-sidebar {
+    z-index: 9999; /* Ensures chat remains on top */
+}
+
+/* Responsive Layout for Smaller Screens */
+@media (max-width: 1024px) {
+    .matches-and-messages {
+        flex-direction: column;
+        height: auto;
+    }
+
+    .matches-container {
+        max-width: 100%;
+        padding: 15px;
+    }
+
+    .chat-sidebar {
+        width: 100%;
+        height: 50vh; /* Chat takes half of the screen */
+        position: relative;
+        border-left: none;
+        border-top: 2px solid #ddd;
+        box-shadow: none;
+    }
+}
+
+@media (max-width: 768px) {
+    .matches-container {
+        height: auto;
+    }
+
+    .chat-sidebar {
+        height: 60vh; /* More space for messages */
+    }
+}

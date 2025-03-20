@@ -162,3 +162,64 @@
   background-color: #fed7d7;
   color: #742a2a;
 }
+/* Profile Link - Stack Profile Picture and Text Vertically */
+.home-toolbar-item.profile-link {
+  display: flex;
+  flex-direction: column; /* Stack items vertically */
+  align-items: center; /* Center-align items */
+  gap: 4px; /* Add small spacing between profile picture and text */
+  cursor: pointer;
+  position: relative;
+}
+
+.home-toolbar-item.profile-link img {
+  width: 40px; /* Adjust profile picture size */
+  height: 40px;
+  border-radius: 50%;
+}
+
+.navbar-text-and-arrow {
+  display: flex;
+  flex-direction: column; /* Stack text and arrow vertically */
+  align-items: center;
+  gap: 2px; /* Reduce space between "Me" and the arrow */
+}
+
+.navbar-text-and-arrow p {
+  font-size: 14px;
+  margin: 0;
+  font-weight: bold;
+}
+
+.navbar-text-and-arrow img {
+  width: 12px; /* Adjust arrow size */
+  height: 12px;
+}
+
+/* Dropdown Styling */
+.profile-dropdown-window {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: white;
+  border-radius: 5px;
+  padding: 10px;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+  width: 180px;
+  text-align: center;
+}
+
+.profile-drop-item {
+  padding: 8px;
+  cursor: pointer;
+  border-bottom: 1px solid #ddd;
+}
+
+.profile-drop-item:last-child {
+  border-bottom: none;
+}
+
+.profile-drop-item:hover {
+  background-color: #f0f0f0;
+}
