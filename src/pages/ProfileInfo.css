@@ -1,10 +1,25 @@
-/* General Profile Page Styling */
-.profile-container {
-  display: flex;
-  min-height: 100vh;
-  background: linear-gradient(135deg, #1e3c72, #2a5298); /* Professional gradient background */
-  color: #2c3e50;
+/* Reset and Base Styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
   font-family: 'Inter', sans-serif;
+  line-height: 1.6;
+}
+
+/* Profile Container - Two-Column Layout */
+.profile-container {
+  display: flex; /* Fixed from 'absolute' to enable flexbox */
+  height: 100vh;
+  width: 100vw;
+  background: linear-gradient(135deg, #1e3c72, #2a5298);
+  color: #f4f4f4;
 }
 
 /* Left Side - Profile Image */
@@ -21,7 +36,7 @@
   background: #ffffff;
   border-radius: 0 10px 10px 0;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
+  overflow-y: auto; /* Allow scrolling if content overflows */
 }
 
 /* Profile Header */
@@ -47,14 +62,12 @@
   display: flex;
   flex-direction: column;
   gap: 15px;
-  max-height: calc(100vh - 120px);
 }
 
 .form-scrollable-content {
   flex: 1;
   overflow-y: auto;
   padding-right: 15px;
-  margin-right: -15px;
 }
 
 /* Form Section */
@@ -87,13 +100,14 @@ select.text-input {
   font-size: 14px;
   background: #f8f9fa;
   color: #333;
-  transition: 0.3s ease;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 .text-input:focus,
 select.text-input:focus {
   border-color: #4a90e2;
   box-shadow: 0 0 4px rgba(74, 144, 226, 0.3);
+  outline: none;
 }
 
 /* Custom Select Dropdown */
@@ -101,9 +115,7 @@ select.text-input {
   cursor: pointer;
   appearance: none;
   padding-right: 40px;
-  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
-  background-repeat: no-repeat;
-  background-position: right 12px center;
+  background: #f8f9fa url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e") no-repeat right 12px center;
   background-size: 16px;
 }
 
@@ -129,7 +141,8 @@ select.text-input {
   color: white;
   border-radius: 6px;
   font-weight: 600;
-  transition: all 0.3s ease;
+  text-align: center;
+  transition: background 0.3s ease;
 }
 
 .upload-button:hover {
@@ -159,16 +172,16 @@ select.text-input {
 /* Buttons */
 .add-button,
 .save-button,
-.edit-button {
+.edit-button,
+.submit-button {
   padding: 12px 16px;
   border: none;
   border-radius: 6px;
   cursor: pointer;
   font-weight: 600;
-  transition: all 0.3s ease;
+  transition: background 0.3s ease;
 }
 
-/* Add Button */
 .add-button {
   background: #3498db;
   color: white;
@@ -178,7 +191,6 @@ select.text-input {
   background: #2980b9;
 }
 
-/* Save Button */
 .save-button {
   background: #2ecc71;
   color: white;
@@ -188,7 +200,6 @@ select.text-input {
   background: #27ae60;
 }
 
-/* Edit Button */
 .edit-button {
   background: #f1c40f;
   color: white;
@@ -196,6 +207,18 @@ select.text-input {
 
 .edit-button:hover {
   background: #f39c12;
+}
+
+.submit-button {
+  width: 100%;
+  padding: 14px;
+  background: linear-gradient(135deg, #007bff, #0056b3);
+  color: white;
+  font-size: 1.1rem;
+}
+
+.submit-button:hover {
+  background: linear-gradient(135deg, #0056b3, #003f7f);
 }
 
 /* Error Messages */
@@ -206,22 +229,6 @@ select.text-input {
   border-radius: 6px;
   text-align: center;
   margin-bottom: 12px;
-}
-
-/* Submit Button */
-.submit-button {
-  width: 100%;
-  padding: 14px;
-  background: linear-gradient(135deg, #007bff, #0056b3);
-  color: white;
-  border-radius: 6px;
-  font-size: 1.1rem;
-  font-weight: 600;
-  transition: all 0.3s ease;
-}
-
-.submit-button:hover {
-  background: linear-gradient(135deg, #0056b3, #003f7f);
 }
 
 /* Selected Courses */
@@ -243,7 +250,6 @@ select.text-input {
   color: #2c5282;
 }
 
-/* Remove Course */
 .remove-course {
   background: none;
   border: none;
@@ -251,7 +257,7 @@ select.text-input {
   margin-left: 8px;
   cursor: pointer;
   font-size: 18px;
-  transition: color 0.2s;
+  transition: color 0.2s ease;
 }
 
 .remove-course:hover {
@@ -281,16 +287,19 @@ select.text-input {
 @media (max-width: 768px) {
   .profile-container {
     flex-direction: column;
-    align-items: center;
   }
 
   .profile-image-half {
+    flex: none;
     height: 200px;
     width: 100%;
     border-radius: 10px 10px 0 0;
   }
 
   .profile-content-half {
+    flex: none;
+    width: 100%;
+    height: calc(100vh - 200px); /* Adjust height to fit below image */
     border-radius: 0 0 10px 10px;
   }
 }

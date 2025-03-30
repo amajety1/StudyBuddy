@@ -7,15 +7,26 @@
   font-family: "Poppins", sans-serif;
 }
 
+@property --rotate {
+  syntax: "<angle>";
+  initial-value: 132deg;
+  inherits: false;
+}
+
+:root {
+  --card-height: 550px; /* Increased height for more space */
+  --card-width: 450px; /* Increased width */
+}
+
 body {
-  background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab,#9527c0,#000000);
+  background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
   background-size: 400% 400%;
   animation: gradient 15s ease infinite;
-  min-height: 100vh; /* Ensure it covers the whole page */
+  min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden; /* Prevent scrolling issues */
+  overflow: hidden;
 }
 
 @keyframes gradient {
@@ -29,63 +40,119 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  height: 100vh;
 }
 
 .signup-card {
-  background: white;
-  padding: 40px;
-  width: 400px;
-  border-radius: 10px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-  text-align: center;
+  background: #1a1d2b; /* Dark background to match the theme */
+  width: var(--card-width);
+  height: var(--card-height);
+  padding: 30px;
   position: relative;
-  z-index: 10; /* Ensure form is visible over the background */
-  animation: fadeIn 0.8s ease-in-out;
+  border-radius: 12px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  font-size: 1.2em;
+  color: rgb(88 199 250 / 0%);
+  cursor: pointer;
+  font-family: "Poppins", sans-serif;
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-20px); }
-  to { opacity: 1; transform: translateY(0); }
+.signup-card:hover {
+  color: rgb(88 199 250 / 100%);
+  transition: color 1s;
+}
+
+.signup-card:hover:before,
+.signup-card:hover:after {
+  animation: none;
+  opacity: 0;
+}
+
+/* Glowing Border */
+.signup-card::before {
+  content: "";
+  width: 105%;
+  height: 103%;
+  border-radius: 12px;
+  background-image: linear-gradient(var(--rotate), #ff6b6b, #ff8e53 43%, #ffbe0b);
+  position: absolute;
+  z-index: -1;
+  top: -1.5%;
+  left: -2.5%;
+  animation: spin 2.5s linear infinite;
+}
+
+.signup-card::after {
+  position: absolute;
+  content: "";
+  top: 12%;
+  left: 0;
+  right: 0;
+  z-index: -1;
+  height: 100%;
+  width: 100%;
+  margin: 0 auto;
+  transform: scale(0.85);
+  filter: blur(35px);
+  background-image: linear-gradient(var(--rotate), #ff6b6b, #ff8e53 43%, #ffbe0b);
+  opacity: 1;
+  transition: opacity .5s;
+  animation: spin 2.5s linear infinite;
+}
+
+@keyframes spin {
+  0% { --rotate: 0deg; }
+  100% { --rotate: 360deg; }
 }
 
 .signup-card h1 {
-  font-size: 24px;
-  margin-bottom: 10px;
+  font-size: 26px;
+  margin-bottom: 15px;
+  color: white;
 }
 
 .signup-card p {
-  font-size: 14px;
-  color: #666;
-  margin-bottom: 20px;
+  font-size: 15px;
+  color: #bbb;
+  margin-bottom: 25px;
 }
 
+/* Input Fields */
 .input-group {
   display: flex;
   flex-direction: column;
-  gap: 15px;
-  margin-bottom: 15px;
+  gap: 18px;
+  margin-bottom: 20px;
+  width: 85%;
 }
 
 .input-group input {
   width: 100%;
-  padding: 12px;
+  padding: 14px;
   border-radius: 8px;
-  border: 1px solid #ccc;
+  border: 1px solid #444;
+  background: #222;
+  color: white;
   font-size: 16px;
 }
 
 .input-group input:focus {
   outline: none;
-  border-color: #23a6d5;
-  box-shadow: 0 0 5px rgba(35, 166, 213, 0.5);
+  border-color: #ff6b6b;
+  box-shadow: 0 0 5px rgba(255, 107, 107, 0.5);
 }
 
+/* Submit Button */
 .submit-button {
-  width: 100%;
-  padding: 12px;
+  width: 85%;
+  padding: 14px;
   font-size: 16px;
-  background: #23a6d5;
-  color: white;
+  background: #ff6b6b;
+  color: black;
   border: none;
   border-radius: 8px;
   cursor: pointer;
@@ -93,15 +160,17 @@ body {
 }
 
 .submit-button:hover {
-  background: #1d8ec3;
+  background: #ff8e53;
+  color: white;
 }
 
+/* Sign In Link */
 .switch-page {
-  margin-top: 15px;
+  margin-top: 18px;
 }
 
 .switch-page a {
-  color: #23a6d5;
+  color: #ff6b6b;
   text-decoration: none;
   font-weight: bold;
 }

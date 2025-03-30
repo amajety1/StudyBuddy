@@ -1,96 +1,102 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import "../styles/Login.css"; // Import CSS file
+import "../styles/Login.css";
+
 
 function Login({ setIsAuthenticated }) {
-  const [formData, setFormData] = useState({ email: "", password: "" });
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [animationKey, setAnimationKey] = useState(0); // To restart animation
   const navigate = useNavigate();
 
-  // Restart animation when the page is mounted
-  useEffect(() => {
-    setAnimationKey((prev) => prev + 1);
-  }, []);
-
-  // Handle input changes
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
-  // Handle form submission
-  const handleSubmit = async (e) => {
+  const formSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    setErrorMessage("");
-
     try {
       const response = await fetch("http://localhost:5001/api/users/login", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
       });
 
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "Invalid credentials");
 
-      // Store token & authenticate user
-      localStorage.setItem("token", data.token);
-      setIsAuthenticated(true);
-      navigate("/home");
+      if (response.ok) {
+        console.log("Login successful:", data);
+
+        // Store the token in localStorage
+        localStorage.setItem("token", data.token);
+
+        // Update authentication state
+        setIsAuthenticated(true);
+
+        // Navigate to the home page
+        navigate("/home");
+      } else {
+        setErrorMessage(data.error || "Invalid email or password.");
+      }
     } catch (error) {
-      setErrorMessage(error.message);
-    } finally {
-      setLoading(false);
+      console.error("Error during login:", error);
+      setErrorMessage("An error occurred. Please try again.");
     }
   };
 
   return (
-    <div key={animationKey} className="login-page">
-      <div className="login-card">
-        <h1>Log In</h1>
-        <p>Welcome back! Please enter your details.</p>
-        <form onSubmit={handleSubmit}>
-          <div className="input-group">
+    <div className="login-container">
+      <div className="login-image-half"></div>
+      <div className="login-text-half">
+        <div className="login-heading-description">
+          <h1 className="noto-sans">Log in</h1>
+        </div>
+        <form onSubmit={formSubmit}>
+          <div className="email-form">
             <input
-              type="email"
-              name="email"
-              placeholder="Email"
-              value={formData.email}
-              onChange={handleChange}
+              className="noto-sans input-box"
+              type="text"
+              placeholder="Email or Username"
               required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
             />
           </div>
-          <div className="input-group">
+
+          <div className="password-form">
             <input
+              className="noto-sans input-box"
               type="password"
-              name="password"
               placeholder="Password"
-              value={formData.password}
-              onChange={handleChange}
               required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
             />
           </div>
 
           {errorMessage && <p className="error-message">{errorMessage}</p>}
 
-          <button type="submit" className="submit-button" disabled={loading}>
-            {loading ? "Logging in..." : "Log In"}
+          <button type="submit" className="login-button noto-sans">
+            Log in
           </button>
 
-          <button type="button" className="google-button">
-            <img src="/images/google.png" alt="Google" className="google-icon" />
-            Log in with Google
+          <button type="button" className="google-button noto-sans">
+            <img
+              src="/images/google.png"
+              alt="Google Icon"
+              style={{ width: "20px", height: "20px", marginRight: "10px" }}
+            />
+            <p>Log in with Google</p>
           </button>
 
-          <p className="forgot-password">
-            <a href="/forgot-password">Forgot Password?</a>
-          </p>
-
-          <p className="switch-page">
-            Don't have an account? <a href="/signup">Sign Up</a>
-          </p>
+          <div className="forgot-password">
+            <a href="/forgot-password" className="noto-sans">
+              Forgot Password?
+            </a>
+          </div>
+          <div className="no-account">
+            <a href="/signup" style={{ cursor: "pointer" }} className="noto-sans">
+              Don't have an account?
+            </a>
+          </div>
         </form>
       </div>
     </div>

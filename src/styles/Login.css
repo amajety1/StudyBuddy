@@ -1,158 +1,117 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
-
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  font-family: "Poppins", sans-serif;
-}
-
-body {
-  background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab,#9527c0,#000000);
-  background-size: 400% 400%;
-  animation: gradient 15s ease infinite;
-  min-height: 100vh;
+/* Full Page Container */
+.login-container {
   display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-@keyframes gradient {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
-
-.login-page {
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
   height: 100vh;
 }
 
-.login-card {
-  background: white;
-  padding: 40px;
-  width: 400px;
-  border-radius: 10px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-  text-align: center;
-  position: relative;
-  z-index: 10;
-  animation: fadeIn 0.8s ease-in-out;
+/* Left Section - Image Half */
+.login-image-half {
+  width: 50%;
+  background-image: url('/public/images/STUDYBUDDY.jpg');  /* Add the path to your image */
+  background-size: cover;
+  background-position: center;
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.login-card h1 {
-  font-size: 24px;
-  margin-bottom: 10px;
-}
-
-.login-card p {
-  font-size: 14px;
-  color: #666;
-  margin-bottom: 20px;
-}
-
-.input-group {
+/* Right Section - Text and Form */
+.login-text-half {
+  width: 50%;
+  background-color: rgb(0 57 166);  /* Deep blue background */
   display: flex;
+  justify-content: center;
+  align-items: center;
   flex-direction: column;
-  gap: 15px;
-  margin-bottom: 15px;
+  padding: 30px;
 }
 
-.input-group input {
+/* Heading */
+.login-heading-description h1 {
+  color: #fff;
+  font-size: 36px;
+  font-family: "Poppins", sans-serif;
+}
+
+/* Form Styling */
+input.input-box {
   width: 100%;
-  padding: 12px;
+  padding: 12px 20px;
+  margin: 12px 0;
   border-radius: 8px;
-  border: 1px solid #ccc;
+  border: none;
   font-size: 16px;
+  background-color: #f0f0f0;
 }
 
-.input-group input:focus {
-  outline: none;
-  border-color: #23a6d5;
-  box-shadow: 0 0 5px rgba(35, 166, 213, 0.5);
-}
-
-.submit-button {
+/* Login Button */
+button.login-button {
   width: 100%;
-  padding: 12px;
-  font-size: 16px;
-  background: #23a6d5;
-  color: white;
+  padding: 12px 20px;
+  background-color: #ffcc00;  /* Bright yellow */
+  color: #fff;
   border: none;
   border-radius: 8px;
+  font-size: 18px;
   cursor: pointer;
-  transition: 0.3s;
+  transition: background-color 0.3s ease;
 }
 
-.submit-button:hover {
-  background: #1d8ec3;
+button.login-button:hover {
+  background-color: #003366;  /* Dark blue on hover */
 }
 
-.submit-button:disabled {
-  background: #aaa;
-  cursor: not-allowed;
-}
-
-.google-button {
+/* Google Button */
+button.google-button {
   width: 100%;
-  padding: 12px;
-  font-size: 16px;
-  background: white;
-  color: #333;
-  border: 1px solid #ccc;
+  padding: 12px 20px;
+  background-color: #db4437;  /* Google Red */
+  color: #fff;
   border-radius: 8px;
-  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  margin-top: 10px;
-  transition: 0.3s;
+  font-size: 16px;
+  margin-top: 15px;
+  cursor: pointer;
 }
 
-.google-button:hover {
-  background: #f5f5f5;
+button.google-button:hover {
+  background-color: #c1351d;  /* Darker Google Red */
 }
 
-.google-icon {
-  width: 20px;
-  height: 20px;
-}
-
+/* Forgot Password Link */
 .forgot-password {
-  margin-top: 10px;
-}
-
-.forgot-password a {
-  color: #23a6d5;
-  text-decoration: none;
-  font-weight: bold;
-}
-
-.switch-page {
+  color: #fff;
+  font-size: 14px;
   margin-top: 15px;
 }
 
-.switch-page a {
-  color: #23a6d5;
+.forgot-password a {
+  color: #fff;
   text-decoration: none;
-  font-weight: bold;
 }
 
+.forgot-password a:hover {
+  text-decoration: underline;
+}
+
+/* No Account Link */
+.no-account {
+  color: #fff;
+  font-size: 14px;
+  margin-top: 15px;
+}
+
+.no-account a {
+  color: #fff;
+  text-decoration: none;
+}
+
+.no-account a:hover {
+  text-decoration: underline;
+}
+
+/* Error Message Styling */
 .error-message {
-  color: red;
+  color: #ff6b6b;
   font-size: 14px;
-}
-
-.success-message {
-  color: green;
-  font-size: 14px;
+  margin-top: 10px;
 }
