@@ -7,7 +7,6 @@ function Messages() {
     const [chatrooms, setChatrooms] = useState([]);
     const [selectedChat, setSelectedChat] = useState(null);
     const [currentUser, setCurrentUser] = useState(null);
-    const [isChatSidebarOpen, setIsChatSidebarOpen] = useState(true);
     const [error, setError] = useState(null);
     const token = localStorage.getItem('token');
 
@@ -15,16 +14,16 @@ function Messages() {
         const fetchUserAndChats = async () => {
             try {
                 const userResponse = await fetch('http://localhost:5001/api/users/me', {
-                    headers: { 
+                    headers: {
                         'Authorization': `Bearer ${token}`,
                         'Content-Type': 'application/json'
                     }
                 });
-                
+
                 if (!userResponse.ok) {
                     throw new Error(`Failed to fetch user: ${userResponse.status}`);
                 }
-                
+
                 const userData = await userResponse.json();
                 setCurrentUser(userData);
 
@@ -38,16 +37,16 @@ function Messages() {
         const fetchChatrooms = async () => {
             try {
                 const chatsResponse = await fetch('http://localhost:5001/api/users/get-chats', {
-                    headers: { 
+                    headers: {
                         'Authorization': `Bearer ${token}`,
                         'Content-Type': 'application/json'
                     }
                 });
-                
+
                 if (!chatsResponse.ok) {
                     throw new Error(`Failed to fetch chatrooms: ${chatsResponse.status}`);
                 }
-                
+
                 const chatsData = await chatsResponse.json();
                 setChatrooms(chatsData);
             } catch (error) {
@@ -63,15 +62,11 @@ function Messages() {
     };
 
     return (
-        <div className={`chat-sidebar ${isChatSidebarOpen ? "open" : "closed"}`}>
-            <div className="chat-header">
-                <h3>Messages</h3>
-                <button className="toggle-btn" onClick={() => setIsChatSidebarOpen(!isChatSidebarOpen)}>
-                    {isChatSidebarOpen ? "➖" : "📩"}
-                </button>
-            </div>
-
-            {isChatSidebarOpen && (
+        <div className="messages-container">
+            <div className="chat-sidebar">
+                <div className="chat-header">
+                    <h3>Chats</h3>
+                </div>
                 <div className="chat-list">
                     {chatrooms.length > 0 ? (
                         chatrooms.map((chatroom) => (
@@ -87,15 +82,21 @@ function Messages() {
                         <p className="no-chats">No chats available</p>
                     )}
                 </div>
-            )}
+            </div>
 
-            {selectedChat && (
-                <ChatExpandedWindow
-                    chatroom={selectedChat}
-                    currentUser={currentUser}
-                    onClose={() => setSelectedChat(null)}
-                />
-            )}
+            <div className="chat-window">
+                {selectedChat ? (
+                    <ChatExpandedWindow
+                        chatroom={selectedChat}
+                        currentUser={currentUser}
+                        onClose={() => setSelectedChat(null)}
+                    />
+                ) : (
+                    <div className="empty-chat-placeholder">
+                        Select a chat to start messaging
+                    </div>
+                )}
+            </div>
         </div>
     );
 }

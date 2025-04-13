@@ -7,33 +7,52 @@ const chatWindowStyle = {
     position: 'fixed',
     bottom: '0',
     right: '350px',
-    width: '300px',
-    height: '400px',
-    backgroundColor: 'white',
-    borderRadius: '10px 10px 0 0',
-    boxShadow: '0 0 10px rgba(0,0,0,0.1)',
+    width: '320px',
+    height: '460px',
+    backgroundColor: '#ffffff',
+    borderRadius: '12px 12px 0 0',
+    boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
     display: 'flex',
     flexDirection: 'column',
+    overflow: 'hidden',
+    fontFamily: '"Segoe UI", sans-serif',
     zIndex: 1000,
 };
+
 const chatHeaderStyle = {
-    padding: '10px',
-    borderBottom: '1px solid #eee',
+    padding: '12px 16px',
+    borderBottom: '1px solid #e0e0e0',
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
+    backgroundColor: '#f9f9f9',
 };
+
 const chatMessagesStyle = {
     flex: 1,
     overflowY: 'auto',
-    padding: '10px',
+    padding: '12px',
+    backgroundColor: '#f4f6f8',
     display: 'flex',
     flexDirection: 'column',
+    gap: '8px',
 };
+
 const chatInputStyle = {
-    padding: '10px',
-    borderTop: '1px solid #eee',
-    backgroundColor: 'white',
+    padding: '12px',
+    borderTop: '1px solid #e0e0e0',
+    backgroundColor: '#fff',
+};
+
+const BASE_URL = 'http://localhost:5001';
+
+const getImageUrl = (profilePicture, userId) => {
+    if (!profilePicture || profilePicture === 'null') {
+        return `https://api.dicebear.com/7.x/adventurer/png?seed=${userId}`;
+    }
+    if (profilePicture.startsWith('http')) return profilePicture;
+    const filename = profilePicture.split('/').pop();
+    return `${BASE_URL}/api/images/${filename}`;
 };
 
 function ChatExpandedWindow({ 
@@ -46,23 +65,15 @@ function ChatExpandedWindow({
 }) {
     const [messages, setMessages] = useState([]);
     const [newMessage, setNewMessage] = useState('');
-    const [showParticipants, setShowParticipants] = useState(false);
-    const [isLoading, setIsLoading] = useState(false);
-    const [requestStatuses, setRequestStatuses] = useState({});
-    const [deleteStatus, setDeleteStatus] = useState({ loading: false, error: null });
-    const [leaveStatus, setLeaveStatus] = useState({ loading: false, error: null });
-    const [removeMemberStatuses, setRemoveMemberStatuses] = useState({});
     const messagesEndRef = useRef(null);
-    const socket = useRef(null); // Use useRef for socket
+    const socket = useRef(null);
     const navigate = useNavigate();
 
     useEffect(() => {
-        // Initialize Socket.IO
-        socket.current = io('http://localhost:5001');
+        socket.current = io(BASE_URL);
 
         if (chatroom) {
             socket.current.emit("join_chat", chatroom._id);
-            // Fetch existing messages
             fetchMessages();
         }
 
@@ -75,7 +86,7 @@ function ChatExpandedWindow({
 
     const fetchMessages = async () => {
         try {
-            const response = await fetch(`http://localhost:5001/api/chatrooms/${chatroom._id}/messages`, {
+            const response = await fetch(`${BASE_URL}/api/chatrooms/${chatroom._id}/messages`, {
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('token')}`
                 }
@@ -91,407 +102,66 @@ function ChatExpandedWindow({
 
     useEffect(() => {
         if (!socket.current) return;
-    
+
         socket.current.on("message_received", (message) => {
-            console.log('Received message:', message);
             if (message.chatroomId === chatroom._id) {
-                setMessages(prevMessages => [...prevMessages, message]);
+                setMessages(prev => [...prev, message]);
                 scrollToBottom();
             }
         });
 
-        socket.current.on("message_error", (error) => {
-            console.error('Message error:', error);
-        });
-    
         return () => {
-            if (socket.current) {
-                socket.current.off("message_received");
-                socket.current.off("message_error");
-            }
+            socket.current.off("message_received");
         };
     }, [chatroom]);
 
     const handleSend = (e) => {
         e.preventDefault();
         if (!newMessage.trim() || !socket.current) return;
-    
+
         socket.current.emit("new_message", {
             chatroomId: chatroom._id,
             content: newMessage,
             sender: currentUser._id,
         });
-    
+
         setNewMessage('');
     };
-    
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     };
 
-    const handleApproveRequest = async (userId) => {
-        try {
-            setRequestStatuses(prev => ({
-                ...prev,
-                [userId]: { status: 'approving', message: 'Approving...' }
-            }));
-
-            const response = await fetch('http://localhost:5001/api/groups/approve-join-group', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                },
-                body: JSON.stringify({
-                    groupId: chatroom.group._id,
-                    userId: userId
-                })
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to approve request');
-            }
-
-            setRequestStatuses(prev => ({
-                ...prev,
-                [userId]: { status: 'approved', message: 'Approved!' }
-            }));
-
-            // Refresh chatrooms to update the UI after a short delay
-            setTimeout(() => {
-                if (onChatroomUpdate) {
-                    onChatroomUpdate();
-                }
-            }, 1000);
-        } catch (error) {
-            console.error('Error approving request:', error);
-            setRequestStatuses(prev => ({
-                ...prev,
-                [userId]: { status: 'error', message: 'Error!' }
-            }));
-        }
-    };
-
-    const handleRejectRequest = async (userId) => {
-        try {
-            setRequestStatuses(prev => ({
-                ...prev,
-                [userId]: { status: 'rejecting', message: 'Denying...' }
-            }));
-
-            const response = await fetch('http://localhost:5001/api/groups/reject-join-group', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                },
-                body: JSON.stringify({
-                    groupId: chatroom.group._id,
-                    userId: userId
-                })
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to reject request');
-            }
-
-            setRequestStatuses(prev => ({
-                ...prev,
-                [userId]: { status: 'rejected', message: 'Denied!' }
-            }));
-
-            // Refresh chatrooms to update the UI after a short delay
-            setTimeout(() => {
-                if (onChatroomUpdate) {
-                    onChatroomUpdate();
-                }
-            }, 1000);
-        } catch (error) {
-            console.error('Error rejecting request:', error);
-            setRequestStatuses(prev => ({
-                ...prev,
-                [userId]: { status: 'error', message: 'Error!' }
-            }));
-        }
-    };
-
-    const handleRemoveMember = async (userId) => {
-        if (!window.confirm('Are you sure you want to remove this member from the group?')) {
-            return;
-        }
-
-        setRemoveMemberStatuses(prev => ({
-            ...prev,
-            [userId]: { loading: true, error: null }
-        }));
-
-        try {
-            const response = await fetch('http://localhost:5001/api/groups/remove-member', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                },
-                body: JSON.stringify({
-                    groupId: chatroom.group._id,
-                    userId: userId
-                })
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'Failed to remove member');
-            }
-
-            // Refresh chatrooms to update the UI
-            if (onChatroomUpdate) {
-                onChatroomUpdate();
-            }
-        } catch (error) {
-            console.error('Error removing member:', error);
-            setRemoveMemberStatuses(prev => ({
-                ...prev,
-                [userId]: { loading: false, error: error.message || 'Failed to remove member' }
-            }));
-        }
-    };
-
-    const handleDeleteGroup = async () => {
-        if (!window.confirm('Are you sure you want to delete this group? This action cannot be undone.')) {
-            return;
-        }
-
-        setDeleteStatus({ loading: true, error: null });
-        try {
-            const response = await fetch(`http://localhost:5001/api/groups/${chatroom.group._id}`, {
-                method: 'DELETE',
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                }
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to delete group');
-            }
-
-            // Close the chat window and refresh the chat list
-            onClose();
-            if (onChatroomUpdate) {
-                onChatroomUpdate();
-            }
-        } catch (error) {
-            console.error('Error deleting group:', error);
-            setDeleteStatus({ loading: false, error: 'Failed to delete group' });
-        }
-    };
-
-    const handleLeaveGroup = async () => {
-        if (!window.confirm('Are you sure you want to leave this group?')) {
-            return;
-        }
-
-        setLeaveStatus({ loading: true, error: null });
-        try {
-            const response = await fetch('http://localhost:5001/api/users/leave-group', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                },
-                body: JSON.stringify({
-                    groupId: chatroom.group._id
-                })
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to leave group');
-            }
-
-            // Close the chat window and refresh the chat list
-            onClose();
-            if (onChatroomUpdate) {
-                onChatroomUpdate();
-            }
-        } catch (error) {
-            console.error('Error leaving group:', error);
-            setLeaveStatus({ loading: false, error: 'Failed to leave group' });
-        }
-    };
-
-    const navigateToProfile = (userId) => {
-        navigate(`/profile/${userId}`);
-    };
-
-    if (!chatroom || !currentUser) {
-        return null;
-    }
+    if (!chatroom || !currentUser) return null;
 
     return (
-        <div 
-            className={`chat-expanded-window ${isChatWindowMinimized ? 'minimized' : ''}`}
-            style={chatWindowStyle}
-        >
-            <div className="chat-expanded-window-title" style={chatHeaderStyle}>
-                <div className="chat-expanded-window-title-left-profile-and-name">
+        <div style={chatWindowStyle}>
+            <div style={chatHeaderStyle}>
+                <div style={{ display: 'flex', alignItems: 'center' }}>
                     <img 
-                        src={chatroom.displayPhoto} 
+                        src={getImageUrl(chatroom.displayPhoto, chatroom._id)}
                         alt={chatroom.displayTitle} 
-                        style={{ width: '30px', height: '30px', borderRadius: '50%', marginRight: '10px' }}
+                        style={{ width: '30px', height: '30px', borderRadius: '50%', marginRight: '10px' }} 
                     />
-                    <h3 style={{ margin: 0 }}>{chatroom.displayTitle}</h3>
-                    {chatroom.isGroupChat && (
-                        <button 
-                            className="participants-toggle"
-                            onClick={() => setShowParticipants(!showParticipants)}
-                            style={{ marginLeft: '10px' }}
-                        >
-                            <p className='noto-sans' style={{ fontSize: '1em', color: '#6c757d' }}>{showParticipants ? 'Hide' : 'Show'} Info</p>
-                        </button>
-                    )}
+                    <h3 style={{ margin: 0, fontWeight: 600 }}>{chatroom.displayTitle}</h3>
                 </div>
-                <div className="chat-expanded-window-title-right-down-arrow">
+                <div>
                     <img
                         onClick={handleChatMinimizeClick}
                         src={isChatWindowMinimized ? "/images/up-arrow-messages.png" : "/images/down-arrow.png"}
                         alt="Toggle Minimize"
-                        style={{ cursor: 'pointer', marginRight: '10px' }}
+                        style={{ cursor: 'pointer', marginRight: '10px', width: '20px', height: '20px' }}
                     />
                     <img
                         onClick={onClose}
                         src="/images/close-arrow.png"
                         alt="Close Chat"
-                        style={{ cursor: 'pointer' }}
+                        style={{ cursor: 'pointer', width: '20px', height: '20px' }}
                     />
                 </div>
             </div>
 
-            {showParticipants && chatroom.isGroupChat && (
-            <div className="participants-list">
-                <h4>Group Members</h4>
-                {chatroom.participants.map(participant => (
-                    <div key={participant._id} className="participant-item" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <div style={{ display: 'flex', alignItems: 'center' }}>
-                            <img 
-                                src={participant.profilePicture || '/images/default-profile.jpeg'} 
-                                alt={participant.firstName} 
-                                className="participant-avatar"
-                            />
-                            <span>
-                                {participant.firstName} {participant.lastName}
-                                {chatroom.group && chatroom.group.owner === participant._id && (
-                                    <span style={{ color: '#6c757d', marginLeft: '5px', fontSize: '0.9em' }}>
-                                        (owner)
-                                    </span>
-                                )}
-                            </span>
-                        </div>
-                        {chatroom.group && 
-                         chatroom.group.owner === currentUser._id && 
-                         participant._id !== currentUser._id && (
-                            <div>
-                                {!removeMemberStatuses[participant._id]?.loading ? (
-                                    <button 
-                                        onClick={() => handleRemoveMember(participant._id)}
-                                        className="btn btn-danger btn-sm"
-                                        style={{ padding: '2px 8px', fontSize: '0.8em' }}
-                                    >
-                                        Remove
-                                    </button>
-                                ) : (
-                                    <span className="badge bg-secondary" style={{ fontSize: '0.8em' }}>
-                                        Removed
-                                    </span>
-                                )}
-                                {removeMemberStatuses[participant._id]?.error && (
-                                    <div className="text-danger" style={{ fontSize: '0.8em', marginTop: '2px' }}>
-                                        {removeMemberStatuses[participant._id].error}
-                                    </div>
-                                )}
-                            </div>
-                        )}
-                    </div>
-                ))}
-
-              
-                {chatroom.group.pendingRequests && 
-                 chatroom.group.pendingRequests.length > 0 && 
-                 chatroom.group.owner === currentUser._id && (
-                    <div className="pending-requests">
-                        <h4>Pending Requests</h4>
-                        {chatroom.group.pendingRequests.map(request => (
-                            <div key={request.user._id} className="participant-item" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }} onClick={() => navigateToProfile(request.user._id)}>
-                                    <img 
-                                        src={request.user.profilePicture || '/images/default-profile.jpeg'} 
-                                        alt={request.user.firstName} 
-                                        className="participant-avatar"
-                                    />
-                                    <span>{request.user.firstName} {request.user.lastName}</span>
-                                </div>
-                                <div style={{ display: 'flex', gap: '10px' }}>
-                                    {!requestStatuses[request.user._id] ? (
-                                        <>
-                                            <button 
-                                                onClick={() => handleApproveRequest(request.user._id)}
-                                                className="btn btn-success btn-sm"
-                                            >
-                                                Approve
-                                            </button>
-                                            <button 
-                                                onClick={() => handleRejectRequest(request.user._id)}
-                                                className="btn btn-danger btn-sm"
-                                            >
-                                                Deny
-                                            </button>
-                                        </>
-                                    ) : (
-                                        <span className={`badge ${
-                                            requestStatuses[request.user._id].status === 'approved' ? 'bg-success' :
-                                            requestStatuses[request.user._id].status === 'rejected' ? 'bg-danger' :
-                                            requestStatuses[request.user._id].status === 'error' ? 'bg-warning' :
-                                            'bg-secondary'
-                                        }`}>
-                                            {requestStatuses[request.user._id].message}
-                                        </span>
-                                    )}
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                )}
-                {chatroom.group && (
-                    <div className="group-management-section" style={{ marginTop: '20px', borderTop: '1px solid #dee2e6', paddingTop: '20px' }}>
-                        {chatroom.group.owner === currentUser._id ? (
-                            // Delete button for owner
-                            <button 
-                                onClick={handleDeleteGroup}
-                                className="btn btn-danger w-100"
-                                disabled={deleteStatus.loading}
-                            >
-                                {deleteStatus.loading ? 'Deleting...' : 'Delete Group'}
-                            </button>
-                        ) : (
-                            // Leave button for members
-                            <button 
-                                onClick={handleLeaveGroup}
-                                className="btn btn-warning w-100"
-                                disabled={leaveStatus.loading}
-                            >
-                                {leaveStatus.loading ? 'Leaving...' : 'Leave Group'}
-                            </button>
-                        )}
-                        {(deleteStatus.error || leaveStatus.error) && (
-                            <div className="text-danger mt-2 text-center">
-                                {deleteStatus.error || leaveStatus.error}
-                            </div>
-                        )}
-                    </div>
-                )}
-            </div>
-            )}
-
-            <div style={chatMessagesStyle}>    
+            <div style={chatMessagesStyle}>
                 <ChatExpandedWindowMessages 
                     messages={messages}
                     currentUser={currentUser}
@@ -509,22 +179,29 @@ function ChatExpandedWindow({
                             placeholder="Type a message..."
                             style={{
                                 flex: 1,
-                                padding: '8px',
+                                padding: '10px 14px',
                                 borderRadius: '20px',
-                                border: '1px solid #ddd',
-                                outline: 'none'
+                                border: '1px solid #ccc',
+                                outline: 'none',
+                                fontSize: '14px',
                             }}
+                            onFocus={(e) => (e.target.style.borderColor = '#007bff')}
+                            onBlur={(e) => (e.target.style.borderColor = '#ccc')}
                         />
                         <button 
                             type="submit"
                             style={{
-                                padding: '8px 15px',
+                                padding: '10px 18px',
                                 borderRadius: '20px',
                                 border: 'none',
                                 backgroundColor: '#007bff',
                                 color: 'white',
-                                cursor: 'pointer'
+                                fontWeight: 'bold',
+                                fontSize: '14px',
+                                cursor: 'pointer',
                             }}
+                            onMouseEnter={(e) => e.target.style.backgroundColor = '#0056b3'}
+                            onMouseLeave={(e) => e.target.style.backgroundColor = '#007bff'}
                         >
                             Send
                         </button>

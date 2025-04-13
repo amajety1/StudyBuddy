@@ -2,17 +2,29 @@ import React, { useState, useEffect, useRef } from 'react';
 import ChatExpandedWindow from './ChatExpandedWindow';
 import io from 'socket.io-client';
 
+const BASE_URL = 'http://localhost:5001';
+
+// Utility function to resolve image URLs with fallback
+const getImageUrl = (profilePicture, userId) => {
+  if (!profilePicture || profilePicture === 'null') {
+    return `https://api.dicebear.com/7.x/adventurer/png?seed=${userId}`;
+  }
+  if (profilePicture.startsWith('http')) return profilePicture;
+
+  const filename = profilePicture.split('/').pop();
+  return `${BASE_URL}/api/images/${filename}`;
+};
+
 const Chatbox = ({ chatroom, currentUser, onClick, isExpanded, isMinimized, onMinimize, onClose }) => {
   const [isExpandedState, setIsExpanded] = useState(isExpanded);
   const [unreadCount, setUnreadCount] = useState(chatroom.unreadCount || 0);
   const [lastMessagePreview, setLastMessagePreview] = useState('');
   const socket = useRef(null);
 
+  // Socket.IO: Listen for last message updates
   useEffect(() => {
-    // Initialize socket
-    socket.current = io('http://localhost:5001');
+    socket.current = io(BASE_URL);
 
-    // Listen for last message updates
     socket.current.on('update_last_message', (data) => {
       if (data.chatroomId === chatroom._id) {
         const message = data.lastMessage;
@@ -23,67 +35,64 @@ const Chatbox = ({ chatroom, currentUser, onClick, isExpanded, isMinimized, onMi
     });
 
     return () => {
-      if (socket.current) {
-        socket.current.off('update_last_message');
-        socket.current.disconnect();
-      }
+      socket.current.off('update_last_message');
+      socket.current.disconnect();
     };
   }, [chatroom._id, currentUser._id]);
 
+  // Initial load: compute last message preview
   useEffect(() => {
-    // Set initial last message preview
     const messages = chatroom.messages || [];
-    const lastMessage = messages.length > 0 ? messages[0] : null; // Get first message since they're sorted by timestamp DESC
-    const preview = lastMessage 
+    const lastMessage = messages.length > 0 ? messages[0] : null;
+    const preview = lastMessage
       ? `${lastMessage.sender._id === currentUser._id ? 'You' : lastMessage.sender.firstName}: ${lastMessage.content.substring(0, 30)}${lastMessage.content.length > 30 ? '...' : ''}`
       : 'No messages yet';
     setLastMessagePreview(preview);
   }, [chatroom.messages, currentUser._id]);
 
-  // Get the display title based on chat type
+  // Chat title: Group name or other participant
   const getChatTitle = () => {
     if (chatroom.isGroupChat) {
-      return chatroom.groupName;
+      return chatroom.groupName || 'Unnamed Group';
     } else {
-      const otherParticipant = chatroom.participants.find(
-        p => p._id !== currentUser._id
-      );
-      return otherParticipant 
+      const otherParticipant = chatroom.participants.find(p => p._id !== currentUser._id);
+      return otherParticipant
         ? `${otherParticipant.firstName} ${otherParticipant.lastName}`
         : 'Unknown User';
     }
   };
 
-  // Get the display photo based on chat type
+  // Chat photo: Group photo or other user's profile picture
   const getChatPhoto = () => {
     if (chatroom.isGroupChat) {
-      return chatroom.groupPhoto || '/images/default-group.jpeg';
+      return getImageUrl(chatroom.groupPhoto, chatroom._id);
     } else {
-      
-      const otherParticipant = chatroom.participants.find(
-        p => p._id !== currentUser._id
-      );
-      
-      return otherParticipant?.profilePicture || '/images/default-profile.jpeg';
+      const otherParticipant = chatroom.participants.find(p => p._id !== currentUser._id);
+      return getImageUrl(otherParticipant?.profilePicture, otherParticipant?._id);
     }
   };
 
   const handleClick = () => {
     setIsExpanded(true);
-    setUnreadCount(0); // Reset unread count when opening chat
+    setUnreadCount(0);
+    if (onClick) onClick(); // In case parent handler is needed
   };
 
   return (
     <>
-      <div 
+      <div
         className={`chatbox ${unreadCount > 0 ? 'has-unread' : ''} ${chatroom.isGroupChat ? 'group-chat' : ''} ${isExpandedState ? 'expanded' : ''} ${isMinimized ? 'minimized' : ''}`}
         onClick={handleClick}
       >
         <div className="chat-header">
-          <img 
-            src={getChatPhoto()} 
+          <img
+            src={getChatPhoto()}
             alt={getChatTitle()}
             className="chat-avatar"
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.src = `https://api.dicebear.com/7.x/adventurer/png?seed=${chatroom._id}`;
+            }}
           />
           <div className="chat-info">
             <div className="chat-title">

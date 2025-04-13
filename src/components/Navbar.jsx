@@ -338,6 +338,9 @@ function Navbar() {
           >
             <p className="noto-sans">Me</p>
             <img src="/images/down-arrow.png" alt="Arrow" id="arrow" />
+            <div class="home-toolbbar-logo">
+              
+            </div>
           </div>
           {isOptionsOpen && (
             <div className="profile-dropdown-window">

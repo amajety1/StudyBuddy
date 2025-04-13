@@ -1,7 +1,7 @@
 /* General Page Styling */
 .create-group-page {
     font-family: 'Inter', sans-serif;
-    background: linear-gradient(to bottom right, #f3f4f6, #e0e7ff);
+    background: linear-gradient(to bottom right, #f4f7fa, #dce3ec); /* light grayish-blue gradient */
     min-height: 100vh;
     display: flex;
     flex-direction: column;
@@ -21,32 +21,33 @@
 
 /* Card Design with Glassmorphism */
 .card {
-    background: rgba(255, 255, 255, 0.8);
+    background: rgba(255, 255, 255, 0.9);
     backdrop-filter: blur(10px);
     padding: 30px;
     border-radius: 15px;
-    box-shadow: 0px 8px 24px rgba(0, 0, 0, 0.15);
+    box-shadow: 0px 8px 24px rgba(0, 0, 0, 0.1);
     width: 50%;
     max-width: 600px;
     text-align: center;
     transition: all 0.3s ease-in-out;
+    border: 1px solid rgba(0, 57, 166, 0.1);
 }
 
 .card:hover {
-    box-shadow: 0px 12px 28px rgba(0, 0, 0, 0.2);
+    box-shadow: 0px 12px 28px rgba(0, 57, 166, 0.2);
     transform: translateY(-3px);
 }
 
 /* Typography */
 .card h2 {
-    color: #1f2937;
+    color: rgb(0, 57, 166);
     font-size: 26px;
     margin-bottom: 12px;
-    font-weight: 600;
+    font-weight: 700;
 }
 
 .card p {
-    color: #4b5563;
+    color: #555;
     font-size: 16px;
     margin-bottom: 20px;
 }
@@ -60,7 +61,7 @@
 .form-group label {
     font-size: 14px;
     font-weight: 600;
-    color: #374151;
+    color: rgb(0, 57, 166);
     display: block;
     margin-bottom: 6px;
 }
@@ -72,19 +73,19 @@ textarea {
     width: 100%;
     padding: 12px;
     border-radius: 8px;
-    border: 1px solid #d1d5db;
+    border: 1px solid #cbd5e1; /* soft gray border */
     font-size: 14px;
+    background: #ffffff;
+    color: #333;
     transition: border 0.3s ease-in-out;
-    background: rgba(255, 255, 255, 0.6);
-    backdrop-filter: blur(5px);
 }
 
 input:focus,
 select:focus,
 textarea:focus {
-    border-color: #2563eb;
+    border-color: rgb(0, 57, 166);
     outline: none;
-    box-shadow: 0 0 5px rgba(37, 99, 235, 0.4);
+    box-shadow: 0 0 6px rgba(0, 57, 166, 0.4);
 }
 
 /* File Input */
@@ -96,7 +97,7 @@ input[type="file"] {
 
 /* Button Styling */
 button {
-    background: linear-gradient(135deg, #2563eb, #1e3a8a);
+    background: rgb(0, 57, 166);
     color: white;
     padding: 12px 18px;
     font-size: 16px;
@@ -108,7 +109,7 @@ button {
 }
 
 button:hover {
-    background: linear-gradient(135deg, #1e3a8a, #1c2e6f);
+    background: #002f8c; /* darker blue for hover */
     transform: scale(1.05);
 }
 

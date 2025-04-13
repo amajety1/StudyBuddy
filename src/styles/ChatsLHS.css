@@ -1,0 +1,24 @@
+.chats-lhs {
+    width: 30%;
+    background-color: white;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    border-right: 1px solid #ccc;
+  }
+  
+  .lhs-header {
+    background-color: #075e54;
+    color: white;
+    padding: 15px;
+    font-size: 18px;
+    font-weight: bold;
+  }
+  
+  .lhs-list {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+  }
+  

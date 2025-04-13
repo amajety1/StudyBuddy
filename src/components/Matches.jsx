@@ -10,12 +10,32 @@ function Matches() {
     const token = localStorage.getItem('token');
     const navigate = useNavigate();
 
+    const BASE_URL = 'http://localhost:5001';
+
+    // Default image fallback
+    const getDefaultImage = (type) => {
+        return type === 'group' ? '/images/default-group.svg' : '/images/default-profile.jpg';
+    };
+
+    // Construct valid profile image URL or return a DiceBear-generated avatar
+    const getImageUrl = (profilePicture, type, userId) => {
+        if (!profilePicture || profilePicture === 'null') {
+            // Return a fun random avatar
+            return `https://api.dicebear.com/7.x/adventurer/png?seed=${userId}`;
+        }
+
+        if (profilePicture.startsWith('http')) return profilePicture;
+
+        const filename = profilePicture.split('/').pop();
+        return `${BASE_URL}/api/images/${filename}`;
+    };
+
     useEffect(() => {
         const fetchCurrentUser = async () => {
             if (!token) return;
 
             try {
-                const response = await fetch('http://localhost:5001/api/users/me', {
+                const response = await fetch(`${BASE_URL}/api/users/me`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
 
@@ -40,7 +60,7 @@ function Matches() {
             if (!token) return;
 
             try {
-                const response = await fetch('http://localhost:5001/api/users/fetch-recommended-matches', {
+                const response = await fetch(`${BASE_URL}/api/users/fetch-recommended-matches`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
 
@@ -68,7 +88,7 @@ function Matches() {
         }
 
         try {
-            const response = await fetch('http://localhost:5001/api/users/send-buddy-request', {
+            const response = await fetch(`${BASE_URL}/api/users/send-buddy-request`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -102,10 +122,14 @@ function Matches() {
                     <div key={match.id} className="matched-buddy">
                         <img
                             className="matched-buddy-image"
-                            src={match.profilePic}
+                            src={getImageUrl(match.profilePic, 'user', match.id)}
                             alt={`${match.fullName}'s profile`}
                             onClick={() => navigate(`/buddy/${match.id}`)}
                             style={{ cursor: 'pointer' }}
+                            onError={(e) => {
+                                e.target.onerror = null;
+                                e.target.src = `https://api.dicebear.com/7.x/adventurer/png?seed=${match.id}`;
+                            }}
                         />
                         <div className="matched-buddy-info">
                             <h4 className="noto-sans clickable-name" onClick={() => navigate(`/buddy/${match.id}`)}>

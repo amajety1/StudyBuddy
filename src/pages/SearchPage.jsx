@@ -11,7 +11,7 @@ function SearchPage() {
             <Header/>
             <Navbar/>
             <SearchPageComponent/>
-            <Messages/>
+        
         </div>
     );
 }

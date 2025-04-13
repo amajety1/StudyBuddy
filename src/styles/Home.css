@@ -1,59 +1,53 @@
-/* Home Page Layout */
 .home-container {
     display: flex;
     flex-direction: column;
-    height: 100vh;
-    position: relative;
-    background: #f4f4f4; /* Light gray background for a clean look */
-}
+    min-height: 100vh;
+    background-color: #f4f7fa;
+    overflow-y: auto; /* allow vertical scroll */
+  }
 
-/* Matches & Messages Layout */
 .matches-and-messages {
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
+    gap: 20px;
+    flex: 1;
     padding: 20px;
-    height: calc(100vh - 60px); /* Adjust height to fit screen */
-    overflow: hidden;
+    overflow: auto; /* prevent scrolling here */
+    min-height: 0;
 }
 
-/* Matches Section */
-.matches-container {
-    flex: 1; /* Takes remaining space */
-    max-width: 75%;
-    padding: 20px;
-    background: white;
-    border-radius: 10px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    overflow-y: auto;
-    height: 100%;
-}
-
-/* Messages Sidebar (Fixed to the Right) */
+.matches-container,
 .chat-sidebar {
-    width: 320px; /* Slightly wider for a better chat experience */
-    height: 100vh;
-    background: white;
-    position: fixed;
-    right: 0;
-    top: 0;
-    z-index: 1050; /* Higher z-index to stay on top */
-    border-left: 1px solid #ddd;
     display: flex;
     flex-direction: column;
-    transition: width 0.3s ease-in-out;
-    padding-top: 60px; /* Keeps space for navbar */
-    box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    padding: 20px;
+    overflow-y: auto; /* scrolling only inside these */
+    min-height: 0;
+    max-height: 100%;
 }
 
-/* Fix for Overlapping Issues */
-.matches-and-messages > * {
-    position: relative;
-    z-index: 1;
+.matches-container {
+    flex: 2;
+    align-items: center;
+}
+
+.matches-container .match-card {
+    flex: 0 0 auto;
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    padding: 15px;
+    width: 100%;
+    margin-bottom: 15px;
 }
 
 .chat-sidebar {
-    z-index: 9999; /* Ensures chat remains on top */
+    flex: 1;
+    min-width: 280px;
+    position: relative;
 }
 
 /* Responsive Layout for Smaller Screens */
@@ -61,29 +55,24 @@
     .matches-and-messages {
         flex-direction: column;
         height: auto;
+        padding: 10px;
     }
 
-    .matches-container {
-        max-width: 100%;
-        padding: 15px;
-    }
-
+    .matches-container,
     .chat-sidebar {
-        width: 100%;
-        height: 50vh; /* Chat takes half of the screen */
-        position: relative;
-        border-left: none;
-        border-top: 2px solid #ddd;
-        box-shadow: none;
+        max-width: 100%;
+        height: auto;
+        max-height: none;
+    }
+
+    .matches-container .match-card {
+        flex: 1 100%;
     }
 }
 
 @media (max-width: 768px) {
-    .matches-container {
-        height: auto;
-    }
-
+    .matches-container,
     .chat-sidebar {
-        height: 60vh; /* More space for messages */
+        padding: 10px;
     }
 }

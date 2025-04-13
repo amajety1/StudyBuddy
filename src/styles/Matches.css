@@ -1,134 +1,167 @@
-/* Main Container */
-.matches-container {
-    width: 80%;
-    margin: auto;
-    padding: 20px;
-    text-align: left;
-}
-
-/* Title */
-.matches-title {
-    font-size: 24px;
+/* Wrapper for the entire Matches section */
+.matches-title-and-buddies {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 40px 20px;
+    background-color: #f9f9f9;
     color: #333;
-    margin-bottom: 20px;
-    font-weight: bold; 
-}
-
-/* List of Matches */
-.matches-list {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-}
-
-/* Match Item */
-.match-item {
-    display: flex;
-    align-items: flex-start;
-    background: white;
-    border-radius: 12px;
-    padding: 15px;
-    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
-    transition: transform 0.3s ease-in-out;
+    font-family: 'Noto Sans', sans-serif;
+    height: 100%;
     width: 100%;
 }
 
-.match-item:hover {
-    transform: translateX(5px);
+/* Title styling */
+.matches-title-and-buddies h2 {
+    font-size: 2rem;
+    margin-bottom: 30px;
+    color: rgb(0, 57, 166);
+    text-align: center;
 }
 
-/* Profile Picture */
-.match-profile-pic {
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
+/* Scrollable list of matched buddies */
+.matched-buddies {
+    width: 100%;
+    max-width: 800px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+
+    overflow-y: auto;
+    max-height: calc(100vh - 180px); /* adjust based on header/padding height */
+    padding-right: 10px; /* extra spacing for scrollbar */
+}
+
+/* Individual buddy card */
+.matched-buddy {
+    display: flex;
+    align-items: center;
+    background-color: #ffffff;
+    border: 1px solid #e0e0e0;
+    border-left: 6px solid rgb(0, 57, 166);
+    border-radius: 10px;
+    padding: 18px 24px;
+    /* REMOVE this ↓ */
+    /* height: 140px; */
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    width: 100%;
+    flex-wrap: wrap; /* optional if you want tighter responsiveness */
+}
+
+
+.matched-buddy:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+/* Profile picture */
+.matched-buddy-image {
+    width: 100px;
+    height: 100px;
+    border-radius: 8px;
     object-fit: cover;
-    cursor: pointer;
-    margin-right: 15px;
-    border: 2px solid #007bff;
-    transition: transform 0.2s;
+    margin-right: 24px;
+    border: 1px solid #ccc;
+    flex-shrink: 0;
 }
 
-.match-profile-pic:hover {
-    transform: scale(1.1);
-}
-
-/* Match Info */
-.match-info {
+/* Info section */
+.matched-buddy-info {
     display: flex;
     flex-direction: column;
-    width: 100%;
+    justify-content: center;
+    flex-grow: 1;
 }
 
 /* Name */
-.match-name {
-    font-size: 18px;
-    color: #333;
-    margin-bottom: 5px;
-}
-
-.clickable-name {
+.matched-buddy-info .clickable-name {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: rgb(0, 57, 166);
+    margin-bottom: 6px;
     cursor: pointer;
-    text-decoration: none;
-    transition: color 0.3s ease;
 }
 
-.clickable-name:hover {
-    color: #007bff;
-}
-
-/* Projects */
+/* Project section */
 .match-projects {
-    margin-top: 10px;
+    display: flex;
+    flex-direction: column;
 }
 
 .match-projects h5 {
-    font-size: 14px;
-    color: #007bff;
-    margin-bottom: 5px;
+    color: #666;
+    font-size: 0.95rem;
+    margin-bottom: 4px;
 }
 
-.match-projects ul {
-    list-style-type: none;
-    padding: 0;
-    margin: 0;
+.project-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
 }
 
 .project-item {
-    font-size: 13px;
-    background: #f8f9fa;
-    padding: 4px 8px;
+    background-color: #f5f5f5;
+    color: #333;
+    padding: 4px 10px;
     border-radius: 5px;
-    display: inline-block;
-    margin-right: 5px;
+    font-size: 0.8rem;
+    border: 1px solid #ddd;
 }
 
+/* GitHub link icon */
+.github-link {
+    margin-left: 6px;
+    color: rgb(0, 57, 166);
+    text-decoration: none;
+    font-size: 0.9rem;
+}
+
+.github-link:hover {
+    text-decoration: underline;
+}
+
+/* View more link */
 .view-more {
-    font-size: 12px;
-    color: #007bff;
+    color: rgb(0, 57, 166);
+    cursor: pointer;
+    font-size: 0.85rem;
+    margin-top: 6px;
+}
+
+/* Buddy request button */
+.buddy-up-button {
+    margin-top: 12px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background-color: rgb(0, 57, 166);
+    color: #fff;
+    box-shadow: 0 0 8px rgba(0, 57, 166, 0.3);
+    transition: all 0.2s ease;
     cursor: pointer;
 }
 
-/* Connect Button */
-.connect-btn {
-    background: #007bff;
-    color: white;
-    border: none;
-    padding: 8px 14px;
-    font-size: 14px;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: background 0.3s;
-    align-self: flex-start;
-}
-
-.connect-btn:hover {
-    background: #0056b3;
-}
-
-/* Button - Request Sent */
-.connect-btn.sent {
-    background: #ccc;
+.buddy-up-button.sent {
+    background-color: #aaa;
+    box-shadow: none;
     cursor: not-allowed;
 }
 
+.buddy-up-button:hover:not(.sent) {
+    background-color: rgb(0, 45, 130);
+    box-shadow: 0 0 10px rgba(0, 57, 166, 0.5);
+}
+
+/* Icon sizing */
+.sent-icon,
+.plus-icon {
+    width: 20px;
+    height: 20px;
+}
