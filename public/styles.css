@@ -1055,11 +1055,13 @@ h4 {
 
 .buddy-profile {
   display: flex;
+  flex-direction: column; /* if vertical scroll is intended */
   padding: 20px 180px;
-  background-color: #f0f0f0;
+  background-color: #ffffff;
   gap: 20px;
   position: relative;
-
+  height: 100vh;              /* or any specific height */
+  overflow-y: auto;           /* enables vertical scrolling */
 }
 
 .buddy-profile-name-github-courses-left-half {
