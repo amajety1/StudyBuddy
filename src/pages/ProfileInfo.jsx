@@ -169,7 +169,12 @@ function ProfileInfo({ setIsAuthenticated }) {
     try {
       const currentCourseIds = selectedCourses.map(course => course._id);
       const previousCourseIds = previousCourses.map(course => course._id);
-
+  
+      const defaultSession = {
+        location: "Online",         // You can replace this with dynamic values later
+        sessionType: "Study Group"  // Or "1-on-1", "Mentorship", etc.
+      };
+  
       const response = await fetch("http://localhost:5001/api/users/initial-profile-creation", {
         method: "PUT",
         headers: {
@@ -183,17 +188,18 @@ function ProfileInfo({ setIsAuthenticated }) {
           projects,
           classYear,
           major,
+          availableSessions: [defaultSession],  // ✅ added this line
           ...(profilePicture && { profilePicture })
         }),
       });
-
+  
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || "Failed to update profile");
       }
-
+  
       const data = await response.json();
-
+  
       if (response.ok) {
         console.log("Profile updated:", data);
         const token = data.token;
@@ -208,7 +214,7 @@ function ProfileInfo({ setIsAuthenticated }) {
       setErrorMessage("An unexpected error occurred.");
     }
   };
-
+  
   return (
     <div className="profile-container">
       <div className="profile-image-half"></div>
