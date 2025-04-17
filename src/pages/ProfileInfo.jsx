@@ -1,20 +1,28 @@
 import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { CAlert } from '@coreui/react';
-import { useEffect } from "react";
-import './ProfileInfo.css';
+// import "./ProfileInfo.css";
+
+
+const courses = [
+  "CSC 2720 - Data Structures",
+  "CSC 3350 - Software Development",
+  "CSC 1302 - Principles of Computer Science II",
+  "CSC 1301 - Principles of Computer Science I",
+  "CSC 4520 - Design and Analysis of Algorithms",
+  "CSC 3210 - Computer Organization and Programming",
+  "CSC 3320 - System Level Programming",
+  "CSC 4320 - Operating Systems",
+];
 
 function ProfileInfo({ setIsAuthenticated }) {
-  const [courses, setCourses] = useState([]);
   const [github, setGithub] = useState("");
   const [selectedCourses, setSelectedCourses] = useState([]);
-  const [previousCourses, setPreviousCourses] = useState([]);
+  const [search, setSearch] = useState("");
   const [projects, setProjects] = useState([]);
   const [profilePicture, setProfilePicture] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isAddingProject, setIsAddingProject] = useState(false);
-  const [classYear, setClassYear] = useState("");
-  const [major, setMajor] = useState("");
   const [newProject, setNewProject] = useState({
     name: "",
     description: "",
@@ -23,84 +31,23 @@ function ProfileInfo({ setIsAuthenticated }) {
   });
   const [errorMessage, setErrorMessage] = useState("");
 
-  const classYearOptions = [
-    "Freshman",
-    "Sophomore",
-    "Junior",
-    "Senior"
-  ];
-
-  const majorOptions = [
-    "Computer Science",
-    "Computer Engineering",
-    "Data Science",
-    "Information Technology",
-    "Business Administration",
-    "Marketing",
-    "Finance",
-    "Economics",
-    "Psychology",
-    "Biology",
-    "Chemistry",
-    "Physics",
-    "Mathematics",
-    "Electrical Engineering",
-    "Mechanical Engineering",
-    "Civil Engineering",
-    "Industrial Engineering",
-    "Graphic Design",
-    "Communication",
-    "English",
-    "History",
-    "Political Science",
-    "Sociology",
-    "Environmental Science"
-  ];
-
-  useEffect(() => {
-    const fetchAllCourses = async () => {
-      try {
-        const response = await fetch('http://localhost:5001/api/get-all-courses/', {
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          setCourses(data);
-          console.log("[Profile] Received all courses:", data);
-        } else {
-          const errorText = await response.text();
-          console.log("[Profile] Error details:", errorText);
-        }
-      } catch (error) {
-        console.error('[Profile] Error fetching user data:', error);
-      }
-    };
-
-    fetchAllCourses();
-  }, []); // Empty dependency array means this runs once on mount
-
   const location = useLocation();
   const { email } = location.state; // Retrieve email from navigation state
   const navigate = useNavigate();
 
-  const addCurrentCourse = (course) => {
-    if (!selectedCourses.find(c => c._id === course._id) && !previousCourses.find(c => c._id === course._id)) {
+  const filteredCourses = courses.filter((course) =>
+    course.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const addCourse = (course) => {
+    if (!selectedCourses.includes(course)) {
       setSelectedCourses([...selectedCourses, course]);
+      setSearch("");
     }
   };
 
-  const addPreviousCourse = (course) => {
-    if (!previousCourses.find(c => c._id === course._id) && !selectedCourses.find(c => c._id === course._id)) {
-      setPreviousCourses([...previousCourses, course]);
-    }
-  };
-
-  const removeCurrentCourse = (courseToRemove) => {
-    setSelectedCourses(selectedCourses.filter((course) => course._id !== courseToRemove._id));
-  };
-
-  const removePreviousCourse = (courseToRemove) => {
-    setPreviousCourses(previousCourses.filter((course) => course._id !== courseToRemove._id));
+  const removeCourse = (courseToRemove) => {
+    setSelectedCourses(selectedCourses.filter((course) => course !== courseToRemove));
   };
 
   const handleProjectInputChange = (e) => {
@@ -137,8 +84,9 @@ function ProfileInfo({ setIsAuthenticated }) {
   
       const formData = new FormData();
       formData.append("profilePicture", file);
-      formData.append("email", email);
+      formData.append("email", email); // Add email for initial profile creation
       
+      // For initial profile creation, we don't need authorization
       const uploadResponse = await fetch("http://localhost:5001/api/users/upload-profile-picture", {
         method: "POST",
         body: formData,
@@ -163,18 +111,11 @@ function ProfileInfo({ setIsAuthenticated }) {
       setIsLoading(false);
     }
   };
+  
 
   const formSubmit = async (e) => {
     e.preventDefault();
     try {
-      const currentCourseIds = selectedCourses.map(course => course._id);
-      const previousCourseIds = previousCourses.map(course => course._id);
-  
-      const defaultSession = {
-        location: "Online",         // You can replace this with dynamic values later
-        sessionType: "Study Group"  // Or "1-on-1", "Mentorship", etc.
-      };
-  
       const response = await fetch("http://localhost:5001/api/users/initial-profile-creation", {
         method: "PUT",
         headers: {
@@ -183,23 +124,15 @@ function ProfileInfo({ setIsAuthenticated }) {
         body: JSON.stringify({
           email,
           github,
-          selectedCourses: currentCourseIds,
-          previousCourses: previousCourseIds,
+          selectedCourses,
           projects,
-          classYear,
-          major,
-          availableSessions: [defaultSession],  // ✅ added this line
+          // Only include profilePicture if one was uploaded
           ...(profilePicture && { profilePicture })
         }),
       });
-  
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to update profile");
-      }
-  
+
       const data = await response.json();
-  
+
       if (response.ok) {
         console.log("Profile updated:", data);
         const token = data.token;
@@ -214,250 +147,154 @@ function ProfileInfo({ setIsAuthenticated }) {
       setErrorMessage("An unexpected error occurred.");
     }
   };
-  
+
   return (
-    <div className="profile-container">
-      <div className="profile-image-half"></div>
-      <div className="profile-content-half">
-        <div className="profile-header">
-          <h2 className="noto-sans">Complete Your Profile</h2>
-          <p className="profile-subtitle">Let's get to know you better!</p>
+    <div className="login-container">
+      <div className="login-image-half"></div>
+      <div className="login-text-half">
+        <div className="login-heading-description">
+          <h2 className="noto-sans">Profile</h2>
         </div>
-        
         <form onSubmit={formSubmit} className="profile-form">
-          <div className="form-scrollable-content">
-            {/* Profile Picture Section */}
-            <section className="form-section">
-              <h3 className="section-title">Profile Picture</h3>
-              <div className="profile-picture-upload">
-                <label className="upload-label">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleProfilePictureChange}
-                    className="file-input"
-                  />
-                  <span className="upload-button">Choose Photo</span>
-                </label>
-              </div>
-            </section>
 
-            {/* GitHub Section */}
-            <section className="form-section">
-              <h3 className="section-title">GitHub Profile</h3>
-              <div className="input-container">
-                <input
-                  className="text-input"
-                  type="text"
-                  placeholder="Enter your GitHub profile URL"
-                  value={github}
-                  onChange={(e) => setGithub(e.target.value)}
-                />
-              </div>
-            </section>
+        {/* Profile Picture Upload */}
+        <div className="profile-picture-form">
+            <label className="noto-sans">Upload Profile Picture</label>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleProfilePictureChange}
+            />
+          </div>
+          {/* GitHub Input */}
+          <div className="email-form">
+            <label className="noto-sans">GitHub Profile</label>
+            <input
+              className="noto-sans github-input-box"
+              type="text"
+              placeholder="Enter GitHub Link Here:"
+              required
+              value={github}
+              onChange={(e) => setGithub(e.target.value)}
+            />
+          </div>
 
-            {/* Academic Information Section */}
-            <section className="form-section">
-              <h3 className="section-title">Academic Information</h3>
-              
-              {/* Class Year Dropdown */}
-              <div className="input-container">
-                <select
-                  className="text-input"
-                  value={classYear}
-                  onChange={(e) => setClassYear(e.target.value)}
-                  required
-                >
-                  <option value="">Select Your Class Year</option>
-                  {classYearOptions.map((year) => (
-                    <option key={year} value={year}>
-                      {year}
-                    </option>
-                  ))}
-                </select>
-              </div>
+          {/* Searchable Dropdown for Courses */}
+          <div className="phone-form">
+            <h4 className="noto-sans">GSU Courses</h4>
+            <div className="course-input-container">
+              <input
+                className="noto-sans course-input-box"
+                type="text"
+                placeholder="Search courses..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
 
-              {/* Major Dropdown */}
-              <div className="input-container">
-                <select
-                  className="text-input"
-                  value={major}
-                  onChange={(e) => setMajor(e.target.value)}
-                  required
-                >
-                  <option value="">Select Your Major</option>
-                  {majorOptions.map((majorOption) => (
-                    <option key={majorOption} value={majorOption}>
-                      {majorOption}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </section>
-
-            {/* Current Courses Section */}
-            <section className="form-section">
-              <h3 className="section-title">Current Courses</h3>
-              <div className="input-container">
-                <select
-                  className="text-input"
-                  value=""
-                  onChange={(e) => {
-                    const selectedCourse = courses.find(course => course._id === e.target.value);
-                    if (selectedCourse) {
-                      addCurrentCourse(selectedCourse);
-                      e.target.value = ""; // Reset the select after adding
-                    }
-                  }}
-                >
-                  <option value="">Select Current Courses...</option>
-                  {courses
-                    .filter(course => !selectedCourses.some(selected => selected._id === course._id))
-                    .map((course) => (
-                      <option key={course._id} value={course._id}>
-                        {course.prefix} {course.number} - {course.name}
-                      </option>
-                    ))}
-                </select>
-              </div>
-              <div className="selected-courses-container">
-                {selectedCourses.map((course) => (
-                  <div key={course._id} className="course-tag">
-                    <span>{course.prefix} {course.number}</span>
-                    <button 
-                      type="button" 
-                      onClick={() => removeCurrentCourse(course)}
-                      className="remove-course"
-                    >
-                      ×
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </section>
-
-            {/* Previous Courses Section */}
-            <section className="form-section">
-              <h3 className="section-title">Previous Courses</h3>
-              <div className="input-container">
-                <select
-                  className="text-input"
-                  value=""
-                  onChange={(e) => {
-                    const selectedCourse = courses.find(course => course._id === e.target.value);
-                    if (selectedCourse) {
-                      addPreviousCourse(selectedCourse);
-                      e.target.value = ""; // Reset the select after adding
-                    }
-                  }}
-                >
-                  <option value="">Select Previous Courses...</option>
-                  {courses
-                    .filter(course => !previousCourses.some(previous => previous._id === course._id))
-                    .map((course) => (
-                      <option key={course._id} value={course._id}>
-                        {course.prefix} {course.number} - {course.name}
-                      </option>
-                    ))}
-                </select>
-              </div>
-              <div className="selected-courses-container">
-                {previousCourses.map((course) => (
-                  <div key={course._id} className="course-tag">
-                    <span>{course.prefix} {course.number}</span>
-                    <button 
-                      type="button" 
-                      onClick={() => removePreviousCourse(course)}
-                      className="remove-course"
-                    >
-                      ×
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </section>
-
-            {/* Projects Section */}
-            <section className="form-section">
-              <h3 className="section-title">Projects</h3>
-              {!isAddingProject ? (
-                <button
-                  type="button"
-                  className="add-button"
-                  onClick={() => setIsAddingProject(true)}
-                >
-                  Add Project
-                </button>
-              ) : (
-                <div className="project-form">
-                  <input
-                    type="text"
-                    className="text-input"
-                    name="name"
-                    placeholder="Project Name"
-                    value={newProject.name}
-                    onChange={handleProjectInputChange}
-                  />
-                  <textarea
-                    className="text-input"
-                    name="description"
-                    placeholder="Project Description"
-                    value={newProject.description}
-                    onChange={handleProjectInputChange}
-                  />
-                  <input
-                    type="text"
-                    className="text-input"
-                    name="techStack"
-                    placeholder="Tech Stack"
-                    value={newProject.techStack}
-                    onChange={handleProjectInputChange}
-                  />
-                  <input
-                    type="text"
-                    className="text-input"
-                    name="githubLink"
-                    placeholder="GitHub Link"
-                    value={newProject.githubLink}
-                    onChange={handleProjectInputChange}
-                  />
-                  <button
-                    type="button"
-                    className="save-button"
-                    onClick={addProject}
-                  >
-                    Save Project
-                  </button>
-                </div>
+              {search && (
+                <ul className="dropdown-options">
+                  {filteredCourses.length > 0 ? (
+                    filteredCourses.map((course) => (
+                      <li
+                        className="general-hover general-transition"
+                        key={course}
+                        onClick={() => addCourse(course)}
+                      >
+                        {course}
+                      </li>
+                    ))
+                  ) : (
+                    <li>No courses found</li>
+                  )}
+                </ul>
               )}
-              <div className="projects-list">
-                {projects.map((project, index) => (
-                  <div key={index} className="project-item">
-                    <span className="project-name">{project.name}</span>
-                    <button
-                      type="button"
-                      className="edit-button"
-                      onClick={() => editProject(index)}
-                    >
-                      Edit
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </section>
+            </div>
 
-            {errorMessage && (
-              <div className="error-message">
-                {errorMessage}
+            <div className="selected-courses">
+              {selectedCourses.map((course) => (
+                <div key={course} className="selected-item">
+                  <h4>{course.split(" - ")[0]}</h4>
+                  <button onClick={() => removeCourse(course)}>x</button>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Project Area */}
+          <div className="project-area">
+            <h4 className="noto-sans">Projects</h4>
+            {!isAddingProject && (
+              <button
+                className="add-project-button noto-sans"
+                onClick={() => setIsAddingProject(true)}
+              >
+                Add Project
+              </button>
+            )}
+
+            {isAddingProject && (
+              <div className="project-form">
+                <input
+                  type="text"
+                  name="name"
+                  placeholder="Project Name"
+                  value={newProject.name}
+                  onChange={handleProjectInputChange}
+                  required
+                />
+                <textarea
+                  name="description"
+                  placeholder="Project Description"
+                  value={newProject.description}
+                  onChange={handleProjectInputChange}
+                  required
+                />
+                <input
+                  type="text"
+                  name="techStack"
+                  placeholder="Tech Stack"
+                  value={newProject.techStack}
+                  onChange={handleProjectInputChange}
+                  required
+                />
+                <input
+                  type="text"
+                  name="githubLink"
+                  placeholder="GitHub Link"
+                  value={newProject.githubLink}
+                  onChange={handleProjectInputChange}
+                  required
+                />
+                <button
+                  className="save-project-button noto-sans"
+                  onClick={addProject}
+                >
+                  Save Project
+                </button>
               </div>
             )}
+
+            <div className="project-list">
+              {projects.map((project, index) => (
+                <div key={index} className="project-item">
+                  <span>{project.name}</span>
+                  <button
+                    className="edit-project-button"
+                    onClick={() => editProject(index)}
+                  >
+                    Edit
+                  </button>
+                </div>
+              ))}
+            </div>
           </div>
 
-          <div className="form-footer">
-            <button type="submit" className="submit-button">
-              Complete Profile
-            </button>
-          </div>
+          {errorMessage && <p className="error-message">{errorMessage}</p>}
+
+          {/* Continue Button */}
+          <button type="submit" className="login-button noto-sans">
+            Continue
+          </button>
         </form>
       </div>
     </div>

@@ -15,13 +15,48 @@
 /* Parent container */
 .login-container {
   padding: 0;
+  margin: 0;
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 800px;
-  margin: 0;
-  background-color: #ab5b5b;
+  height: 100vh;
+  position: relative;
+  overflow: hidden;
+  background-color: #0039A6;
 }
+
+/* Animated dots background */
+.login-container::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+  background:
+    radial-gradient(white 2px, transparent 2px) 0 0,
+    radial-gradient(white 2px, transparent 2px) 20px 20px;
+  background-size: 40px 40px;
+  animation: floatDots 20s linear infinite;
+  z-index: 0;
+  opacity: 0.2;
+}
+
+/* Animation to move the dots */
+@keyframes floatDots {
+  0% {
+    transform: translate(0, 0);
+  }
+  100% {
+    transform: translate(-40px, -40px);
+  }
+}
+
+/* Make sure your inner login content appears above animation */
+.login-text-half, .login-image-half, .form-container {
+  position: relative;
+  z-index: 1;
+}
+
 
 .noto-sans {
   font-family: "Noto Sans", serif;
@@ -1137,7 +1172,7 @@ h4 {
 
 .buddy-profile-current-course-card {
   padding: 5px 10px;
-  border: #ab5b5b solid 1px;
+  border: #ffffff solid 1px;
 }
 
 .buddy-profile-previous-courses {
@@ -1622,7 +1657,7 @@ h4 {
   height: 50px;
   border-radius: 10px;
   border: none;
-  background-color: #ab5b5b;
+  background-color: #f4f4f4;
   color: white;
   font-size: 20px;
   cursor: pointer;

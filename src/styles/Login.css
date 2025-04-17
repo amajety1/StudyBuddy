@@ -1,117 +1,142 @@
-/* Full Page Container */
+/* Reset default margins and paddings for full window layout */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  width: 100%;
+  font-family: "Poppins", sans-serif;
+  overflow: hidden; /* Optional: Prevent scrollbars */
+}
+
+/* Main container */
 .login-container {
   display: flex;
   height: 100vh;
+  width: 100vw;
 }
 
-/* Left Section - Image Half */
+/* Image half */
 .login-image-half {
-  width: 50%;
-  background-image: url('/public/images/STUDYBUDDY.jpg');  /* Add the path to your image */
+  flex: 1;
+  background-image: url('/public/images/STUDYBUDDY.jpg');
   background-size: cover;
   background-position: center;
 }
 
-/* Right Section - Text and Form */
+/* Text form half */
 .login-text-half {
-  width: 50%;
-  background-color: rgb(0 57 166);  /* Deep blue background */
+  flex: 1;
+  background-color: rgb(0, 57, 166);
   display: flex;
   justify-content: center;
   align-items: center;
-  flex-direction: column;
-  padding: 30px;
+  padding: 40px;
 }
 
 /* Heading */
 .login-heading-description h1 {
   color: #fff;
-  font-size: 36px;
-  font-family: "Poppins", sans-serif;
+  font-size: 32px;
+  text-align: center;
+  margin-bottom: 20px;
 }
 
-/* Form Styling */
+/* Form */
+.form-container {
+  width: 100%;
+  max-width: 350px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
 input.input-box {
   width: 100%;
-  padding: 12px 20px;
-  margin: 12px 0;
+  padding: 12px 15px;
+  margin-bottom: 10px;
   border-radius: 8px;
   border: none;
   font-size: 16px;
   background-color: #f0f0f0;
 }
 
-/* Login Button */
-button.login-button {
+button.login-button,
+button.google-button {
   width: 100%;
-  padding: 12px 20px;
-  background-color: #ffcc00;  /* Bright yellow */
-  color: #fff;
+  height: 40PX;
+  padding: 12px;
   border: none;
   border-radius: 8px;
-  font-size: 18px;
+  font-size: 16px;
+  color: white;
   cursor: pointer;
+  margin-top: 10px;
   transition: background-color 0.3s ease;
 }
 
-button.login-button:hover {
-  background-color: #003366;  /* Dark blue on hover */
+button.login-button {
+  background-color: #000000;
 }
 
-/* Google Button */
+button.login-button:hover {
+  background-color: #1678da;
+}
+
 button.google-button {
-  width: 100%;
-  padding: 12px 20px;
-  background-color: #db4437;  /* Google Red */
-  color: #fff;
-  border-radius: 8px;
+  background-color: #000000;
+  height: 50px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
-  margin-top: 15px;
-  cursor: pointer;
 }
 
 button.google-button:hover {
-  background-color: #c1351d;  /* Darker Google Red */
+  background-color: #1678da;
 }
 
-/* Forgot Password Link */
-.forgot-password {
-  color: #fff;
-  font-size: 14px;
-  margin-top: 15px;
-}
-
-.forgot-password a {
-  color: #fff;
-  text-decoration: none;
-}
-
-.forgot-password a:hover {
-  text-decoration: underline;
-}
-
-/* No Account Link */
+.forgot-password,
 .no-account {
+  margin-top: 10px;
   color: #fff;
   font-size: 14px;
-  margin-top: 15px;
+  text-align: center;
 }
 
+.forgot-password a,
 .no-account a {
   color: #fff;
   text-decoration: none;
 }
 
+.forgot-password a:hover,
 .no-account a:hover {
   text-decoration: underline;
 }
 
-/* Error Message Styling */
 .error-message {
   color: #ff6b6b;
   font-size: 14px;
+  text-align: center;
   margin-top: 10px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .login-container {
+    flex-direction: column;
+  }
+
+  .login-image-half {
+    display: none;
+  }
+
+  .login-text-half {
+    width: 100vw;
+    height: 100vh;
+    padding: 20px;
+  }
 }

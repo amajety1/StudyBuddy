@@ -1,12 +1,16 @@
 import mongoose from 'mongoose';
 const { Schema, model } = mongoose;
 
+
 const projectSchema = new Schema({
   name: { type: String, required: true },
   description: { type: String, required: true },
   techStack: { type: String },
   githubLink: { type: String }
 });
+
+
+
 
 const availableSessionSchema = new Schema({
   dayOfWeek: { 
@@ -29,6 +33,7 @@ const availableSessionSchema = new Schema({
   },
 });
 
+
 const userSchema = new Schema({
   // Basic Information
   firstName: { type: String, required: true },
@@ -44,7 +49,7 @@ const userSchema = new Schema({
   incomingGroupRequests: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
   outgoingGroupRequests: [{ type: mongoose.Schema.Types.ObjectId, ref: "Group" }],
 
-  groups: [
+groups: [
     {
       group: { type: mongoose.Schema.Types.ObjectId, ref: "Group" },
       isOwner: { type: Boolean, default: false },
@@ -54,32 +59,19 @@ const userSchema = new Schema({
 
   // Profile Info
   github: { type: String },
-
-  recommendedMatches: [{ score: { type: Number }, match: { type: mongoose.Schema.Types.ObjectId, ref: "User" } }],
-
-
-
-  selectedCourses: [{
-    prefix: { type: String },
-    number: { type: Number },
-    name: { type: String },
-    _id: { type: mongoose.Schema.Types.ObjectId, ref: "Course" }
-  }],
-  previousCourses: [{
-    prefix: { type: String },
-    number: { type: Number },
-    name: { type: String },
-    _id: { type: mongoose.Schema.Types.ObjectId, ref: "Course" }
-  }],
+  selectedCourses: [{ type: String }], // Array of course strings
+  previousCourses: [{ type: String }],
   projects: [projectSchema], // Array of project objects
   major: { type: String },
   degreeType: { type: String },
   bio: { type: String },
   about: { type: String },
-  classYear: { type:String},// Freshman/sophomore/junior/senior
   availableSessions: [availableSessionSchema], // Array of available session objects
   notifications: [{ type: mongoose.Schema.Types.ObjectId, ref: "Notification" }],
+
+
 });
 
 const User = model('User', userSchema);
 export default User;
+
